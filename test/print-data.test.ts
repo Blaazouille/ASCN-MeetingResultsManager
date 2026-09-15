@@ -27,4 +27,10 @@ describe('buildPrintMeta', () => {
     expect(meta.date.length).toBeGreaterThan(0);
     expect(meta.computedAt.length).toBeGreaterThan(0);
   });
+
+  it('formats the date in medium style (e.g. "16 nov. 2026")', () => {
+    const meta = buildPrintMeta();
+    // Verify format: day, abbreviated month with period, year (e.g. "16 nov. 2026")
+    expect(meta.date).toMatch(/^\d{1,2}\s+\w+\.\s+\d{4}$/);
+  });
 });

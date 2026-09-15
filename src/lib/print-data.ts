@@ -9,7 +9,7 @@ export interface PrintMeta {
 
 const MEETING_NAME = 'Meeting de la Mer 2026';
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
+const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 
 /**
