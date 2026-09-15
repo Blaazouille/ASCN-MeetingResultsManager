@@ -16,3 +16,6 @@ const POINTS_FORMATTER = new Intl.NumberFormat('fr-FR', {
 export function formatPoints(n: number): string {
   return POINTS_FORMATTER.format(n).replace(/\s/g, ' ');
 }
+
+/** The club name used to highlight ASCN own rows throughout the ranking UI and exports. */
+export const ASCN_CLUB_NAME = "AS CHERBOURG NATATION";
