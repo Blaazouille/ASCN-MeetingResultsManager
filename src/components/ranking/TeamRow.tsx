@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, memo } from 'react';
 import { flexRender, type Row } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';
 import type { TeamResult } from '@/lib/ranking-engine';
@@ -11,7 +11,7 @@ export interface TeamRowProps {
 }
 
 /** One club row in the ranking table, plus its expandable swimmer-detail row. */
-export function TeamRow({ row, isAscn, isExpanded }: TeamRowProps): JSX.Element {
+function TeamRowComponent({ row, isAscn, isExpanded }: TeamRowProps): JSX.Element {
   const cells = row.getVisibleCells();
 
   return (
@@ -33,3 +33,5 @@ export function TeamRow({ row, isAscn, isExpanded }: TeamRowProps): JSX.Element 
     </Fragment>
   );
 }
+
+export const TeamRow = memo(TeamRowComponent);

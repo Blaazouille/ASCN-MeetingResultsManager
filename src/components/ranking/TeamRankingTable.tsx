@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react';
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+} from '@tanstack/react-table';
 import { ChevronRight, Search } from 'lucide-react';
 import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
@@ -21,7 +27,14 @@ export interface TeamRankingTableProps {
 
 const columnHelper = createColumnHelper<TeamResult>();
 
-function buildColumns(topN: TopN, expanded: Set<string>, onToggle: (club: string) => void) {
+/**
+ * Rank/club/points/swimmer-count columns — independent of expand state, so
+ * they're memoized separately from the expand column to avoid rebuilding
+ * every column on every row toggle.
+ */
+// TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
+// columns; `any` here is the library's own documented pattern for a mixed column array.
+function buildBaseColumns(topN: TopN): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
@@ -59,35 +72,38 @@ function buildColumns(topN: TopN, expanded: Set<string>, onToggle: (club: string
         </span>
       ),
     }),
-    columnHelper.accessor('swimmers', {
+    columnHelper.accessor('swimmerCount', {
       id: 'swimmerBadge',
       header: 'Nageurs',
       cell: (info) => (
         <span className="rounded-sm bg-neutral-100 px-2 py-0.5 font-mono text-xs" data-numeric>
-          {info.getValue().length}/{topN}
+          {info.getValue()}/{topN}
         </span>
       ),
     }),
-    columnHelper.display({
-      id: 'expand',
-      header: '',
-      cell: (info) => {
-        const club = info.row.original.club;
-        const isExpanded = expanded.has(club);
-        return (
-          <button
-            type="button"
-            aria-label={isExpanded ? `Masquer le détail de ${club}` : `Afficher le détail de ${club}`}
-            aria-expanded={isExpanded}
-            onClick={() => onToggle(club)}
-            className="flex h-7 w-7 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-150 hover:bg-neutral-100"
-          >
-            <ChevronRight className={cn('h-4 w-4 transition-transform duration-150', isExpanded && 'rotate-90')} />
-          </button>
-        );
-      },
-    }),
   ];
+}
+
+function buildExpandColumn(expanded: Set<string>, onToggle: (club: string) => void): ColumnDef<TeamResult, any> {
+  return columnHelper.display({
+    id: 'expand',
+    header: '',
+    cell: (info) => {
+      const club = info.row.original.club;
+      const isExpanded = expanded.has(club);
+      return (
+        <button
+          type="button"
+          aria-label={isExpanded ? `Masquer le détail de ${club}` : `Afficher le détail de ${club}`}
+          aria-expanded={isExpanded}
+          onClick={() => onToggle(club)}
+          className="flex h-7 w-7 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-150 hover:bg-neutral-100"
+        >
+          <ChevronRight className={cn('h-4 w-4 transition-transform duration-150', isExpanded && 'rotate-90')} />
+        </button>
+      );
+    },
+  });
 }
 
 export function TeamRankingTable({ results, topN, search, onSearchChange }: TeamRankingTableProps): JSX.Element {
@@ -107,7 +123,9 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
     });
   }
 
-  const columns = useMemo(() => buildColumns(topN, expanded, toggle), [topN, expanded]);
+  const baseColumns = useMemo(() => buildBaseColumns(topN), [topN]);
+  const expandColumn = useMemo(() => buildExpandColumn(expanded, toggle), [expanded]);
+  const columns = useMemo(() => [...baseColumns, expandColumn], [baseColumns, expandColumn]);
 
   const table = useReactTable({
     data: filtered,

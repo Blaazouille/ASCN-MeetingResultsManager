@@ -18,10 +18,12 @@ export function SwimmerDetail({ swimmers }: SwimmerDetailProps): JSX.Element {
         </tr>
       </thead>
       <tbody>
-        {/* swimmer.rank is the shared FFN `place` column, not a per-club-unique index — ex-aequo
-            swimmers can share the same rank, so the key must include the array index too. */}
+        {/* Keyed on array index: swimmers is a fresh, stable slice built by computeTeamRanking
+            for this render and is never sorted/filtered afterwards, so index is a safe, simple
+            key. swimmer.rank is the shared FFN `place` column (ex-aequo swimmers can share it)
+            and lastname/firstname can repeat too, so none of them are a safer choice than index. */}
         {swimmers.map((swimmer, index) => (
-          <tr key={`${swimmer.rank}-${swimmer.lastname}-${swimmer.firstname}-${index}`}>
+          <tr key={index}>
             <td className="py-1 text-center font-mono" data-numeric>
               {swimmer.rank}
             </td>
