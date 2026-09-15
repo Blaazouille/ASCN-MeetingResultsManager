@@ -20,7 +20,13 @@ export async function buildRankingWorkbookBuffer(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetName = category.replace(/^Classement\s+/i, '').slice(0, 31) || 'Classement';
+  const sheetName =
+    category
+      .replace(/^Classement\s+/i, '')
+      .replace(/[\\/?*:[\]]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 31) || 'Classement';
   const sheet = workbook.addWorksheet(sheetName);
 
   sheet.columns = [

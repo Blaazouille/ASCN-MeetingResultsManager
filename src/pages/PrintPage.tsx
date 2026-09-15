@@ -1,32 +1,23 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useRanking } from '@/hooks/use-ranking';
+import { usePrintExport } from '@/hooks/use-print-export';
 import { buildPrintMeta } from '@/lib/print-data';
-import { exportRankingToPdf } from '@/lib/pdf-export';
 import { PrintControls } from '@/components/print/PrintControls';
 import { PrintPreview } from '@/components/print/PrintPreview';
 
 export default function PrintPage(): JSX.Element {
   const { importState } = useOutletContext<AppOutletContext>();
-  const [isExporting, setIsExporting] = useState(false);
 
   const rows = importState.result?.rows ?? [];
   const categories = importState.result?.categories ?? [];
   const ranking = useRanking(rows, categories);
   const meta = useMemo(() => buildPrintMeta(), []);
+  const { isExporting, error, exportPdf } = usePrintExport();
 
   if (!importState.result) {
     return <Navigate to="/import" replace />;
-  }
-
-  async function handleDownloadPdf(): Promise<void> {
-    setIsExporting(true);
-    try {
-      await exportRankingToPdf(meta, ranking.category, ranking.teamResults);
-    } finally {
-      setIsExporting(false);
-    }
   }
 
   return (
@@ -41,9 +32,10 @@ export default function PrintPage(): JSX.Element {
         category={ranking.category}
         onCategoryChange={ranking.setCategory}
         onPrint={() => window.print()}
-        onDownloadPdf={handleDownloadPdf}
+        onDownloadPdf={() => exportPdf(ranking.category, ranking.teamResults)}
         isExporting={isExporting}
       />
+      {error && <p className="text-sm text-error">{error}</p>}
 
       <PrintPreview meta={meta} category={ranking.category} results={ranking.teamResults} />
     </div>

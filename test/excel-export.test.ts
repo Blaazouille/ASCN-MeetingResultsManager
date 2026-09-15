@@ -49,4 +49,18 @@ describe('buildRankingWorkbookBuffer', () => {
     expect(sheet.getRow(39).getCell(2).value).toBe('CN BERGERAC');
     expect(sheet.getRow(39).getCell(3).value).toBe(561);
   });
+
+  it('strips characters Excel forbids in sheet names', async () => {
+    const rows = loadRows();
+    const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
+    const meta = buildPrintMeta();
+
+    const buffer = await buildRankingWorkbookBuffer(meta, 'Classement 100m [Dames]', results);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
+    const sheet = workbook.worksheets[0]!;
+
+    expect(sheet.name).not.toMatch(/[\\/?*:[\]]/);
+    expect(sheet.name).toBe('100m Dames');
+  });
 });
