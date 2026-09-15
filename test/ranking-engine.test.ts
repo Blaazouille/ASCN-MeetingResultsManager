@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
-import { computeTeamRanking, type TeamResult } from '../src/lib/ranking-engine';
+import { computeTeamRanking, filterTeamResultsByClub, type TeamResult } from '../src/lib/ranking-engine';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
@@ -107,5 +107,36 @@ describe('computeTeamRanking — algorithm behavior', () => {
 
   it('returns an empty ranking for an unknown category', () => {
     expect(computeTeamRanking(rows, { category: 'Classement Inexistant', topN: 5 })).toEqual([]);
+  });
+});
+
+describe('filterTeamResultsByClub', () => {
+  const rows = loadRows();
+  const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
+
+  it('returns all results unchanged for an empty query', () => {
+    expect(filterTeamResultsByClub(results, '')).toEqual(results);
+  });
+
+  it('returns all results unchanged for a whitespace-only query', () => {
+    expect(filterTeamResultsByClub(results, '   ')).toEqual(results);
+  });
+
+  it('matches case-insensitively on a substring of the club name', () => {
+    const filtered = filterTeamResultsByClub(results, 'cherbourg');
+    expect(filtered.map((team) => team.club)).toEqual(
+      expect.arrayContaining(['AS CHERBOURG NATATION', 'AC CHERBOURG EN COTENTIN'])
+    );
+    expect(filtered).toHaveLength(2);
+  });
+
+  it('returns an empty array when nothing matches', () => {
+    expect(filterTeamResultsByClub(results, 'no-such-club-xyz')).toEqual([]);
+  });
+
+  it('does not mutate the input array', () => {
+    const originalLength = results.length;
+    filterTeamResultsByClub(results, 'viry');
+    expect(results).toHaveLength(originalLength);
   });
 });

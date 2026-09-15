@@ -73,3 +73,15 @@ export function computeTeamRanking(
     rank: index + 1,
   }));
 }
+
+/**
+ * Filters team results to those whose club name contains the query,
+ * case-insensitively. An empty or whitespace-only query returns all results.
+ */
+export function filterTeamResultsByClub(results: TeamResult[], query: string): TeamResult[] {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return results;
+  }
+  return results.filter((team) => team.club.toLowerCase().includes(normalized));
+}
