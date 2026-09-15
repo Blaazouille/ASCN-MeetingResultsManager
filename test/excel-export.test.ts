@@ -29,7 +29,7 @@ describe('buildRankingWorkbookBuffer', () => {
     // Header row + 38 club rows.
     expect(sheet.rowCount).toBe(39);
 
-    const clubNames = sheet.getColumn(2).values.slice(2) as string[];
+    const clubNames = sheet.getColumn(2)!.values!.slice(2) as string[];
     expect(clubNames).toContain('AS CHERBOURG NATATION');
     expect(clubNames).toHaveLength(38);
   });
