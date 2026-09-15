@@ -17,7 +17,7 @@ export default defineConfig({
         },
       },
       preload: {
-        input: path.join(__dirname, 'electron/preload.ts'),
+        input: path.join(import.meta.dirname, 'electron/preload.ts'),
         vite: {
           build: {
             outDir: 'dist-electron',
@@ -29,7 +29,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
     },
   },
 });
