@@ -1,0 +1,936 @@
+[
+  {
+    "club": "CN VIRY-CHÂTILLON",
+    "totalPoints": 5841,
+    "swimmers": [
+      {
+        "lastname": "SCHWING",
+        "firstname": "Pascale",
+        "birthyear": 1958,
+        "points": 1274
+      },
+      {
+        "lastname": "KABICHE",
+        "firstname": "Laurent",
+        "birthyear": 1967,
+        "points": 1166
+      },
+      {
+        "lastname": "BOCQUILLON",
+        "firstname": "Philippe",
+        "birthyear": 1962,
+        "points": 1165
+      },
+      {
+        "lastname": "DAVID",
+        "firstname": "Christine",
+        "birthyear": 1967,
+        "points": 1133
+      },
+      {
+        "lastname": "CAZAL",
+        "firstname": "Caroline",
+        "birthyear": 1981,
+        "points": 1103
+      }
+    ],
+    "swimmerCount": 18,
+    "rank": 1
+  },
+  {
+    "club": "BOULOGNE BILLANCOURT NATATION",
+    "totalPoints": 5364,
+    "swimmers": [
+      {
+        "lastname": "BLANC",
+        "firstname": "Pierre",
+        "birthyear": 1965,
+        "points": 1175
+      },
+      {
+        "lastname": "MARCHAND",
+        "firstname": "Nancy",
+        "birthyear": 1958,
+        "points": 1150
+      },
+      {
+        "lastname": "FERRY",
+        "firstname": "Maryse",
+        "birthyear": 1956,
+        "points": 1084
+      },
+      {
+        "lastname": "MORAND",
+        "firstname": "Sophie",
+        "birthyear": 1960,
+        "points": 1039
+      },
+      {
+        "lastname": "TOPOLANSKI",
+        "firstname": "Nathalie",
+        "birthyear": 1965,
+        "points": 916
+      }
+    ],
+    "swimmerCount": 8,
+    "rank": 2
+  },
+  {
+    "club": "AC CHERBOURG EN COTENTIN",
+    "totalPoints": 5201,
+    "swimmers": [
+      {
+        "lastname": "VILLETTE",
+        "firstname": "Florent",
+        "birthyear": 1972,
+        "points": 1089
+      },
+      {
+        "lastname": "DUTRIEUX",
+        "firstname": "Morgan",
+        "birthyear": 1982,
+        "points": 1075
+      },
+      {
+        "lastname": "LAROSE",
+        "firstname": "Olivier",
+        "birthyear": 1969,
+        "points": 1032
+      },
+      {
+        "lastname": "LUNG",
+        "firstname": "Daniel",
+        "birthyear": 1943,
+        "points": 1010
+      },
+      {
+        "lastname": "SEBIRE",
+        "firstname": "Jean-Paul",
+        "birthyear": 1959,
+        "points": 995
+      }
+    ],
+    "swimmerCount": 19,
+    "rank": 3
+  },
+  {
+    "club": "UAS ST-CLOUD",
+    "totalPoints": 5191,
+    "swimmers": [
+      {
+        "lastname": "LOSCH",
+        "firstname": "Julien",
+        "birthyear": 1987,
+        "points": 1147
+      },
+      {
+        "lastname": "GALLO",
+        "firstname": "Clémence",
+        "birthyear": 1997,
+        "points": 1063
+      },
+      {
+        "lastname": "LEROY",
+        "firstname": "Alexandra",
+        "birthyear": 1973,
+        "points": 1004
+      },
+      {
+        "lastname": "FLEURENTIN",
+        "firstname": "Lucas",
+        "birthyear": 1989,
+        "points": 1003
+      },
+      {
+        "lastname": "KLEIN",
+        "firstname": "Antoine",
+        "birthyear": 1999,
+        "points": 974
+      }
+    ],
+    "swimmerCount": 15,
+    "rank": 4
+  },
+  {
+    "club": "EN CAEN",
+    "totalPoints": 5155,
+    "swimmers": [
+      {
+        "lastname": "CREANCE",
+        "firstname": "Pascale",
+        "birthyear": 1954,
+        "points": 1218
+      },
+      {
+        "lastname": "THIBAUD",
+        "firstname": "Benoit",
+        "birthyear": 1980,
+        "points": 1062
+      },
+      {
+        "lastname": "POIRIER",
+        "firstname": "Alain",
+        "birthyear": 1995,
+        "points": 985
+      },
+      {
+        "lastname": "DEPREUX",
+        "firstname": "Clement",
+        "birthyear": 1999,
+        "points": 949
+      },
+      {
+        "lastname": "BRINDJONC",
+        "firstname": "Wilfrid",
+        "birthyear": 1976,
+        "points": 941
+      }
+    ],
+    "swimmerCount": 22,
+    "rank": 5
+  },
+  {
+    "club": "AMICALE CREIL NATATION",
+    "totalPoints": 4758,
+    "swimmers": [
+      {
+        "lastname": "MOLINA",
+        "firstname": "Francis",
+        "birthyear": 1966,
+        "points": 1088
+      },
+      {
+        "lastname": "RATEAU",
+        "firstname": "Remy",
+        "birthyear": 1967,
+        "points": 1083
+      },
+      {
+        "lastname": "JANVIER",
+        "firstname": "David",
+        "birthyear": 1969,
+        "points": 979
+      },
+      {
+        "lastname": "CHARPIOT",
+        "firstname": "Thierry",
+        "birthyear": 1958,
+        "points": 956
+      },
+      {
+        "lastname": "RUFFIER",
+        "firstname": "Coralie",
+        "birthyear": 1967,
+        "points": 652
+      }
+    ],
+    "swimmerCount": 5,
+    "rank": 6
+  },
+  {
+    "club": "AS CHERBOURG NATATION",
+    "totalPoints": 4735,
+    "swimmers": [
+      {
+        "lastname": "LECACHEUX",
+        "firstname": "Bruno",
+        "birthyear": 1970,
+        "points": 982
+      },
+      {
+        "lastname": "DUPRE",
+        "firstname": "Morgane",
+        "birthyear": 1991,
+        "points": 974
+      },
+      {
+        "lastname": "FAUCHARD",
+        "firstname": "Frédéric",
+        "birthyear": 1967,
+        "points": 952
+      },
+      {
+        "lastname": "DABO",
+        "firstname": "Mathieu",
+        "birthyear": 1979,
+        "points": 929
+      },
+      {
+        "lastname": "VOISIN",
+        "firstname": "Clément",
+        "birthyear": 1993,
+        "points": 898
+      }
+    ],
+    "swimmerCount": 30,
+    "rank": 7
+  },
+  {
+    "club": "CN POISSY",
+    "totalPoints": 4721,
+    "swimmers": [
+      {
+        "lastname": "LOISEAU",
+        "firstname": "Mathieu",
+        "birthyear": 1974,
+        "points": 1031
+      },
+      {
+        "lastname": "PHILIPPE",
+        "firstname": "Catherine",
+        "birthyear": 1964,
+        "points": 957
+      },
+      {
+        "lastname": "PIQUEMAL",
+        "firstname": "Eric",
+        "birthyear": 1986,
+        "points": 932
+      },
+      {
+        "lastname": "RENARD",
+        "firstname": "Francis",
+        "birthyear": 1965,
+        "points": 928
+      },
+      {
+        "lastname": "THIBAUDEAU",
+        "firstname": "Laurent",
+        "birthyear": 1979,
+        "points": 873
+      }
+    ],
+    "swimmerCount": 15,
+    "rank": 8
+  },
+  {
+    "club": "CN COUTANCES",
+    "totalPoints": 4442,
+    "swimmers": [
+      {
+        "lastname": "POULLAIN",
+        "firstname": "Anne-Dorothée",
+        "birthyear": 1980,
+        "points": 933
+      },
+      {
+        "lastname": "SELWIET",
+        "firstname": "Bernard",
+        "birthyear": 1969,
+        "points": 922
+      },
+      {
+        "lastname": "SAVARY",
+        "firstname": "Jean-Paul",
+        "birthyear": 1958,
+        "points": 899
+      },
+      {
+        "lastname": "MADELENAT",
+        "firstname": "Jean-Paul",
+        "birthyear": 1941,
+        "points": 847
+      },
+      {
+        "lastname": "TULLIER",
+        "firstname": "Jean",
+        "birthyear": 1944,
+        "points": 841
+      }
+    ],
+    "swimmerCount": 12,
+    "rank": 9
+  },
+  {
+    "club": "CNP DE SAINT-LO",
+    "totalPoints": 3932,
+    "swimmers": [
+      {
+        "lastname": "MAGITTERI",
+        "firstname": "Caroline",
+        "birthyear": 1988,
+        "points": 900
+      },
+      {
+        "lastname": "THERMY",
+        "firstname": "Elodie",
+        "birthyear": 1984,
+        "points": 882
+      },
+      {
+        "lastname": "LANA GASTELOIS",
+        "firstname": "Maria",
+        "birthyear": 1971,
+        "points": 803
+      },
+      {
+        "lastname": "LEBRUN",
+        "firstname": "Georges",
+        "birthyear": 1955,
+        "points": 674
+      },
+      {
+        "lastname": "MOTIN",
+        "firstname": "Agnes",
+        "birthyear": 1961,
+        "points": 673
+      }
+    ],
+    "swimmerCount": 11,
+    "rank": 10
+  },
+  {
+    "club": "C.S.C CARENTAN NATATION",
+    "totalPoints": 3776,
+    "swimmers": [
+      {
+        "lastname": "MONTAZ-ROSSET",
+        "firstname": "Marlène",
+        "birthyear": 1987,
+        "points": 1027
+      },
+      {
+        "lastname": "MORELLE",
+        "firstname": "Olivier",
+        "birthyear": 1982,
+        "points": 810
+      },
+      {
+        "lastname": "BARDYN",
+        "firstname": "Melanie",
+        "birthyear": 1985,
+        "points": 697
+      },
+      {
+        "lastname": "LEVRARD",
+        "firstname": "Lise",
+        "birthyear": 1992,
+        "points": 675
+      },
+      {
+        "lastname": "LEGASTELOIS",
+        "firstname": "Nicolas",
+        "birthyear": 1988,
+        "points": 567
+      }
+    ],
+    "swimmerCount": 6,
+    "rank": 11
+  },
+  {
+    "club": "CN LE HAVRE",
+    "totalPoints": 3506,
+    "swimmers": [
+      {
+        "lastname": "LEBRET",
+        "firstname": "Christophe",
+        "birthyear": 1964,
+        "points": 934
+      },
+      {
+        "lastname": "NACE",
+        "firstname": "Charlotte",
+        "birthyear": 1996,
+        "points": 918
+      },
+      {
+        "lastname": "LECANU",
+        "firstname": "Stephanie",
+        "birthyear": 1977,
+        "points": 905
+      },
+      {
+        "lastname": "LISBONIS",
+        "firstname": "Claire",
+        "birthyear": 1960,
+        "points": 749
+      }
+    ],
+    "swimmerCount": 4,
+    "rank": 12
+  },
+  {
+    "club": "ES FALAISE",
+    "totalPoints": 2954,
+    "swimmers": [
+      {
+        "lastname": "SOUMARE",
+        "firstname": "Mamadou",
+        "birthyear": 1992,
+        "points": 1077
+      },
+      {
+        "lastname": "PRADIER",
+        "firstname": "Cedric",
+        "birthyear": 1974,
+        "points": 672
+      },
+      {
+        "lastname": "TARIEL",
+        "firstname": "Nicolas",
+        "birthyear": 1985,
+        "points": 618
+      },
+      {
+        "lastname": "LAURENT",
+        "firstname": "Julien",
+        "birthyear": 1985,
+        "points": 587
+      }
+    ],
+    "swimmerCount": 4,
+    "rank": 13
+  },
+  {
+    "club": "CLUB DES NAGEURS DE PARIS",
+    "totalPoints": 2855,
+    "swimmers": [
+      {
+        "lastname": "CUDELOU",
+        "firstname": "Jérôme",
+        "birthyear": 1973,
+        "points": 1033
+      },
+      {
+        "lastname": "BOQUET",
+        "firstname": "Aurélien",
+        "birthyear": 1993,
+        "points": 983
+      },
+      {
+        "lastname": "GACHET",
+        "firstname": "Marie-Pierre",
+        "birthyear": 1947,
+        "points": 839
+      }
+    ],
+    "swimmerCount": 3,
+    "rank": 14
+  },
+  {
+    "club": "EXOCET MASTER CLUB ",
+    "totalPoints": 2819,
+    "swimmers": [
+      {
+        "lastname": "BRACHET",
+        "firstname": "Robert",
+        "birthyear": 1938,
+        "points": 1069
+      },
+      {
+        "lastname": "KLINGBEIL",
+        "firstname": "Herbert",
+        "birthyear": 1954,
+        "points": 908
+      },
+      {
+        "lastname": "REUGE",
+        "firstname": "Stephan",
+        "birthyear": 1966,
+        "points": 842
+      }
+    ],
+    "swimmerCount": 3,
+    "rank": 15
+  },
+  {
+    "club": "ESPÉRANCE VAILLANTE GRANVILLE",
+    "totalPoints": 2415,
+    "swimmers": [
+      {
+        "lastname": "DANIEL",
+        "firstname": "Baptiste",
+        "birthyear": 1988,
+        "points": 834
+      },
+      {
+        "lastname": "RADOVIC",
+        "firstname": "Anne",
+        "birthyear": 1968,
+        "points": 687
+      },
+      {
+        "lastname": "PIQUOT",
+        "firstname": "Frédéric",
+        "birthyear": 1964,
+        "points": 553
+      },
+      {
+        "lastname": "BAGUELIN-SIMON",
+        "firstname": "Coralie",
+        "birthyear": 1995,
+        "points": 341
+      }
+    ],
+    "swimmerCount": 4,
+    "rank": 16
+  },
+  {
+    "club": "C.N DE MANTES EN YVELINES",
+    "totalPoints": 1956,
+    "swimmers": [
+      {
+        "lastname": "SMYTH-RONGEAT",
+        "firstname": "Ludovic",
+        "birthyear": 1962,
+        "points": 1060
+      },
+      {
+        "lastname": "VATIN",
+        "firstname": "Sandrine",
+        "birthyear": 1971,
+        "points": 896
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 17
+  },
+  {
+    "club": "A.O. TRAPPES NATATION",
+    "totalPoints": 1813,
+    "swimmers": [
+      {
+        "lastname": "LE ROUX",
+        "firstname": "Anne-Marie",
+        "birthyear": 1948,
+        "points": 944
+      },
+      {
+        "lastname": "LE ROUX",
+        "firstname": "Jean-Jacques",
+        "birthyear": 1946,
+        "points": 869
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 18
+  },
+  {
+    "club": "BAYEUX OLYMPIQUE NATATION",
+    "totalPoints": 1762,
+    "swimmers": [
+      {
+        "lastname": "SEREY",
+        "firstname": "Jean-Francois",
+        "birthyear": 1976,
+        "points": 669
+      },
+      {
+        "lastname": "JULIEN",
+        "firstname": "Anthony",
+        "birthyear": 1992,
+        "points": 668
+      },
+      {
+        "lastname": "LECONTE",
+        "firstname": "Christelle",
+        "birthyear": 1976,
+        "points": 425
+      }
+    ],
+    "swimmerCount": 3,
+    "rank": 19
+  },
+  {
+    "club": "CN YVETOT",
+    "totalPoints": 1753,
+    "swimmers": [
+      {
+        "lastname": "BOS",
+        "firstname": "Maxime",
+        "birthyear": 1996,
+        "points": 881
+      },
+      {
+        "lastname": "GODART",
+        "firstname": "Sylvie",
+        "birthyear": 1960,
+        "points": 872
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 20
+  },
+  {
+    "club": "CO ULIS NATATION",
+    "totalPoints": 1695,
+    "swimmers": [
+      {
+        "lastname": "EVAN",
+        "firstname": "Bernard",
+        "birthyear": 1973,
+        "points": 1004
+      },
+      {
+        "lastname": "HAURINE",
+        "firstname": "Frédéric",
+        "birthyear": 1986,
+        "points": 691
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 21
+  },
+  {
+    "club": "C.O CHATEAU-DU-LOIR",
+    "totalPoints": 1681,
+    "swimmers": [
+      {
+        "lastname": "CHENU",
+        "firstname": "Franck",
+        "birthyear": 1959,
+        "points": 968
+      },
+      {
+        "lastname": "TERPREAU",
+        "firstname": "Guillaume",
+        "birthyear": 1992,
+        "points": 713
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 22
+  },
+  {
+    "club": "PORNIC NATATION PAYS DE RETZ",
+    "totalPoints": 1536,
+    "swimmers": [
+      {
+        "lastname": "GRESLIN-CAUSSANEL",
+        "firstname": "Nadia",
+        "birthyear": 1970,
+        "points": 908
+      },
+      {
+        "lastname": "WAJEMAN",
+        "firstname": "Sophie",
+        "birthyear": 1963,
+        "points": 628
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 23
+  },
+  {
+    "club": "USM VIRE",
+    "totalPoints": 1203,
+    "swimmers": [
+      {
+        "lastname": "VANET",
+        "firstname": "Pauline",
+        "birthyear": 1992,
+        "points": 1070
+      },
+      {
+        "lastname": "VISEUX DE POTTER",
+        "firstname": "Philippe",
+        "birthyear": 1973,
+        "points": 133
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 24
+  },
+  {
+    "club": "SN VERSAILLES",
+    "totalPoints": 1168,
+    "swimmers": [
+      {
+        "lastname": "COUSSIEU",
+        "firstname": "Beatrice",
+        "birthyear": 1969,
+        "points": 1168
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 25
+  },
+  {
+    "club": "CN AVRANCHES",
+    "totalPoints": 1045,
+    "swimmers": [
+      {
+        "lastname": "POULEYN",
+        "firstname": "Stéphanie",
+        "birthyear": 1985,
+        "points": 773
+      },
+      {
+        "lastname": "GUARY",
+        "firstname": "Nicolas",
+        "birthyear": 1975,
+        "points": 272
+      }
+    ],
+    "swimmerCount": 2,
+    "rank": 26
+  },
+  {
+    "club": "CHOLET NATATION",
+    "totalPoints": 986,
+    "swimmers": [
+      {
+        "lastname": "SOLONTCHENKO",
+        "firstname": "Oleg",
+        "birthyear": 1991,
+        "points": 986
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 27
+  },
+  {
+    "club": "NEPTUNE CLUB DE FRANCE",
+    "totalPoints": 978,
+    "swimmers": [
+      {
+        "lastname": "SCHUSTER",
+        "firstname": "Silvere",
+        "birthyear": 1979,
+        "points": 978
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 28
+  },
+  {
+    "club": "ES SUCY-EN-BRIE",
+    "totalPoints": 853,
+    "swimmers": [
+      {
+        "lastname": "COLLACE",
+        "firstname": "Jean-Jacques",
+        "birthyear": 1945,
+        "points": 853
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 29
+  },
+  {
+    "club": "CN DECIZE",
+    "totalPoints": 852,
+    "swimmers": [
+      {
+        "lastname": "RAPIAU",
+        "firstname": "Alexis",
+        "birthyear": 1996,
+        "points": 852
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 30
+  },
+  {
+    "club": "AS BOUGUENAIS REZE",
+    "totalPoints": 803,
+    "swimmers": [
+      {
+        "lastname": "BETHEMBOS",
+        "firstname": "Olivier",
+        "birthyear": 1965,
+        "points": 803
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 31
+  },
+  {
+    "club": "MARSOUINS HÉROUVILLE",
+    "totalPoints": 802,
+    "swimmers": [
+      {
+        "lastname": "DE SEREVILLE",
+        "firstname": "Ludovic",
+        "birthyear": 1972,
+        "points": 802
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 32
+  },
+  {
+    "club": "DAUPHINS EMBRUN",
+    "totalPoints": 722,
+    "swimmers": [
+      {
+        "lastname": "BESSY",
+        "firstname": "Carole",
+        "birthyear": 1967,
+        "points": 722
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 33
+  },
+  {
+    "club": "EN LOUVIERS",
+    "totalPoints": 697,
+    "swimmers": [
+      {
+        "lastname": "COQUELIN",
+        "firstname": "Patrick",
+        "birthyear": 1955,
+        "points": 697
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 34
+  },
+  {
+    "club": "CN BRECEY",
+    "totalPoints": 658,
+    "swimmers": [
+      {
+        "lastname": "BOUTIN",
+        "firstname": "Marc",
+        "birthyear": 1960,
+        "points": 658
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 35
+  },
+  {
+    "club": "FECAMP AQUATIQUE CLUB",
+    "totalPoints": 656,
+    "swimmers": [
+      {
+        "lastname": "KIRCH",
+        "firstname": "Daniel",
+        "birthyear": 1946,
+        "points": 656
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 36
+  },
+  {
+    "club": "CS LES LILAS NATATION",
+    "totalPoints": 623,
+    "swimmers": [
+      {
+        "lastname": "DUPUIS",
+        "firstname": "Laurent",
+        "birthyear": 1971,
+        "points": 623
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 37
+  },
+  {
+    "club": "CN BERGERAC",
+    "totalPoints": 561,
+    "swimmers": [
+      {
+        "lastname": "POUCET",
+        "firstname": "Philippe",
+        "birthyear": 1959,
+        "points": 561
+      }
+    ],
+    "swimmerCount": 1,
+    "rank": 38
+  }
+]
