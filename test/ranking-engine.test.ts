@@ -108,6 +108,15 @@ describe('computeTeamRanking — algorithm behavior', () => {
   it('returns an empty ranking for an unknown category', () => {
     expect(computeTeamRanking(rows, { category: 'Classement Inexistant', topN: 5 })).toEqual([]);
   });
+
+  it('preserves ex-aequo swimmers sharing the same rank (shared FFN place column)', () => {
+    const result = computeTeamRanking(rows, { category: 'Classement Messieurs', topN: 10 });
+    const viry = result.find((team) => team.club === 'CN VIRY-CHÂTILLON');
+    const sharedRank45 = viry?.swimmers.filter((swimmer) => swimmer.rank === 45) ?? [];
+    expect(sharedRank45).toHaveLength(2);
+    expect(sharedRank45.map((swimmer) => swimmer.lastname).sort()).toEqual(['CHEVALLIER', 'KNODEL']);
+    expect(sharedRank45.every((swimmer) => swimmer.points === 925)).toBe(true);
+  });
 });
 
 describe('filterTeamResultsByClub', () => {

@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ChevronRight, Search } from 'lucide-react';
-import { cn, formatPoints } from '@/lib/utils';
+import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
 import type { TopN } from '@/hooks/use-ranking';
 import { TeamRow } from './TeamRow';
-
-const ASCN_CLUB_NAME = 'AS CHERBOURG NATATION';
 
 const PODIUM_STYLES: Record<number, string> = {
   1: 'bg-accent-600 text-neutral-0',
@@ -132,7 +130,11 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
       </div>
 
       {filtered.length === 0 ? (
-        <p className="p-8 text-center text-sm text-neutral-600">Aucun club ne correspond à la recherche.</p>
+        <p className="p-8 text-center text-sm text-neutral-600">
+          {search.trim() !== ''
+            ? 'Aucun club ne correspond à la recherche.'
+            : 'Aucun classement pour cette catégorie.'}
+        </p>
       ) : (
         <table className="w-full border-collapse text-sm">
           <thead>

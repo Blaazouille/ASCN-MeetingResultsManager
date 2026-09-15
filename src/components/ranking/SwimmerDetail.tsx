@@ -18,8 +18,10 @@ export function SwimmerDetail({ swimmers }: SwimmerDetailProps): JSX.Element {
         </tr>
       </thead>
       <tbody>
-        {swimmers.map((swimmer) => (
-          <tr key={swimmer.rank}>
+        {/* swimmer.rank is the shared FFN `place` column, not a per-club-unique index — ex-aequo
+            swimmers can share the same rank, so the key must include the array index too. */}
+        {swimmers.map((swimmer, index) => (
+          <tr key={`${swimmer.rank}-${swimmer.lastname}-${swimmer.firstname}-${index}`}>
             <td className="py-1 text-center font-mono" data-numeric>
               {swimmer.rank}
             </td>
