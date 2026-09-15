@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary (Institutional Blue) */
+  --color-primary-900: #071e3d;
+  --color-primary-800: #0a3663;
+  --color-primary-700: #0d4a87;
+  --color-primary-600: #1260a8;
+  --color-primary-500: #1a78c8;
+  --color-primary-400: #4a9ad8;
+  --color-primary-300: #7abbe4;
+  --color-primary-200: #b0d5f0;
+  --color-primary-100: #e0eefa;
+  --color-primary-50: #f0f6fd;
+
+  /* Secondary (Pool Blue) */
+  --color-secondary-900: #004a66;
+  --color-secondary-800: #006e99;
+  --color-secondary-700: #0089bf;
+  --color-secondary-600: #00a4e4;
+  --color-secondary-500: #1ab4ed;
+  --color-secondary-400: #4dc6f2;
+  --color-secondary-300: #80d6f6;
+  --color-secondary-200: #b3e6fa;
+  --color-secondary-100: #e0f4fd;
+  --color-secondary-50: #f0faff;
+
+  /* Accent (Coral Energy) */
+  --color-accent-900: #7a2e10;
+  --color-accent-800: #a34118;
+  --color-accent-700: #cc5625;
+  --color-accent-600: #ff6b35;
+  --color-accent-500: #ff8555;
+  --color-accent-400: #ffa07a;
+  --color-accent-300: #ffb99e;
+  --color-accent-200: #ffd4c2;
+  --color-accent-100: #ffeee6;
+  --color-accent-50: #fff7f3;
+
+  /* Neutrals */
+  --color-neutral-950: #0f1419;
+  --color-neutral-900: #1a2332;
+  --color-neutral-800: #2d3a4d;
+  --color-neutral-700: #3f4f66;
+  --color-neutral-600: #5b6b7d;
+  --color-neutral-500: #7a8999;
+  --color-neutral-400: #97a3b0;
+  --color-neutral-300: #b4bcc7;
+  --color-neutral-200: #d1d7de;
+  --color-neutral-100: #e8ebef;
+  --color-neutral-50: #f4f7f6;
+  --color-neutral-0: #ffffff;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef9c3;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(10, 54, 99, 0.08), 0 1px 2px rgba(10, 54, 99, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(10, 54, 99, 0.12), 0 2px 4px rgba(10, 54, 99, 0.08);
+  --shadow-dropdown: 0 4px 16px rgba(10, 54, 99, 0.14);
+
+  color-scheme: light;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-900 font-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+
+  .font-mono,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
