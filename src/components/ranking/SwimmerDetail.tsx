@@ -19,7 +19,7 @@ export function SwimmerDetail({ swimmers }: SwimmerDetailProps): JSX.Element {
       </thead>
       <tbody>
         {swimmers.map((swimmer) => (
-          <tr key={`${swimmer.lastname}-${swimmer.firstname}`}>
+          <tr key={swimmer.rank}>
             <td className="py-1 text-center font-mono" data-numeric>
               {swimmer.rank}
             </td>
