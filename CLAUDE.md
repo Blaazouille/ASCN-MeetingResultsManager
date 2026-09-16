@@ -250,74 +250,16 @@ TESTING
 - Never write a test that only confirms what the code currently does — test what it should do per the spec.
 ```
 
----
+## AI Reference Files
 
-## Principles
+Deeper rule sets live in `.ai/`. Load the relevant file when the task calls for it:
 
-Three non-negotiable rules that override any shortcut, urgency, or convenience:
-
-1. **Humans own the "what" and "why" — AI owns the "how".**  
-   AI compresses the implementation phase, not the thinking phases. Design, specification, review, and refactoring stay human-driven.
-
-2. **If nobody can explain it, it doesn't ship.**  
-   Every piece of AI-generated code must be understood by at least one person before it merges. "It passes tests" is not sufficient. "I can explain what it does and why" is the bar.
-
-3. **AI is a pair partner, not a contractor.**  
-   Work interactively: outline → AI drafts → you review and adjust → AI refines. Never throw a vague task at AI and rubber-stamp whatever comes back.
-
----
-
-## Architecture Rules
-
-- **Architecture stays human-owned.** Module structure, data flow, API contracts, state management, and error-handling strategy are deliberate human choices. AI fills in the boxes; humans draw the boxes.
-- **Contract-first for interfaces.** Define types, interfaces, and data shapes before generating implementations. If AI output respects the contract, the blast radius of any mistake is contained.
-- **Dependency discipline.** Every suggested dependency must be vetted: maintained? license-compatible? actually needed? already covered by an existing dependency?
-- **Decompose ruthlessly.** Break every feature into the smallest possible units before involving AI. Small tasks produce better output and individually reviewable pieces.
-
-**AI ceiling:**
-
-| Good for AI | Needs deep human attention |
+| File | When to load |
 |---|---|
-| Boilerplate, CRUD | Security-sensitive code |
-| Data transformations | Performance-critical paths |
-| Test scaffolding | Complex state machines |
-| UI component wiring | Authentication and access control |
-| Documentation drafts | Cryptography and secrets handling |
-| Repetitive refactoring | Concurrent/async edge cases |
-
----
-
-## File Hygiene
-
-- **One file = one responsibility.** If you can't summarize it in one sentence, it's doing too much.
-- **Hard ceiling: 300 lines.** When approaching the limit, extract — don't append.
-- **Never add a second responsibility.** If new logic doesn't fit the file's stated purpose, create a new file. Do not ask, just propose the split.
-- **Zero dead code tolerance.** Dead code lives in version control history. If it's not called, it's deleted. No commented-out blocks, no `// TODO: maybe use this later`, no unused exports.
-- **Refuse god-file patterns:** "Add it to utils", "Put the logic in the main component", "Add another case to the switch" — these are all warning signs.
-
----
-
-## Testing Philosophy
-
-- No code merges without tests.
-- **Circular reasoning risk:** AI writes code, then writes tests confirming what the code *does* rather than what it *should do*. Human always verifies that assertions match the spec, not the implementation.
-- Human defines acceptance criteria and edge cases. AI helps with boilerplate, mocking, and repetitive patterns.
-- **Red-Green-Refactor:** human writes the failing test → AI implements → human cleans up.
-- Before asking AI to implement anything, write down: inputs, expected outputs, edge cases, and what "done" looks like.
-
----
-
-## Review Checklist
-
-**Before committing:**
-- [ ] No dead code: no unused imports, variables, functions, or commented-out blocks
-- [ ] No god files: no file has gained a second responsibility
-- [ ] Tests exist and assert expected behavior, not just implementation
-- [ ] Every file has a header comment stating its purpose
-- [ ] Diff is small and single-purpose
-- [ ] Linter and formatter pass with zero warnings
-
-**PR discipline:**
-- Small, scoped commits. One logical change per commit.
-- Review the diff, not the file — pattern breaks and unnecessary changes only show in the diff.
-- AI configuration files (`CLAUDE.md`, etc.) are checked into the repo as part of the development process.
+| `.ai/conventions.md` | Any code generation or editing task |
+| `.ai/file-hygiene.md` | Creating new files, refactoring, or when a file is growing |
+| `.ai/testing.md` | Writing or reviewing tests |
+| `.ai/architecture.md` | Adding dependencies, creating new modules, structural decisions |
+| `.ai/review-checklist.md` | Before any PR or code review |
+| `.ai/unfamiliar-stack.md` | When reviewing tech you don't master directly |
+| `.ai/PRINCIPLES.md` | Core principles — humans own "what/why", AI owns "how" |
