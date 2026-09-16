@@ -2,14 +2,17 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useImport, type UseImportResult } from '@/hooks/use-import';
+import { useMeeting, type UseMeetingResult } from '@/hooks/use-meeting';
 
 export interface AppOutletContext {
   importState: UseImportResult;
+  meetingState: UseMeetingResult;
 }
 
 export function AppShell(): JSX.Element {
   const importState = useImport();
-  const context: AppOutletContext = { importState };
+  const meetingState = useMeeting();
+  const context: AppOutletContext = { importState, meetingState };
 
   return (
     <div className="flex min-h-screen bg-neutral-50">
