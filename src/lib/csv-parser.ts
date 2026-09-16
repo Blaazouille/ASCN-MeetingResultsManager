@@ -29,6 +29,7 @@ export interface CsvParseResult {
   /** Unique category names, in order of first appearance. */
   categories: string[];
   clubCount: number;
+  /** Distinct swimmers (by lastname+firstname+birthyear+club) across the whole file — a swimmer counted once even if entered in multiple categories, not `rows.length`. */
   swimmerCount: number;
   /** Encoding actually used to decode the file. */
   encoding: 'latin1' | 'utf-8';
@@ -130,6 +131,11 @@ export function parseCsv(
   const categories: string[] = [];
   const clubs = new Set<string>();
   const seenSwimmersByCategory = new Map<string, Set<string>>();
+  // A swimmer typically appears once per category they're ranked in (once
+  // in "Classement Mixte", again in their gender category), so this tracks
+  // distinct swimmers across the whole file for swimmerCount, separately
+  // from `rows.length` (which counts entries, not people).
+  const uniqueSwimmers = new Set<string>();
   const rows: RawSwimmerRow[] = [];
 
   parsed.data.forEach((raw, index) => {
@@ -174,6 +180,7 @@ export function parseCsv(
     // (common French surnames, different clubs) that name alone would
     // false-positive on them.
     const swimmerKey = `${lastname}|${firstname}|${birthyear}|${club}`;
+    uniqueSwimmers.add(swimmerKey);
     let seenInCategory = seenSwimmersByCategory.get(name);
     if (!seenInCategory) {
       seenInCategory = new Set<string>();
@@ -201,7 +208,7 @@ export function parseCsv(
     rows,
     categories,
     clubCount: clubs.size,
-    swimmerCount: rows.length,
+    swimmerCount: uniqueSwimmers.size,
     encoding,
     delimiter: parsed.meta.delimiter,
     warnings,

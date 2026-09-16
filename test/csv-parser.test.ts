@@ -38,10 +38,13 @@ describe('parseCsv — real FFN extraNat fixture (Latin-1, semicolon)', () => {
     expect(result.categories).toEqual(['Classement Dames', 'Classement Messieurs', 'Classement Mixte']);
   });
 
-  it('counts 38 distinct clubs and 422 swimmer entries', () => {
+  it('counts 38 distinct clubs, 422 row entries, and 211 unique swimmers', () => {
     expect(result.clubCount).toBe(38);
-    expect(result.swimmerCount).toBe(422);
     expect(result.rows).toHaveLength(422);
+    // Each swimmer appears once in "Classement Mixte" and again in their
+    // gender category, so swimmerCount (unique people) is roughly half of
+    // rows.length (entries).
+    expect(result.swimmerCount).toBe(211);
   });
 
   it('correctly decodes accented club names', () => {
