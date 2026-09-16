@@ -1,10 +1,56 @@
+import { useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import type { AppOutletContext } from '@/components/layout/AppShell';
+import type { Meeting } from '@/lib/db';
+import { MeetingForm } from '@/components/meeting/MeetingForm';
+import { MeetingList } from '@/components/meeting/MeetingList';
+
 export default function HomePage(): JSX.Element {
+  const { meetingState } = useOutletContext<AppOutletContext>();
+  const [isCreating, setIsCreating] = useState(false);
+  const navigate = useNavigate();
+
+  const openMeeting = (meeting: Meeting): void => {
+    meetingState.selectMeeting(meeting.id);
+    navigate('/import');
+  };
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 py-24 text-center">
-      <h1 className="text-xl font-semibold text-primary-800">Accueil</h1>
-      <p className="text-neutral-600">
-        La liste des meetings sera disponible en Phase 4, avec la persistance SQLite.
-      </p>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-primary-800">Meetings</h1>
+          <p className="text-neutral-600">Créez un meeting ou reprenez un précédent.</p>
+        </div>
+        {!isCreating && (
+          <button
+            type="button"
+            onClick={() => setIsCreating(true)}
+            className="rounded-md bg-accent-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-accent-700"
+          >
+            Nouveau meeting
+          </button>
+        )}
+      </header>
+
+      {meetingState.error && <p className="text-sm text-error">{meetingState.error}</p>}
+
+      {isCreating && (
+        <MeetingForm
+          onCancel={() => setIsCreating(false)}
+          onSubmit={async (input) => {
+            const meeting = await meetingState.createMeeting(input);
+            setIsCreating(false);
+            openMeeting(meeting);
+          }}
+        />
+      )}
+
+      {meetingState.isLoading ? (
+        <p className="text-neutral-600">Chargement des meetings…</p>
+      ) : (
+        <MeetingList meetings={meetingState.meetings} onOpen={openMeeting} />
+      )}
     </div>
   );
 }
