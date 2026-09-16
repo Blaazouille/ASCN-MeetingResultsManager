@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS swimmer_result (
   club        TEXT NOT NULL,
   points      REAL NOT NULL,
   raw_line    TEXT,
-  UNIQUE(meeting_id, category, lastname, firstname)
+  UNIQUE(meeting_id, category, lastname, firstname, birthyear)
 );
 
 CREATE TABLE IF NOT EXISTS team_ranking (
@@ -70,6 +70,7 @@ export function createDatabase(filePath: string): Database.Database {
   const db = new Database(filePath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
+  db.pragma('user_version = 1');
   db.exec(SCHEMA_SQL);
   return db;
 }
@@ -166,8 +167,8 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
   const stmt = db.prepare(`
     INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
     VALUES (@meetingId, @category, @rank, @lastname, @firstname, @birthyear, @nation, @club, @points, @rawLine)
-    ON CONFLICT(meeting_id, category, lastname, firstname)
-    DO UPDATE SET rank = excluded.rank, birthyear = excluded.birthyear, nation = excluded.nation,
+    ON CONFLICT(meeting_id, category, lastname, firstname, birthyear)
+    DO UPDATE SET rank = excluded.rank, nation = excluded.nation,
       club = excluded.club, points = excluded.points, raw_line = excluded.raw_line
   `);
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {

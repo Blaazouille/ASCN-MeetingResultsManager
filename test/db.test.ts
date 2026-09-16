@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeTeamRanking } from '../src/lib/ranking-engine';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { computeTeamRanking, type TeamResult } from '../src/lib/ranking-engine';
+import { parseCsv } from '../src/lib/csv-parser';
 import {
   createDatabase,
   createMeeting,
@@ -11,6 +14,8 @@ import {
   updateMeeting,
 } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
+
+const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
 function freshDb() {
   return createDatabase(':memory:');
@@ -129,5 +134,36 @@ describe('team ranking persistence', () => {
     expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
     // Recomputing and saving again must not throw a UNIQUE constraint error.
     expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
+  });
+});
+
+/** Drops the `rank` field the engine adds to each swimmer entry, which the reference fixture doesn't include. */
+function stripSwimmerRank(result: TeamResult) {
+  return {
+    ...result,
+    swimmers: result.swimmers.map(({ lastname, firstname, birthyear, points }) => ({
+      lastname,
+      firstname,
+      birthyear,
+      points,
+    })),
+  };
+}
+
+describe('DB round-trip preserves the reference ranking (historique path)', () => {
+  it('parsing → persisting → reloading → ranking the real fixture matches the freshly-parsed reference ranking', () => {
+    const buffer = readFileSync(path.join(FIXTURE_DIR, 'sample.csv'));
+    const parsed = parseCsv(new Uint8Array(buffer));
+    const expected = JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'expected-ranking.json'), 'utf-8'));
+
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026', date: '2026-11-16' });
+
+    insertSwimmerResults(db, meeting.id, parsed.rows);
+    const reloadedRows = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    const result = computeTeamRanking(reloadedRows, { category: 'Classement Mixte', topN: 5 });
+
+    expect(result).toHaveLength(38);
+    expect(result.map(stripSwimmerRank)).toEqual(expected);
   });
 });
