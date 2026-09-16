@@ -12,8 +12,26 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc -b --noEmit",
+    "postinstall": "electron-builder install-app-deps",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "fr.ascn.meeting-results",
+    "productName": "ASCN Meeting Results",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
   },
   "dependencies": {
     "@react-pdf/renderer": "^3.4.0",
