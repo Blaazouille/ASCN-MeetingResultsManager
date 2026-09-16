@@ -61,7 +61,12 @@ export function useMeetingRows(
 
   const willFetchFromDb = importResult === null && meetingId !== null;
   const hasFreshDbRows = dbRowsMeetingId === meetingId;
-  const isLoading = willFetchFromDb && (isFetching || !hasFreshDbRows);
+  // A failed fetch must stop "loading" too, or the error below is
+  // unreachable: both consuming pages render a loading placeholder before
+  // their error/redirect branches, so `isLoading` staying true forever on
+  // failure would strand the user on an infinite spinner instead of ever
+  // showing `error`.
+  const isLoading = willFetchFromDb && error === null && (isFetching || !hasFreshDbRows);
   const rows = importResult?.rows ?? (hasFreshDbRows ? (dbRows ?? []) : []);
   const categories = useMemo(
     () => importResult?.categories ?? Array.from(new Set(rows.map((row) => row.name))),

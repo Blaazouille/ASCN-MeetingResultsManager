@@ -12,7 +12,11 @@ process.env.APP_ROOT = path.join(__dirname, '..');
 // file (WAL mode tolerates multiple connections, but two windows editing the
 // same meeting concurrently would be confusing and isn't a supported use case).
 if (!app.requestSingleInstanceLock()) {
+  // app.quit() is asynchronous and doesn't stop the rest of this script from
+  // running, so without process.exit() a second instance could still open
+  // its own DB connection and window before the queued quit takes effect.
   app.quit();
+  process.exit(0);
 }
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
