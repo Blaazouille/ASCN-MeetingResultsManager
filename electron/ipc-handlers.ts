@@ -1,44 +1,51 @@
 import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
+import type Database from 'better-sqlite3';
 import { IpcChannels } from './ipc-channels';
+import {
+  createMeeting,
+  deleteMeeting,
+  getAllMeetings,
+  getSwimmerResults,
+  insertSwimmerResults,
+  saveTeamRanking,
+  updateMeeting,
+  type MeetingInput,
+} from '../src/lib/db';
+import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
+import type { RawSwimmerRow } from '../src/lib/csv-parser';
 
-/**
- * Registers all IPC handlers used by the renderer via the contextBridge
- * exposed in preload.ts. Meeting/import/ranking/export handlers are stubs
- * for Phase 1 — they are wired up to real logic (SQLite, csv-parser,
- * ranking-engine, pdf/excel export) in later phases as those modules land
- * in src/lib.
- */
-export function registerIpcHandlers(): void {
-  ipcMain.handle(IpcChannels.getMeetings, async () => {
-    return [];
+/** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
+export function registerIpcHandlers(db: Database.Database): void {
+  ipcMain.handle(IpcChannels.getMeetings, async () => getAllMeetings(db));
+
+  ipcMain.handle(IpcChannels.createMeeting, async (_event, data: MeetingInput) => createMeeting(db, data));
+
+  ipcMain.handle(IpcChannels.updateMeeting, async (_event, id: number, data: Partial<MeetingInput>) =>
+    updateMeeting(db, id, data)
+  );
+
+  ipcMain.handle(IpcChannels.deleteMeeting, async (_event, id: number) => {
+    deleteMeeting(db, id);
   });
 
-  ipcMain.handle(IpcChannels.createMeeting, async (_event, _data: unknown) => {
-    throw new Error('createMeeting: not implemented yet (Phase 4 — SQLite persistence)');
+  ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
+    insertSwimmerResults(db, meetingId, rows);
   });
 
-  ipcMain.handle(IpcChannels.updateMeeting, async (_event, _id: number, _data: unknown) => {
-    throw new Error('updateMeeting: not implemented yet (Phase 4 — SQLite persistence)');
+  ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>
+    getSwimmerResults(db, meetingId, category)
+  );
+
+  ipcMain.handle(IpcChannels.computeRanking, async (_event, meetingId: number, params: RankingParams) => {
+    const rows = getSwimmerResults(db, meetingId, params.category);
+    const results = computeTeamRanking(rows, params);
+    saveTeamRanking(db, meetingId, params.category, params.topN, results);
+    return results;
   });
 
-  ipcMain.handle(IpcChannels.deleteMeeting, async (_event, _id: number) => {
-    throw new Error('deleteMeeting: not implemented yet (Phase 4 — SQLite persistence)');
-  });
-
-  ipcMain.handle(IpcChannels.importCsv, async (_event, _meetingId: number, _filePath: string) => {
-    throw new Error('importCsv: not implemented yet (Phase 1/2 — csv-parser wiring)');
-  });
-
-  ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, _meetingId: number, _category?: string) => {
-    return [];
-  });
-
-  ipcMain.handle(IpcChannels.computeRanking, async (_event, _meetingId: number, _params: unknown) => {
-    throw new Error('computeRanking: not implemented yet (Phase 2 — ranking-engine wiring)');
-  });
-
-  ipcMain.handle(IpcChannels.saveRanking, async (_event, _meetingId: number, _results: unknown) => {
-    throw new Error('saveRanking: not implemented yet (Phase 4 — SQLite persistence)');
+  ipcMain.handle(IpcChannels.saveRanking, async () => {
+    // No-op: computeRanking already persists via saveTeamRanking. Registered
+    // so the renderer's saveRanking call never hits "no handler registered".
   });
 
   ipcMain.handle(IpcChannels.exportPdf, async (_event, _meetingId: number, _category: string) => {

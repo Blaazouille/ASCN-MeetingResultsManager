@@ -9,10 +9,16 @@ export const IpcChannels = {
   updateMeeting: 'meeting:update',
   deleteMeeting: 'meeting:delete',
 
+  // Persists already-parsed rows (the renderer parses the CSV itself via
+  // src/lib/csv-parser.ts so the on-screen preview and the persisted data
+  // always come from the exact same parse).
   importCsv: 'import:csv',
   getSwimmerResults: 'import:getSwimmerResults',
 
+  // Computes AND persists (saveTeamRanking) in one round-trip.
   computeRanking: 'ranking:compute',
+  // Kept registered for parity with the documented bridge shape; computeRanking
+  // already persists, so this is a no-op.
   saveRanking: 'ranking:save',
 
   exportPdf: 'export:pdf',

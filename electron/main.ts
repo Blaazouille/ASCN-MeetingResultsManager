@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { registerIpcHandlers } from './ipc-handlers';
+import { createDatabase } from '../src/lib/db';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,8 +34,6 @@ function createWindow(): void {
   }
 }
 
-registerIpcHandlers();
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -48,4 +47,9 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  const dbPath = path.join(app.getPath('userData'), 'ascn-meeting-results.sqlite3');
+  const db = createDatabase(dbPath);
+  registerIpcHandlers(db);
+  createWindow();
+});
