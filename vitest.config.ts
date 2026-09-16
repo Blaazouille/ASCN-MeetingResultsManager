@@ -3,9 +3,9 @@ import path from 'node:path';
 
 /**
  * Deliberately separate from vite.config.ts: the app's Vite config loads
- * vite-plugin-electron-renderer to polyfill Node builtins for the browser
- * renderer bundle, which breaks real `node:fs` access needed by these tests
- * (they read fixtures straight off disk).
+ * vite-plugin-electron, which spawns the Electron main/preload build and
+ * an Electron process during `vite dev` — unwanted overhead for a test run
+ * that just needs Node's `fs` to read fixtures straight off disk.
  */
 export default defineConfig({
   resolve: {
