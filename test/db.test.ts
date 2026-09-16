@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { computeTeamRanking } from '../src/lib/ranking-engine';
 import {
   createDatabase,
   createMeeting,
   deleteMeeting,
   getAllMeetings,
+  getSwimmerResults,
+  insertSwimmerResults,
+  saveTeamRanking,
   updateMeeting,
 } from '../src/lib/db';
+import type { RawSwimmerRow } from '../src/lib/csv-parser';
 
 function freshDb() {
   return createDatabase(':memory:');
@@ -61,5 +66,68 @@ describe('meeting CRUD', () => {
     deleteMeeting(db, meeting.id);
 
     expect(getAllMeetings(db)).toEqual([]);
+  });
+});
+
+function sampleRows(): RawSwimmerRow[] {
+  return [
+    { name: 'Classement Mixte', place: 1, lastname: 'DUPONT', firstname: 'Alice', birthyear: 2000, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
+    { name: 'Classement Mixte', place: 2, lastname: 'MARTIN', firstname: 'Bob', birthyear: 1999, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 850, comment: '' },
+    { name: 'Classement Dames', place: 1, lastname: 'DUPONT', firstname: 'Alice', birthyear: 2000, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
+  ];
+}
+
+describe('swimmer results persistence', () => {
+  it('round-trips inserted rows for a meeting', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+
+    insertSwimmerResults(db, meeting.id, sampleRows());
+
+    const all = getSwimmerResults(db, meeting.id);
+    expect(all).toHaveLength(3);
+
+    const mixte = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    expect(mixte).toHaveLength(2);
+    expect(mixte.map((r) => r.lastname)).toEqual(['DUPONT', 'MARTIN']);
+  });
+
+  it('re-importing the same swimmer updates rather than duplicates', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+
+    insertSwimmerResults(db, meeting.id, sampleRows());
+    const updatedRows = sampleRows();
+    updatedRows[0]!.points = 950;
+    insertSwimmerResults(db, meeting.id, updatedRows);
+
+    const all = getSwimmerResults(db, meeting.id);
+    expect(all).toHaveLength(3);
+    expect(all.find((r) => r.lastname === 'DUPONT' && r.name === 'Classement Mixte')?.points).toBe(950);
+  });
+
+  it('scopes rows to their own meeting', () => {
+    const db = createDatabase(':memory:');
+    const meetingA = createMeeting(db, { name: 'A', date: '2026-01-01' });
+    const meetingB = createMeeting(db, { name: 'B', date: '2026-01-02' });
+
+    insertSwimmerResults(db, meetingA.id, sampleRows());
+
+    expect(getSwimmerResults(db, meetingB.id)).toEqual([]);
+  });
+});
+
+describe('team ranking persistence', () => {
+  it('saves a computed ranking and replaces it on recompute', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    insertSwimmerResults(db, meeting.id, sampleRows());
+
+    const rows = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
+
+    expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
+    // Recomputing and saving again must not throw a UNIQUE constraint error.
+    expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
   });
 });

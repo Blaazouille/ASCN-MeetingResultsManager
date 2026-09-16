@@ -1,4 +1,6 @@
 import Database from 'better-sqlite3';
+import type { RawSwimmerRow } from './csv-parser';
+import type { TeamResult } from './ranking-engine';
 
 export type MeetingStatus = 'provisional' | 'final';
 
@@ -127,4 +129,103 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
 
 export function deleteMeeting(db: Database.Database, id: number): void {
   db.prepare('DELETE FROM meeting WHERE id = ?').run(id);
+}
+
+interface SwimmerResultRow {
+  category: string;
+  rank: number | null;
+  lastname: string;
+  firstname: string;
+  birthyear: number | null;
+  nation: string | null;
+  club: string;
+  points: number;
+  raw_line: string | null;
+}
+
+function rowToRawSwimmerRow(row: SwimmerResultRow): RawSwimmerRow {
+  return {
+    name: row.category,
+    place: row.rank ?? 0,
+    lastname: row.lastname,
+    firstname: row.firstname,
+    birthyear: row.birthyear ?? 0,
+    nation: row.nation ?? '',
+    club: row.club,
+    points: row.points,
+    comment: row.raw_line ?? '',
+  };
+}
+
+/**
+ * Bulk-inserts swimmer rows for a meeting. Re-importing the same file (or a
+ * corrected export) updates the existing row for each (category, lastname,
+ * firstname) instead of duplicating it, so importing twice is safe.
+ */
+export function insertSwimmerResults(db: Database.Database, meetingId: number, rows: RawSwimmerRow[]): void {
+  const stmt = db.prepare(`
+    INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
+    VALUES (@meetingId, @category, @rank, @lastname, @firstname, @birthyear, @nation, @club, @points, @rawLine)
+    ON CONFLICT(meeting_id, category, lastname, firstname)
+    DO UPDATE SET rank = excluded.rank, birthyear = excluded.birthyear, nation = excluded.nation,
+      club = excluded.club, points = excluded.points, raw_line = excluded.raw_line
+  `);
+  const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
+    for (const row of rowsToInsert) {
+      stmt.run({
+        meetingId,
+        category: row.name,
+        rank: row.place,
+        lastname: row.lastname,
+        firstname: row.firstname,
+        birthyear: row.birthyear,
+        nation: row.nation,
+        club: row.club,
+        points: row.points,
+        rawLine: row.comment || null,
+      });
+    }
+  });
+  insertAll(rows);
+}
+
+export function getSwimmerResults(db: Database.Database, meetingId: number, category?: string): RawSwimmerRow[] {
+  const rows = category
+    ? (db
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? AND category = ? ORDER BY rank')
+        .all(meetingId, category) as SwimmerResultRow[])
+    : (db
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank')
+        .all(meetingId) as SwimmerResultRow[]);
+  return rows.map(rowToRawSwimmerRow);
+}
+
+/** Replaces the stored ranking for (meetingId, category) with the freshly computed one. */
+export function saveTeamRanking(
+  db: Database.Database,
+  meetingId: number,
+  category: string,
+  topN: number,
+  results: TeamResult[]
+): void {
+  const del = db.prepare('DELETE FROM team_ranking WHERE meeting_id = ? AND category = ?');
+  const stmt = db.prepare(`
+    INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers)
+    VALUES (@meetingId, @category, @club, @rank, @totalPts, @topN, @swimmers)
+  `);
+  const saveAll = db.transaction((teams: TeamResult[]) => {
+    del.run(meetingId, category);
+    for (const team of teams) {
+      stmt.run({
+        meetingId,
+        category,
+        club: team.club,
+        rank: team.rank,
+        totalPts: team.totalPoints,
+        topN,
+        swimmers: JSON.stringify(team.swimmers),
+      });
+    }
+  });
+  saveAll(results);
 }
