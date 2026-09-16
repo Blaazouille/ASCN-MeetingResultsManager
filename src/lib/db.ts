@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS swimmer_result (
   club        TEXT NOT NULL,
   points      REAL NOT NULL,
   raw_line    TEXT,
-  UNIQUE(meeting_id, category, lastname, firstname, birthyear)
+  UNIQUE(meeting_id, category, lastname, firstname, birthyear, club)
 );
 
 CREATE TABLE IF NOT EXISTS team_ranking (
@@ -158,19 +158,32 @@ function rowToRawSwimmerRow(row: SwimmerResultRow): RawSwimmerRow {
   };
 }
 
+function swimmerKey(row: { category: string; lastname: string; firstname: string; birthyear: number | null; club: string }): string {
+  return `${row.category}|${row.lastname}|${row.firstname}|${row.birthyear}|${row.club}`;
+}
+
 /**
  * Bulk-inserts swimmer rows for a meeting. Re-importing the same file (or a
  * corrected export) updates the existing row for each (category, lastname,
- * firstname) instead of duplicating it, so importing twice is safe.
+ * firstname, birthyear, club) instead of duplicating it, so importing twice
+ * is safe. Also removes swimmers that were persisted by a previous import
+ * but are absent from this one (e.g. a corrected FFN export dropping a
+ * withdrawn swimmer) — scoped to the categories present in `rows`, so a
+ * partial re-import never touches categories it didn't mention.
  */
 export function insertSwimmerResults(db: Database.Database, meetingId: number, rows: RawSwimmerRow[]): void {
   const stmt = db.prepare(`
     INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
     VALUES (@meetingId, @category, @rank, @lastname, @firstname, @birthyear, @nation, @club, @points, @rawLine)
-    ON CONFLICT(meeting_id, category, lastname, firstname, birthyear)
+    ON CONFLICT(meeting_id, category, lastname, firstname, birthyear, club)
     DO UPDATE SET rank = excluded.rank, nation = excluded.nation,
-      club = excluded.club, points = excluded.points, raw_line = excluded.raw_line
+      points = excluded.points, raw_line = excluded.raw_line
   `);
+  const selectByCategory = db.prepare(
+    'SELECT id, category, lastname, firstname, birthyear, club FROM swimmer_result WHERE meeting_id = ? AND category = ?'
+  );
+  const deleteById = db.prepare('DELETE FROM swimmer_result WHERE id = ?');
+
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
     for (const row of rowsToInsert) {
       stmt.run({
@@ -185,6 +198,37 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
         points: row.points,
         rawLine: row.comment || null,
       });
+    }
+
+    const rowsByCategory = new Map<string, RawSwimmerRow[]>();
+    for (const row of rowsToInsert) {
+      const list = rowsByCategory.get(row.name);
+      if (list) {
+        list.push(row);
+      } else {
+        rowsByCategory.set(row.name, [row]);
+      }
+    }
+
+    for (const [category, categoryRows] of rowsByCategory) {
+      const incomingKeys = new Set(
+        categoryRows.map((row) =>
+          swimmerKey({ category, lastname: row.lastname, firstname: row.firstname, birthyear: row.birthyear, club: row.club })
+        )
+      );
+      const existing = selectByCategory.all(meetingId, category) as {
+        id: number;
+        category: string;
+        lastname: string;
+        firstname: string;
+        birthyear: number | null;
+        club: string;
+      }[];
+      for (const existingRow of existing) {
+        if (!incomingKeys.has(swimmerKey(existingRow))) {
+          deleteById.run(existingRow.id);
+        }
+      }
     }
   });
   insertAll(rows);

@@ -1,4 +1,5 @@
 import type { Meeting } from '@/lib/db';
+import { meetingStatusLabel, parseMeetingDate } from '@/lib/print-data';
 import { cn } from '@/lib/utils';
 
 export interface MeetingCardProps {
@@ -18,7 +19,7 @@ export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element 
       <div>
         <p className="font-display text-base font-semibold text-primary-800">{meeting.name}</p>
         <p className="text-sm text-neutral-600">
-          {DATE_FORMATTER.format(new Date(meeting.date))}
+          {DATE_FORMATTER.format(parseMeetingDate(meeting.date))}
           {meeting.location ? ` — ${meeting.location}` : ''}
         </p>
       </div>
@@ -28,7 +29,7 @@ export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element 
           meeting.status === 'final' ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
         )}
       >
-        {meeting.status === 'final' ? 'Définitif' : 'Provisoire'}
+        {meetingStatusLabel(meeting.status)}
       </span>
     </button>
   );

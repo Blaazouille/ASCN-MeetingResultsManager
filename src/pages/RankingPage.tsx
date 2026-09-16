@@ -30,6 +30,9 @@ export default function RankingPage(): JSX.Element {
   if (isLoading) {
     return <p className="text-neutral-600">Chargement du classement…</p>;
   }
+  if (rowsError) {
+    return <p className="text-sm text-error">{rowsError}</p>;
+  }
   if (rows.length === 0) {
     return <Navigate to="/import" replace />;
   }
@@ -41,7 +44,6 @@ export default function RankingPage(): JSX.Element {
         <p className="text-neutral-600">{meeting.name}</p>
       </header>
 
-      {rowsError && <p className="text-sm text-error">{rowsError}</p>}
       <CategoryTabs categories={categories} active={ranking.category} onChange={ranking.setCategory} />
       <RankingToolbar
         topN={ranking.topN}

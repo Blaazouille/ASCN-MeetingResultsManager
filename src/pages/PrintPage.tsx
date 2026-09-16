@@ -27,6 +27,9 @@ export default function PrintPage(): JSX.Element {
   if (isLoading) {
     return <p className="text-neutral-600">Chargement…</p>;
   }
+  if (rowsError) {
+    return <p className="text-sm text-error">{rowsError}</p>;
+  }
   if (rows.length === 0) {
     return <Navigate to="/import" replace />;
   }
@@ -46,7 +49,6 @@ export default function PrintPage(): JSX.Element {
         onDownloadPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
         isExporting={isExporting}
       />
-      {rowsError && <p className="text-sm text-error">{rowsError}</p>}
       {error && <p className="text-sm text-error">{error}</p>}
 
       {meta && <PrintPreview meta={meta} category={ranking.category} results={ranking.teamResults} />}

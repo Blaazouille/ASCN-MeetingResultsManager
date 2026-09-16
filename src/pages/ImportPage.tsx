@@ -41,7 +41,7 @@ export default function ImportPage(): JSX.Element {
       <DropZone onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
+      {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
       {result && (
         <div className="rounded-lg bg-neutral-0 p-6 shadow-card">

@@ -111,6 +111,38 @@ describe('swimmer results persistence', () => {
     expect(all.find((r) => r.lastname === 'DUPONT' && r.name === 'Classement Mixte')?.points).toBe(950);
   });
 
+  it('removes swimmers absent from a corrected re-import, scoped to the re-imported categories', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+
+    insertSwimmerResults(db, meeting.id, sampleRows());
+    // Corrected export: MARTIN withdrew from Classement Mixte.
+    const correctedRows = sampleRows().filter(
+      (row) => !(row.name === 'Classement Mixte' && row.lastname === 'MARTIN')
+    );
+    insertSwimmerResults(db, meeting.id, correctedRows);
+
+    const mixte = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    expect(mixte.map((r) => r.lastname)).toEqual(['DUPONT']);
+    // Classement Dames wasn't part of the re-import, so it's untouched.
+    const dames = getSwimmerResults(db, meeting.id, 'Classement Dames');
+    expect(dames).toHaveLength(1);
+  });
+
+  it('distinguishes two same-named, same-birthyear swimmers from different clubs', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+
+    insertSwimmerResults(db, meeting.id, [
+      { name: 'Classement Mixte', place: 1, lastname: 'MARTIN', firstname: 'Paul', birthyear: 2001, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
+      { name: 'Classement Mixte', place: 2, lastname: 'MARTIN', firstname: 'Paul', birthyear: 2001, nation: 'FRA', club: 'CN VIRY-CHÂTILLON', points: 850, comment: '' },
+    ]);
+
+    const mixte = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    expect(mixte).toHaveLength(2);
+    expect(mixte.map((r) => r.club).sort()).toEqual(['AC CHERBOURG EN COTENTIN', 'CN VIRY-CHÂTILLON']);
+  });
+
   it('scopes rows to their own meeting', () => {
     const db = createDatabase(':memory:');
     const meetingA = createMeeting(db, { name: 'A', date: '2026-01-01' });

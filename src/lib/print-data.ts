@@ -1,4 +1,4 @@
-import type { Meeting } from './db';
+import type { Meeting, MeetingStatus } from './db';
 
 export interface PrintMeta {
   meetingName: string;
@@ -12,12 +12,26 @@ export interface PrintMeta {
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 
+/**
+ * Parses a `Meeting.date` string ("YYYY-MM-DD") as local midnight rather
+ * than UTC midnight. `new Date("YYYY-MM-DD")` alone is UTC, which shifts to
+ * the previous day once formatted in a negative-UTC-offset timezone.
+ */
+export function parseMeetingDate(date: string): Date {
+  return new Date(`${date}T00:00:00`);
+}
+
+/** Maps a meeting's persisted status to its French display label. */
+export function meetingStatusLabel(status: MeetingStatus): 'Provisoire' | 'Définitif' {
+  return status === 'final' ? 'Définitif' : 'Provisoire';
+}
+
 /** Builds the print/export metadata from the persisted meeting record. */
 export function buildPrintMeta(meeting: Meeting): PrintMeta {
   return {
     meetingName: meeting.name,
-    date: DATE_FORMATTER.format(new Date(meeting.date)),
-    status: meeting.status === 'final' ? 'Définitif' : 'Provisoire',
+    date: DATE_FORMATTER.format(parseMeetingDate(meeting.date)),
+    status: meetingStatusLabel(meeting.status),
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),
   };
 }

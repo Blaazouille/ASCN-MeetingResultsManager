@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, slugifyCategory } from '../src/lib/print-data';
+import { buildPrintMeta, parseMeetingDate, slugifyCategory } from '../src/lib/print-data';
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {
@@ -49,5 +49,29 @@ describe('buildPrintMeta', () => {
     });
 
     expect(meta.status).toBe('Définitif');
+  });
+
+  it('formats a single-digit-day date in the expected shape (day, abbreviated month with period, year)', () => {
+    const meta = buildPrintMeta({
+      id: 3,
+      name: 'Meeting de la Mer 2026',
+      date: '2026-03-05',
+      location: null,
+      status: 'provisional',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(meta.date).toMatch(/^\d{1,2}\s+\w+\.?\s+\d{4}$/);
+  });
+});
+
+describe('parseMeetingDate', () => {
+  it('parses "YYYY-MM-DD" as local midnight, not UTC midnight', () => {
+    const date = parseMeetingDate('2026-11-16');
+    expect(date.getFullYear()).toBe(2026);
+    expect(date.getMonth()).toBe(10); // 0-indexed: November
+    expect(date.getDate()).toBe(16);
+    expect(date.getHours()).toBe(0);
   });
 });

@@ -71,7 +71,7 @@ app.whenReady().then(() => {
     const message = err instanceof Error ? err.message : String(err);
     dialog.showErrorBox(
       "Impossible de démarrer l'application",
-      `La base de données locale n'a pas pu être ouverte. Fermez toute autre instance de l'application et réessayez.\n\nDétail technique : ${message}`
+      `La base de données locale n'a pas pu être ouverte. Fermez toute autre instance de l'application et réessayez.\n\nDétail technique : ${message}`
     );
     app.quit();
   }
