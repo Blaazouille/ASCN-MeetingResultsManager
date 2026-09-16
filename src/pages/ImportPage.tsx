@@ -68,7 +68,16 @@ export default function ImportPage(): JSX.Element {
             </div>
           </dl>
           {result.warnings.length > 0 && (
-            <p className="mt-3 text-sm text-warning">{result.warnings.length} avertissement(s)</p>
+            <details className="mt-3 text-sm text-warning">
+              <summary className="cursor-pointer font-medium">
+                {result.warnings.length} avertissement{result.warnings.length > 1 ? 's' : ''}
+              </summary>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-neutral-700">
+                {result.warnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
+            </details>
           )}
           <button
             type="button"

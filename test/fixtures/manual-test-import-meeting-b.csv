@@ -1,0 +1,7 @@
+name;place;lastname;firstname;birthyear;nation;club;points;comment
+Classement Mixte;1;GARCIA;Léa;2001;FRA;SN VERSAILLES;910 Pts;
+Classement Mixte;2;FOURNIER;Tom;2000;FRA;BOULOGNE BILLANCOURT NATATION;895 Pts;
+Classement Mixte;3;BERNARD;Julie;1999;FRA;SN VERSAILLES;870 Pts;
+Classement Dames;1;GARCIA;Léa;2001;FRA;SN VERSAILLES;910 Pts;
+Classement Dames;2;BERNARD;Julie;1999;FRA;SN VERSAILLES;870 Pts;
+Classement Messieurs;1;FOURNIER;Tom;2000;FRA;BOULOGNE BILLANCOURT NATATION;895 Pts;

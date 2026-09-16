@@ -1,0 +1,10 @@
+name;place;lastname;firstname;birthyear;nation;club;points;comment
+Classement Mixte;1;DUPONT;Alice;2000;FRA;AC CHERBOURG EN COTENTIN;950 Pts;
+Classement Mixte;2;MARTIN;Bob;1999;FRA;AC CHERBOURG EN COTENTIN;920 Pts;
+Classement Mixte;3;MARTIN;Bob;1999;FRA;CN VIRY-CHÂTILLON;875 Pts;
+Classement Mixte;4;LEFEBVRE;Chloé;2001;FRA;CN VIRY-CHÂTILLON;880 Pts;
+Classement Mixte;5;MOREAU;David;1998;FRA;CN VIRY-CHÂTILLON;860 Pts;
+Classement Mixte;6;NOEL;Hugo;2003;FRA;EN CAEN;790 Pts;
+Classement Messieurs;1;MARTIN;Bob;1999;FRA;AC CHERBOURG EN COTENTIN;920 Pts;
+Classement Messieurs;2;MOREAU;David;1998;FRA;CN VIRY-CHÂTILLON;860 Pts;
+Classement Messieurs;3;ROUSSEL;Félix;2000;FRA;EN CAEN;800 Pts;
