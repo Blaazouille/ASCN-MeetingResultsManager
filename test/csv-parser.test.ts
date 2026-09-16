@@ -95,7 +95,17 @@ describe('parseCsv — encoding and validation edge cases', () => {
       'Classement Mixte;2;DUPONT;Lea;1990;FRA;CN TEST;90 Pts;',
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
-    expect(result.warnings.some((w) => w.includes('duplicate swimmer'))).toBe(true);
+    expect(result.warnings.some((w) => w.includes('apparaît deux fois'))).toBe(true);
+  });
+
+  it('does not flag two different swimmers who share a name but differ in birth year and club', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;1;MARTIN;Bob;1999;FRA;AC CHERBOURG EN COTENTIN;900 Pts;',
+      'Classement Mixte;2;MARTIN;Bob;1999;FRA;CN VIRY-CHÂTILLON;875 Pts;',
+    ].join('\n');
+    const result = parseCsv(new TextEncoder().encode(csv));
+    expect(result.warnings.some((w) => w.includes('apparaît deux fois'))).toBe(false);
   });
 
   it('flags points outside the plausible FFN range', () => {
@@ -104,6 +114,6 @@ describe('parseCsv — encoding and validation edge cases', () => {
       'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;9999 Pts;',
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
-    expect(result.warnings.some((w) => w.includes('out of plausible range'))).toBe(true);
+    expect(result.warnings.some((w) => w.includes('nombre de points inhabituel'))).toBe(true);
   });
 });

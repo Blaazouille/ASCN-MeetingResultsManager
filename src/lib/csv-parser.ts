@@ -117,13 +117,13 @@ export function parseCsv(
 
   const warnings: string[] = [];
   for (const err of parsed.errors) {
-    warnings.push(`${err.type} (row ${err.row ?? '?'}): ${err.message}`);
+    warnings.push(`Ligne ${err.row ?? '?'} : erreur de lecture du fichier (${err.message})`);
   }
 
   const headerFields = parsed.meta.fields ?? [];
   for (const column of REQUIRED_COLUMNS) {
     if (!headerFields.includes(column)) {
-      warnings.push(`Missing expected column: "${column}"`);
+      warnings.push(`Colonne manquante dans le fichier : « ${column} »`);
     }
   }
 
@@ -143,22 +143,23 @@ export function parseCsv(
     const club = raw.club ?? '';
     const lastname = raw.lastname ?? '';
     const firstname = raw.firstname ?? '';
+    const birthyear = Number.parseInt(raw.birthyear ?? '', 10);
     const pointsRaw = raw.points ?? '';
 
     if (!name.trim()) {
-      warnings.push(`Row ${rowNumber}: missing category ("name" column)`);
+      warnings.push(`Ligne ${rowNumber} : catégorie manquante`);
     }
     if (!club.trim()) {
-      warnings.push(`Row ${rowNumber}: missing club`);
+      warnings.push(`Ligne ${rowNumber} : club manquant`);
     }
     if (!pointsRaw.trim()) {
-      warnings.push(`Row ${rowNumber}: missing points`);
+      warnings.push(`Ligne ${rowNumber} : points manquants — ligne ignorée`);
       return;
     }
 
     const points = parsePoints(pointsRaw);
     if (points < PLAUSIBLE_POINTS_MIN || points > PLAUSIBLE_POINTS_MAX) {
-      warnings.push(`Row ${rowNumber}: points out of plausible range (${points})`);
+      warnings.push(`Ligne ${rowNumber} : nombre de points inhabituel (${points})`);
     }
 
     if (!categories.includes(name)) {
@@ -168,14 +169,18 @@ export function parseCsv(
       clubs.add(club);
     }
 
-    const swimmerKey = `${lastname}|${firstname}`;
+    // Same name + birth year + club identifies the same swimmer; two
+    // different swimmers who happen to share a name are common enough
+    // (common French surnames, different clubs) that name alone would
+    // false-positive on them.
+    const swimmerKey = `${lastname}|${firstname}|${birthyear}|${club}`;
     let seenInCategory = seenSwimmersByCategory.get(name);
     if (!seenInCategory) {
       seenInCategory = new Set<string>();
       seenSwimmersByCategory.set(name, seenInCategory);
     }
     if (seenInCategory.has(swimmerKey)) {
-      warnings.push(`Row ${rowNumber}: duplicate swimmer "${lastname} ${firstname}" in category "${name}"`);
+      warnings.push(`Ligne ${rowNumber} : « ${firstname} ${lastname} » apparaît deux fois dans « ${name} »`);
     }
     seenInCategory.add(swimmerKey);
 
@@ -184,7 +189,7 @@ export function parseCsv(
       place: Number.parseInt(raw.place ?? '', 10),
       lastname,
       firstname,
-      birthyear: Number.parseInt(raw.birthyear ?? '', 10),
+      birthyear,
       nation: raw.nation ?? '',
       club,
       points,
