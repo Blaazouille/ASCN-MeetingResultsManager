@@ -5,6 +5,7 @@ import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
 import { buildPrintMeta } from '@/lib/print-data';
+import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { PrintControls } from '@/components/print/PrintControls';
 import { PrintPreview } from '@/components/print/PrintPreview';
 
@@ -12,8 +13,15 @@ export default function PrintPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
-  const ranking = useRanking(rows, categories);
+  const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
+  const categories = useMemo(
+    () => resolveActiveCategories(presentCategories, meetingState.currentMeeting?.activeCategories ?? null),
+    [presentCategories, meetingState.currentMeeting]
+  );
+  const ranking = useRanking(rows, categories, {
+    initialTopN: meetingState.currentMeeting?.defaultTopN,
+    minSwimmers: meetingState.currentMeeting?.minSwimmers,
+  });
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
     [meetingState.currentMeeting]
