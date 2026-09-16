@@ -189,7 +189,7 @@ export function parseCsv(
       warnings.push(`Ligne ${rowNumber} : club manquant`);
     }
     if (!pointsRaw.trim()) {
-      warnings.push(`Ligne ${rowNumber} : points manquants — ligne ignorée`);
+      warnings.push(`Ligne ${rowNumber} : points manquants (ligne ignorée)`);
       return;
     }
 

@@ -34,7 +34,7 @@ export function RankingPdfDocument({ meta, category, results }: RankingPdfDocume
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{meta.meetingName}</Text>
-        <Text style={styles.subtitle}>Classement par équipes — {category.replace(/^Classement\s+/i, '')}</Text>
+        <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
         <Text style={styles.date}>{meta.date}</Text>
 
         {results.length === 0 ? (

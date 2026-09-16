@@ -73,7 +73,7 @@ export default function ImportPage(): JSX.Element {
     <div className="mx-auto max-w-2xl space-y-4">
       <header>
         <h1 className="text-2xl font-bold text-primary-800">Import du fichier de cotations</h1>
-        <p className="text-neutral-600">{meetingState.currentMeeting.name} — CSV extraNat (FFN)</p>
+        <p className="text-neutral-600">{meetingState.currentMeeting.name}, CSV extraNat (FFN)</p>
       </header>
 
       <DropZone onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
@@ -84,7 +84,7 @@ export default function ImportPage(): JSX.Element {
       {result && (
         <div className="rounded-lg bg-neutral-0 p-6 shadow-card">
           <p className="mb-3 text-sm text-neutral-600">
-            {fileName} — encodage <span className="font-mono">{result.encoding}</span>, délimiteur{' '}
+            {fileName}, encodage <span className="font-mono">{result.encoding}</span>, délimiteur{' '}
             <span className="font-mono">&quot;{result.delimiter}&quot;</span>
           </p>
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500">

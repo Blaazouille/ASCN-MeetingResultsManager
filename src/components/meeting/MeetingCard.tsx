@@ -20,7 +20,7 @@ export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element 
         <p className="font-display text-base font-semibold text-primary-800">{meeting.name}</p>
         <p className="text-sm text-neutral-600">
           {DATE_FORMATTER.format(parseMeetingDate(meeting.date))}
-          {meeting.location ? ` — ${meeting.location}` : ''}
+          {meeting.location ? `, ${meeting.location}` : ''}
         </p>
       </div>
       <span

@@ -8,7 +8,7 @@ export interface MeetingListProps {
 
 export function MeetingList({ meetings, onOpen }: MeetingListProps): JSX.Element {
   if (meetings.length === 0) {
-    return <p className="text-neutral-600">Aucun meeting pour l'instant — créez-en un pour commencer.</p>;
+    return <p className="text-neutral-600">Aucun meeting pour l'instant. Créez-en un pour commencer.</p>;
   }
 
   return (

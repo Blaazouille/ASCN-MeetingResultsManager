@@ -24,7 +24,7 @@ export function A4Page({ meta, category, results }: A4PageProps): JSX.Element {
       <header className="mb-6 border-b border-neutral-900 pb-4">
         <h1 className="font-display text-2xl font-bold">{meta.meetingName}</h1>
         <p className="font-body text-sm font-medium text-neutral-700">
-          Classement par équipes — {categoryLabel(category)}
+          Classement par équipes : {categoryLabel(category)}
         </p>
         <p className="font-body text-sm text-neutral-600">{meta.date}</p>
       </header>
