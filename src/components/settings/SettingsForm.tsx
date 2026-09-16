@@ -37,12 +37,14 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
     setActiveCategories((current) =>
       current.includes(category) ? current.filter((entry) => entry !== category) : [...current, category]
     );
+    setSavedAt(null);
   };
 
   const resetRankingRules = (): void => {
     setDefaultTopN(DEFAULT_TOP_N);
     setMinSwimmers('');
     setActiveCategories([...ALL_CATEGORIES]);
+    setSavedAt(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -83,7 +85,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               type="text"
               required
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                setSavedAt(null);
+              }}
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
             />
           </div>
@@ -96,7 +101,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               type="date"
               required
               value={date}
-              onChange={(event) => setDate(event.target.value)}
+              onChange={(event) => {
+                setDate(event.target.value);
+                setSavedAt(null);
+              }}
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
             />
           </div>
@@ -108,7 +116,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               id="settings-location"
               type="text"
               value={location}
-              onChange={(event) => setLocation(event.target.value)}
+              onChange={(event) => {
+                setLocation(event.target.value);
+                setSavedAt(null);
+              }}
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
             />
           </div>
@@ -119,7 +130,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setStatus(option)}
+                  onClick={() => {
+                    setStatus(option);
+                    setSavedAt(null);
+                  }}
                   className={cn(
                     'rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
                     status === option
@@ -145,7 +159,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             <select
               id="settings-top-n"
               value={defaultTopN}
-              onChange={(event) => setDefaultTopN(Number(event.target.value) as TopN)}
+              onChange={(event) => {
+                setDefaultTopN(Number(event.target.value) as TopN);
+                setSavedAt(null);
+              }}
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
             >
               {TOP_N_OPTIONS.map((option) => (
@@ -180,7 +197,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               type="number"
               min={0}
               value={minSwimmers}
-              onChange={(event) => setMinSwimmers(event.target.value)}
+              onChange={(event) => {
+                setMinSwimmers(event.target.value);
+                setSavedAt(null);
+              }}
               placeholder="Aucun seuil"
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
             />
