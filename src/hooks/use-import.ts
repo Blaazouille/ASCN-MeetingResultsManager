@@ -7,6 +7,7 @@ export interface UseImportResult {
   error: string | null;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
+  reset: () => void;
 }
 
 /** Owns the CSV import state: parsing the dropped file and surfacing errors. */
@@ -34,5 +35,12 @@ export function useImport(): UseImportResult {
     setError('Fichier non supporté (.csv attendu)');
   }, []);
 
-  return { result, fileName, error, handleFileAccepted, handleFileRejected };
+  /** Clears the import state. Called when the selected meeting changes, so one meeting's imported data never leaks into another's screens. */
+  const reset = useCallback((): void => {
+    setResult(null);
+    setFileName(null);
+    setError(null);
+  }, []);
+
+  return { result, fileName, error, handleFileAccepted, handleFileRejected, reset };
 }

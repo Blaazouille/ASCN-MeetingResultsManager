@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -12,6 +13,21 @@ export interface AppOutletContext {
 export function AppShell(): JSX.Element {
   const importState = useImport();
   const meetingState = useMeeting();
+
+  // Import state is global (a sibling hook to useMeeting), so it never resets
+  // on its own when the selected meeting changes. Without this, an import
+  // done for meeting A stays visible/exported under meeting B once the user
+  // opens it. Reset it here — the one place both hooks are visible together —
+  // whenever the current meeting id changes, including to/from "none".
+  const currentMeetingId = meetingState.currentMeeting?.id ?? null;
+  const previousMeetingIdRef = useRef<number | null>(currentMeetingId);
+  useEffect(() => {
+    if (previousMeetingIdRef.current !== currentMeetingId) {
+      previousMeetingIdRef.current = currentMeetingId;
+      importState.reset();
+    }
+  }, [currentMeetingId, importState.reset]);
+
   const context: AppOutletContext = { importState, meetingState };
 
   return (

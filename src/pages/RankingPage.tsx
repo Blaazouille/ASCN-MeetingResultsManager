@@ -15,7 +15,7 @@ export default function RankingPage(): JSX.Element {
   const [search, setSearch] = useState('');
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading } = useMeetingRows(meetingId, importState.result);
+  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId, importState.result);
   const ranking = useRanking(rows, categories);
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
@@ -41,6 +41,7 @@ export default function RankingPage(): JSX.Element {
         <p className="text-neutral-600">{meeting.name}</p>
       </header>
 
+      {rowsError && <p className="text-sm text-error">{rowsError}</p>}
       <CategoryTabs categories={categories} active={ranking.category} onChange={ranking.setCategory} />
       <RankingToolbar
         topN={ranking.topN}

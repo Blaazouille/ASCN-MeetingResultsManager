@@ -12,7 +12,7 @@ export default function PrintPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading } = useMeetingRows(meetingId, importState.result);
+  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId, importState.result);
   const ranking = useRanking(rows, categories);
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
@@ -46,6 +46,7 @@ export default function PrintPage(): JSX.Element {
         onDownloadPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
         isExporting={isExporting}
       />
+      {rowsError && <p className="text-sm text-error">{rowsError}</p>}
       {error && <p className="text-sm text-error">{error}</p>}
 
       {meta && <PrintPreview meta={meta} category={ranking.category} results={ranking.teamResults} />}
