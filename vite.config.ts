@@ -12,6 +12,16 @@ export default defineConfig({
         vite: {
           build: {
             outDir: 'dist-electron',
+            // better-sqlite3 is CJS and resolves its native binding path via
+            // `__dirname`. Bundling it inline into the ESM main-process
+            // bundle strips that `__dirname` (nested CJS modules bundled
+            // into an ES module don't get one), crashing `createDatabase()`
+            // at startup. Keeping it external makes Node load it through
+            // its own real CJS module system instead, where `__dirname`
+            // works normally.
+            rolldownOptions: {
+              external: ['better-sqlite3'],
+            },
           },
         },
       },
