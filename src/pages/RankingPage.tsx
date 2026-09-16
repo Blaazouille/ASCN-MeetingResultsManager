@@ -11,11 +11,11 @@ import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { A4Page } from '@/components/print/A4Page';
 
 export default function RankingPage(): JSX.Element {
-  const { importState, meetingState } = useOutletContext<AppOutletContext>();
+  const { meetingState } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId, importState.result);
+  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
   const ranking = useRanking(rows, categories);
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),

@@ -8,6 +8,7 @@ export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
   const { result, fileName, error, handleFileAccepted, handleFileRejected } = importState;
   const [persistError, setPersistError] = useState<string | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
   const navigate = useNavigate();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
@@ -17,10 +18,13 @@ export default function ImportPage(): JSX.Element {
       setPersistError(null);
       const parsed = await handleFileAccepted(file);
       if (parsed && meetingId !== null) {
+        setIsPersisting(true);
         try {
           await window.electronAPI.importCsv(meetingId, parsed.rows);
         } catch (err) {
           setPersistError(err instanceof Error ? err.message : String(err));
+        } finally {
+          setIsPersisting(false);
         }
       }
     },
@@ -82,9 +86,10 @@ export default function ImportPage(): JSX.Element {
           <button
             type="button"
             onClick={() => navigate('/classement')}
-            className="mt-4 w-full rounded-md bg-accent-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-accent-700"
+            disabled={isPersisting}
+            className="mt-4 w-full rounded-md bg-accent-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-accent-700 disabled:opacity-60"
           >
-            Voir le classement
+            {isPersisting ? 'Enregistrement…' : 'Voir le classement'}
           </button>
         </div>
       )}

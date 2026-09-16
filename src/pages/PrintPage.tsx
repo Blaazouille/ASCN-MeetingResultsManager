@@ -9,10 +9,10 @@ import { PrintControls } from '@/components/print/PrintControls';
 import { PrintPreview } from '@/components/print/PrintPreview';
 
 export default function PrintPage(): JSX.Element {
-  const { importState, meetingState } = useOutletContext<AppOutletContext>();
+  const { meetingState } = useOutletContext<AppOutletContext>();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId, importState.result);
+  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
   const ranking = useRanking(rows, categories);
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
