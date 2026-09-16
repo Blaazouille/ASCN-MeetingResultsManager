@@ -35,9 +35,15 @@ export function useMeeting(): UseMeetingResult {
   }, [refresh]);
 
   const createMeeting = useCallback(async (input: MeetingInput): Promise<Meeting> => {
-    const meeting = await window.electronAPI.createMeeting(input);
-    setMeetings((current) => [meeting, ...current]);
-    return meeting;
+    try {
+      const meeting = await window.electronAPI.createMeeting(input);
+      setMeetings((current) => [meeting, ...current]);
+      setError(null);
+      return meeting;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
   }, []);
 
   const selectMeeting = useCallback((id: number | null): void => {

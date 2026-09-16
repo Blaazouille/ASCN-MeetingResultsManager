@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { registerIpcHandlers } from './ipc-handlers';
@@ -7,6 +7,13 @@ import { createDatabase } from '../src/lib/db';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 process.env.APP_ROOT = path.join(__dirname, '..');
+
+// Prevent a second launch from opening a second window onto the same SQLite
+// file (WAL mode tolerates multiple connections, but two windows editing the
+// same meeting concurrently would be confusing and isn't a supported use case).
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
@@ -48,8 +55,20 @@ app.on('activate', () => {
 });
 
 app.whenReady().then(() => {
-  const dbPath = path.join(app.getPath('userData'), 'ascn-meeting-results.sqlite3');
-  const db = createDatabase(dbPath);
-  registerIpcHandlers(db);
-  createWindow();
+  try {
+    const dbPath = path.join(app.getPath('userData'), 'ascn-meeting-results.sqlite3');
+    const db = createDatabase(dbPath);
+    registerIpcHandlers(db);
+    createWindow();
+  } catch (err) {
+    // A volunteer at poolside under stress must never see "nothing happened" —
+    // if the DB can't be opened (corrupt file, locked, native module failure),
+    // say so clearly and exit instead of leaving a dead process with no window.
+    const message = err instanceof Error ? err.message : String(err);
+    dialog.showErrorBox(
+      "Impossible de démarrer l'application",
+      `La base de données locale n'a pas pu être ouverte. Fermez toute autre instance de l'application et réessayez.\n\nDétail technique : ${message}`
+    );
+    app.quit();
+  }
 });

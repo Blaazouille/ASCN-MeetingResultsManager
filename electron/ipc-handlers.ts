@@ -36,6 +36,10 @@ export function registerIpcHandlers(db: Database.Database): void {
     getSwimmerResults(db, meetingId, category)
   );
 
+  // computeRanking/saveRanking below: wired and tested but not currently invoked
+  // by the renderer, which computes rankings client-side instead. See the
+  // comment in ipc-channels.ts for why this is intentional, not dead code to
+  // clean up.
   ipcMain.handle(IpcChannels.computeRanking, async (_event, meetingId: number, params: RankingParams) => {
     const rows = getSwimmerResults(db, meetingId, params.category);
     const results = computeTeamRanking(rows, params);

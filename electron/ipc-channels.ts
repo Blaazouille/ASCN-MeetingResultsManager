@@ -16,9 +16,19 @@ export const IpcChannels = {
   getSwimmerResults: 'import:getSwimmerResults',
 
   // Computes AND persists (saveTeamRanking) in one round-trip.
+  //
+  // NOT CURRENTLY CALLED BY THE RENDERER: RankingPage/PrintPage compute the
+  // ranking client-side via useRanking()/computeTeamRanking() instead, which
+  // is correct and simpler for the MVP (no round-trip needed to react to a
+  // topN/category change). These channels are wired up and unit-tested
+  // (test/db.test.ts) but sit unused — reserved for a future phase where a
+  // persisted/historical ranking snapshot becomes useful (e.g. an audit
+  // trail, or diffing a ranking across sessions). Do not remove; do not wire
+  // into the renderer without a reason to actually persist rankings.
   computeRanking: 'ranking:compute',
   // Kept registered for parity with the documented bridge shape; computeRanking
-  // already persists, so this is a no-op.
+  // already persists, so this is a no-op. Same "reserved, not invoked" status
+  // as computeRanking above.
   saveRanking: 'ranking:save',
 
   exportPdf: 'export:pdf',
