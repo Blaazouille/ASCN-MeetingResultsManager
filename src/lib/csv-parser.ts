@@ -38,6 +38,36 @@ export interface CsvParseResult {
   warnings: string[];
 }
 
+export interface SwimmerRowsSummary {
+  categories: string[];
+  clubCount: number;
+  swimmerCount: number;
+}
+
+/**
+ * Summarizes a set of swimmer rows the same way parseCsv() does (distinct
+ * categories in first-appearance order, distinct clubs, distinct swimmers
+ * by lastname+firstname+birthyear+club) — usable on rows loaded back from
+ * the database, not just on a freshly parsed file.
+ */
+export function summarizeSwimmerRows(rows: RawSwimmerRow[]): SwimmerRowsSummary {
+  const categories: string[] = [];
+  const clubs = new Set<string>();
+  const uniqueSwimmers = new Set<string>();
+
+  for (const row of rows) {
+    if (!categories.includes(row.name)) {
+      categories.push(row.name);
+    }
+    if (row.club) {
+      clubs.add(row.club);
+    }
+    uniqueSwimmers.add(`${row.lastname}|${row.firstname}|${row.birthyear}|${row.club}`);
+  }
+
+  return { categories, clubCount: clubs.size, swimmerCount: uniqueSwimmers.size };
+}
+
 const REQUIRED_COLUMNS = [
   'name',
   'place',

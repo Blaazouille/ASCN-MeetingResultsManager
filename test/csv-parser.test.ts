@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { parseCsv, parsePoints } from '../src/lib/csv-parser';
+import { parseCsv, parsePoints, summarizeSwimmerRows } from '../src/lib/csv-parser';
 
 const FIXTURE_PATH = path.join(__dirname, 'fixtures/sample.csv');
 
@@ -118,5 +118,26 @@ describe('parseCsv — encoding and validation edge cases', () => {
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
     expect(result.warnings.some((w) => w.includes('nombre de points inhabituel'))).toBe(true);
+  });
+});
+
+describe('summarizeSwimmerRows', () => {
+  it('matches parseCsv on its own rows', () => {
+    const result = loadFixture();
+    const summary = summarizeSwimmerRows(result.rows);
+    expect(summary.categories).toEqual(result.categories);
+    expect(summary.clubCount).toBe(result.clubCount);
+    expect(summary.swimmerCount).toBe(result.swimmerCount);
+  });
+
+  it('reflects rows regardless of where they came from (e.g. loaded back from the database)', () => {
+    const summary = summarizeSwimmerRows([
+      { name: 'Classement Mixte', place: 1, lastname: 'DUPONT', firstname: 'Alice', birthyear: 2000, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
+      { name: 'Classement Mixte', place: 2, lastname: 'MARTIN', firstname: 'Bob', birthyear: 1999, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 850, comment: '' },
+      { name: 'Classement Dames', place: 1, lastname: 'DUPONT', firstname: 'Alice', birthyear: 2000, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
+    ]);
+    expect(summary.categories).toEqual(['Classement Mixte', 'Classement Dames']);
+    expect(summary.clubCount).toBe(1);
+    expect(summary.swimmerCount).toBe(2);
   });
 });
