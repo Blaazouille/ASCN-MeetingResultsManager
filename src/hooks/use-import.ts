@@ -5,7 +5,7 @@ export interface UseImportResult {
   result: CsvParseResult | null;
   fileName: string | null;
   error: string | null;
-  handleFileAccepted: (file: File) => Promise<void>;
+  handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
 }
 
@@ -15,15 +15,18 @@ export function useImport(): UseImportResult {
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileAccepted = useCallback(async (file: File): Promise<void> => {
+  const handleFileAccepted = useCallback(async (file: File): Promise<CsvParseResult | null> => {
     setError(null);
     try {
       const buffer = await file.arrayBuffer();
-      setResult(parseCsv(buffer));
+      const parsed = parseCsv(buffer);
+      setResult(parsed);
       setFileName(file.name);
+      return parsed;
     } catch (err) {
       setResult(null);
       setError(err instanceof Error ? err.message : String(err));
+      return null;
     }
   }, []);
 

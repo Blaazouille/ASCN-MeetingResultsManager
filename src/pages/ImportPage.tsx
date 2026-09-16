@@ -1,23 +1,47 @@
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { DropZone } from '@/components/import/DropZone';
 import { formatPoints } from '@/lib/utils';
 
 export default function ImportPage(): JSX.Element {
-  const { importState } = useOutletContext<AppOutletContext>();
+  const { importState, meetingState } = useOutletContext<AppOutletContext>();
   const { result, fileName, error, handleFileAccepted, handleFileRejected } = importState;
+  const [persistError, setPersistError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const meetingId = meetingState.currentMeeting?.id ?? null;
+
+  const handleAccepted = useCallback(
+    async (file: File) => {
+      setPersistError(null);
+      const parsed = await handleFileAccepted(file);
+      if (parsed && meetingId !== null) {
+        try {
+          await window.electronAPI.importCsv(meetingId, parsed.rows);
+        } catch (err) {
+          setPersistError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    },
+    [handleFileAccepted, meetingId]
+  );
+
+  if (!meetingState.currentMeeting) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <header>
         <h1 className="text-2xl font-bold text-primary-800">Import du fichier de cotations</h1>
-        <p className="text-neutral-600">Fichier CSV extraNat (FFN)</p>
+        <p className="text-neutral-600">{meetingState.currentMeeting.name} — CSV extraNat (FFN)</p>
       </header>
 
-      <DropZone onFileAccepted={handleFileAccepted} onFileRejected={handleFileRejected} />
+      <DropZone onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
 
       {error && <p className="text-sm text-error">{error}</p>}
+      {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
       {result && (
         <div className="rounded-lg bg-neutral-0 p-6 shadow-card">
