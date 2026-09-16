@@ -8,6 +8,16 @@ import { buildRankingPdfBlob } from '../src/lib/pdf-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
+const TEST_MEETING = {
+  id: 1,
+  name: 'Meeting de la Mer 2026',
+  date: '2026-11-16',
+  location: 'Cherbourg',
+  status: 'provisional' as const,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
 function loadRows() {
   const buffer = readFileSync(path.join(FIXTURE_DIR, 'sample.csv'));
   return parseCsv(new Uint8Array(buffer)).rows;
@@ -17,7 +27,7 @@ describe('buildRankingPdfBlob', () => {
   it('produces a non-empty application/pdf blob for the reference ranking', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta();
+    const meta = buildPrintMeta(TEST_MEETING);
 
     const blob = await buildRankingPdfBlob(meta, 'Classement Mixte', results);
 
@@ -26,7 +36,7 @@ describe('buildRankingPdfBlob', () => {
   });
 
   it('resolves without throwing when there are no results', async () => {
-    const meta = buildPrintMeta();
+    const meta = buildPrintMeta(TEST_MEETING);
     const blob = await buildRankingPdfBlob(meta, 'Classement Mixte', []);
     expect(blob.size).toBeGreaterThan(0);
   });

@@ -20,17 +20,34 @@ describe('slugifyCategory', () => {
 });
 
 describe('buildPrintMeta', () => {
-  it('returns a meeting name, a non-empty date, and a Provisoire status', () => {
-    const meta = buildPrintMeta();
+  it('maps the meeting name, date, and provisional status', () => {
+    const meta = buildPrintMeta({
+      id: 1,
+      name: 'Meeting de la Mer 2026',
+      date: '2026-11-16',
+      location: 'Cherbourg',
+      status: 'provisional',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
     expect(meta.status).toBe('Provisoire');
-    expect(meta.date.length).toBeGreaterThan(0);
+    expect(meta.date).toBe('16 nov. 2026');
     expect(meta.computedAt.length).toBeGreaterThan(0);
   });
 
-  it('formats the date in medium style (e.g. "16 nov. 2026")', () => {
-    const meta = buildPrintMeta();
-    // Verify format: day, abbreviated month with period, year (e.g. "16 nov. 2026")
-    expect(meta.date).toMatch(/^\d{1,2}\s+\w+\.\s+\d{4}$/);
+  it('maps a final meeting to "Définitif"', () => {
+    const meta = buildPrintMeta({
+      id: 2,
+      name: 'Meeting de la Mer 2026',
+      date: '2026-11-16',
+      location: null,
+      status: 'final',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(meta.status).toBe('Définitif');
   });
 });

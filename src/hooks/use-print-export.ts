@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { buildPrintMeta } from '@/lib/print-data';
 import { exportRankingToPdf } from '@/lib/pdf-export';
 import { exportRankingToExcel } from '@/lib/excel-export';
+import type { Meeting } from '@/lib/db';
 import type { TeamResult } from '@/lib/ranking-engine';
 
 export interface UsePrintExportResult {
   isExporting: boolean;
   error: string | null;
-  exportPdf: (category: string, results: TeamResult[]) => Promise<void>;
-  exportExcel: (category: string, results: TeamResult[]) => Promise<void>;
+  exportPdf: (meeting: Meeting, category: string, results: TeamResult[]) => Promise<void>;
+  exportExcel: (meeting: Meeting, category: string, results: TeamResult[]) => Promise<void>;
 }
 
 const PDF_ERROR_MESSAGE = "Échec de l'export PDF. Vous pouvez réessayer ou utiliser l'impression directe.";
@@ -25,11 +26,11 @@ export function usePrintExport(): UsePrintExportResult {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function exportPdf(category: string, results: TeamResult[]): Promise<void> {
+  async function exportPdf(meeting: Meeting, category: string, results: TeamResult[]): Promise<void> {
     setIsExporting(true);
     setError(null);
     try {
-      await exportRankingToPdf(buildPrintMeta(), category, results);
+      await exportRankingToPdf(buildPrintMeta(meeting), category, results);
     } catch {
       setError(PDF_ERROR_MESSAGE);
     } finally {
@@ -37,11 +38,11 @@ export function usePrintExport(): UsePrintExportResult {
     }
   }
 
-  async function exportExcel(category: string, results: TeamResult[]): Promise<void> {
+  async function exportExcel(meeting: Meeting, category: string, results: TeamResult[]): Promise<void> {
     setIsExporting(true);
     setError(null);
     try {
-      await exportRankingToExcel(buildPrintMeta(), category, results);
+      await exportRankingToExcel(buildPrintMeta(meeting), category, results);
     } catch {
       setError(EXCEL_ERROR_MESSAGE);
     } finally {

@@ -9,6 +9,16 @@ import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
+const TEST_MEETING = {
+  id: 1,
+  name: 'Meeting de la Mer 2026',
+  date: '2026-11-16',
+  location: 'Cherbourg',
+  status: 'provisional' as const,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
 function loadRows() {
   const buffer = readFileSync(path.join(FIXTURE_DIR, 'sample.csv'));
   return parseCsv(new Uint8Array(buffer)).rows;
@@ -18,7 +28,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('produces a workbook with a sheet listing all 38 clubs, including ASCN', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta();
+    const meta = buildPrintMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement Mixte', results);
 
@@ -37,7 +47,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('records the podium points at the right rows', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta();
+    const meta = buildPrintMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement Mixte', results);
     const workbook = new ExcelJS.Workbook();
@@ -53,7 +63,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('strips characters Excel forbids in sheet names', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta();
+    const meta = buildPrintMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement 100m [Dames]', results);
     const workbook = new ExcelJS.Workbook();

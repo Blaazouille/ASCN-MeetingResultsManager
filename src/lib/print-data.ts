@@ -1,3 +1,5 @@
+import type { Meeting } from './db';
+
 export interface PrintMeta {
   meetingName: string;
   /** Meeting date, formatted fr-FR (e.g. "16 nov. 2026"). */
@@ -7,22 +9,16 @@ export interface PrintMeta {
   computedAt: string;
 }
 
-const MEETING_NAME = 'Meeting de la Mer 2026';
-
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 
-/**
- * Placeholder meeting metadata until Phase 5 (Paramètres) makes the meeting
- * name, date, and status configurable and Phase 4 (SQLite) persists them.
- */
-export function buildPrintMeta(): PrintMeta {
-  const now = new Date();
+/** Builds the print/export metadata from the persisted meeting record. */
+export function buildPrintMeta(meeting: Meeting): PrintMeta {
   return {
-    meetingName: MEETING_NAME,
-    date: DATE_FORMATTER.format(now),
-    status: 'Provisoire',
-    computedAt: TIMESTAMP_FORMATTER.format(now),
+    meetingName: meeting.name,
+    date: DATE_FORMATTER.format(new Date(meeting.date)),
+    status: meeting.status === 'final' ? 'Définitif' : 'Provisoire',
+    computedAt: TIMESTAMP_FORMATTER.format(new Date()),
   };
 }
 
