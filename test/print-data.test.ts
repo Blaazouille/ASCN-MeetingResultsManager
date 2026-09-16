@@ -29,6 +29,9 @@ describe('buildPrintMeta', () => {
       status: 'provisional',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      defaultTopN: 5,
+      minSwimmers: 0,
+      activeCategories: null,
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
@@ -46,6 +49,9 @@ describe('buildPrintMeta', () => {
       status: 'final',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      defaultTopN: 5,
+      minSwimmers: 0,
+      activeCategories: null,
     });
 
     expect(meta.status).toBe('Définitif');
@@ -60,6 +66,9 @@ describe('buildPrintMeta', () => {
       status: 'provisional',
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      defaultTopN: 5,
+      minSwimmers: 0,
+      activeCategories: null,
     });
 
     expect(meta.date).toMatch(/^\d{1,2}\s+\w+\.?\s+\d{4}$/);
