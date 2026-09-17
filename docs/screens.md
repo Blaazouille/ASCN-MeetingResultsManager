@@ -23,6 +23,15 @@
 - Recherche par nom de club.
 - Export PDF et export Excel du classement affiché.
 
+## Individuels (`/individuels`)
+
+- Classement global par points, tous nageurs confondus (multi-catégories).
+- Onglets de filtrage par genre (`Tous`, `Dames`, `Messieurs`), détection automatique du genre par le parseur.
+- Tableau (`TeamRankingTable` ou similaire) : Rang, Nom, Année de naissance, Club, Points, Catégorie.
+- Badges pour les 2 premiers nageurs : `1er Prix` et `2e Prix` (par genre dans les vues filtrées, globaux en `Tous`).
+- Recherche par nom ou club (même logique que le classement par équipes).
+- Section "Palmarès des rigolos" en bas (visible uniquement en vue `Tous`) : affiche les 6 fun awards (doyen, relève, loup-solitaire, photo-finish, régulier, armada) avec descriptions humoristiques.
+
 ## Paramètres (`/parametres`)
 
 - Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut.
