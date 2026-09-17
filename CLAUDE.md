@@ -4,7 +4,7 @@
 
 ## Résumé du projet
 
-Remplacement d'une base Microsoft Access par une app Electron moderne. L'app importe un CSV de cotations FFN (extraNat), calcule les classements par équipes selon une règle configurable (top N nageurs par club), et produit des résultats imprimables et exportables (PDF, Excel).
+Remplacement d'une base Microsoft Access par une app Electron moderne. L'app importe un CSV de cotations FFN (extraNat), calcule les classements par équipes selon une règle configurable (top N nageurs par club), et produit des résultats exportables (PDF, Excel).
 
 **Utilisateur cible** : bénévole du club, au bord du bassin le jour du meeting, sous stress. L'interface doit être claire, rapide, sans ambiguïté.
 
@@ -12,7 +12,7 @@ Remplacement d'une base Microsoft Access par une app Electron moderne. L'app imp
 
 - **Frontend** : React 18 + Vite + TypeScript (strict)
 - **Desktop** : Electron (main + renderer, IPC bridge via contextBridge)
-- **UI** : shadcn/ui + Tailwind CSS + Lucide icons
+- **UI** : Tailwind CSS + Lucide icons
 - **Tableaux** : TanStack Table (headless)
 - **Persistance** : SQLite via better-sqlite3 (main process uniquement)
 - **CSV** : Papa Parse (auto-détection encodage + délimiteur)
@@ -83,7 +83,7 @@ Les 38 clubs doivent correspondre au fichier `test/fixtures/expected-ranking.jso
 | `warning` | `#F59E0B` | Statut provisoire |
 | `error` | `#EF4444` | Erreurs |
 
-Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/technical-design.md` §2).
+Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/design-system.md`).
 
 ### Typographie
 
@@ -104,12 +104,17 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/tech
 ```
 ├── CLAUDE.md                 ← Ce fichier
 ├── docs/
-│   ├── design-prompt.md      # Spec des écrans UI (5 écrans + composants)
-│   └── technical-design.md   # Spec technique complète (tokens, types, composants, IPC)
+│   ├── architecture.md       # Stack, flux de données, IPC, dossiers
+│   ├── screens.md            # Description de chaque écran
+│   ├── data-model.md         # Schéma SQLite, interfaces TypeScript
+│   ├── design-system.md      # Couleurs, typo, composants
+│   ├── algorithms.md         # Algorithmes de calcul
+│   └── archive/               # Specs et plans des phases précédentes
 ├── electron/
 │   ├── main.ts               # Process principal Electron
 │   ├── preload.ts            # Context bridge IPC
-│   └── ipc-handlers.ts       # Handlers filesystem + SQLite
+│   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
+│   └── ipc-channels.ts       # Noms de canaux IPC partagés
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx
@@ -117,26 +122,26 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/tech
 │   │   ├── csv-parser.ts     # Parseur CSV (wrapper Papa Parse)
 │   │   ├── ranking-engine.ts # Algorithme de classement
 │   │   ├── db.ts             # Opérations SQLite
-│   │   ├── pdf-export.ts     # Génération PDF
+│   │   ├── export-data.ts    # Métadonnées et helpers pour les exports
+│   │   ├── pdf-export.tsx    # Génération PDF
 │   │   ├── excel-export.ts   # Génération Excel
+│   │   ├── download.ts       # Déclenchement du téléchargement navigateur
 │   │   └── utils.ts          # Helpers (formatPoints, cn, etc.)
 │   ├── hooks/
 │   │   ├── use-meeting.ts
 │   │   ├── use-import.ts
-│   │   └── use-ranking.ts
+│   │   ├── use-ranking.ts
+│   │   ├── use-meeting-rows.ts
+│   │   └── use-print-export.ts
 │   ├── components/
-│   │   ├── ui/               # shadcn/ui (généré)
 │   │   ├── layout/           # AppShell, Sidebar, Header
 │   │   ├── meeting/          # MeetingCard, MeetingList, MeetingForm
-│   │   ├── import/           # DropZone, CsvPreview, ColumnMapper
-│   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs
-│   │   ├── print/            # PrintPreview, A4Page, PrintControls
-│   │   └── settings/         # SettingsForm
+│   │   ├── import/           # DropZone
+│   │   └── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
 │   ├── pages/
 │   │   ├── HomePage.tsx
 │   │   ├── ImportPage.tsx
 │   │   ├── RankingPage.tsx
-│   │   ├── PrintPage.tsx
 │   │   └── SettingsPage.tsx
 │   └── styles/
 │       └── globals.css       # Tailwind base + custom properties
@@ -171,7 +176,7 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/tech
 
 ### CSS / Tailwind
 - Classes utilitaires Tailwind dans le JSX
-- CSS custom uniquement pour les styles d'impression et animations complexes
+- CSS custom uniquement pour les animations complexes
 - Pas de `style` inline sauf valeurs dynamiques
 - Utiliser `cn()` (clsx + tailwind-merge) pour les classes conditionnelles
 
@@ -189,17 +194,25 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/tech
 
 1. **Accueil** — Liste des meetings, créer/ouvrir
 2. **Import** — Drag & drop CSV, preview, validation colonnes
-3. **Classement** — Tableau des clubs avec drill-down nageurs, filtres par catégorie, sélecteur top N
-4. **Impression** — Aperçu A4, export PDF, impression directe
-5. **Paramètres** — Config meeting (nom, date, lieu, statut) et règles de calcul (top N, catégories)
+3. **Classement** — Tableau des clubs avec drill-down nageurs, filtres par catégorie, sélecteur top N, export PDF/Excel
+4. **Paramètres** — Config meeting (nom, date, lieu, statut) et règles de calcul (top N, catégories)
 
-Les specs détaillées de chaque écran sont dans `docs/design-prompt.md`.
+Les specs détaillées de chaque écran sont dans `docs/screens.md`.
 
 ## Modèle de données (SQLite)
 
-3 tables : `meeting`, `swimmer_result`, `team_ranking`. Schéma complet dans `docs/technical-design.md` §5.
+3 tables : `meeting`, `swimmer_result`, `team_ranking`. Schéma complet dans `docs/data-model.md`.
 
-La base SQLite tourne dans le **main process** Electron. Le renderer communique via IPC (`contextBridge`). L'interface IPC est définie dans `docs/technical-design.md` §5.
+La base SQLite tourne dans le **main process** Electron. Le renderer communique via IPC (`contextBridge`). L'interface IPC est définie dans `docs/architecture.md`.
+
+## Documentation détaillée
+
+Les fichiers dans `docs/` décrivent l'état actuel de l'application :
+- `docs/architecture.md` — Stack, flux de données, structure
+- `docs/screens.md` — Description de chaque écran
+- `docs/data-model.md` — Schéma SQLite et types
+- `docs/design-system.md` — Design tokens et composants
+- `docs/algorithms.md` — Algorithmes de calcul
 
 ## Commandes
 
