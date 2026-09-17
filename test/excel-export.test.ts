@@ -17,6 +17,9 @@ const TEST_MEETING = {
   status: 'provisional' as const,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
+  defaultTopN: 5,
+  minSwimmers: 0,
+  activeCategories: null,
 };
 
 function loadRows() {

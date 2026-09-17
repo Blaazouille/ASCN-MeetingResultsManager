@@ -8,6 +8,7 @@ export interface UseMeetingResult {
   error: string | null;
   refresh: () => Promise<void>;
   createMeeting: (input: MeetingInput) => Promise<Meeting>;
+  updateMeeting: (id: number, input: Partial<MeetingInput>) => Promise<Meeting>;
   selectMeeting: (id: number | null) => void;
 }
 
@@ -51,11 +52,23 @@ export function useMeeting(): UseMeetingResult {
     }
   }, []);
 
+  const updateMeeting = useCallback(async (id: number, input: Partial<MeetingInput>): Promise<Meeting> => {
+    try {
+      const meeting = await window.electronAPI.updateMeeting(id, input);
+      setMeetings((current) => current.map((existing) => (existing.id === id ? meeting : existing)));
+      setError(null);
+      return meeting;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  }, []);
+
   const selectMeeting = useCallback((id: number | null): void => {
     setCurrentMeetingId(id);
   }, []);
 
   const currentMeeting = meetings.find((meeting) => meeting.id === currentMeetingId) ?? null;
 
-  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, selectMeeting };
+  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, updateMeeting, selectMeeting };
 }

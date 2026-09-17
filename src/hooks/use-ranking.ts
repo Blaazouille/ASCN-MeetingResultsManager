@@ -29,11 +29,25 @@ export interface UseRankingResult {
  * meeting with different categories) — otherwise `category` would latch
  * onto `''` (or a stale value) and never recover.
  */
-export function useRanking(rows: RawSwimmerRow[], categories: string[]): UseRankingResult {
+export interface UseRankingOptions {
+  /** Initial Top N value, from the meeting's saved default (falls back to 5 if not one of TOP_N_OPTIONS). */
+  initialTopN?: number;
+  /** Clubs with fewer than this many swimmers in the category are excluded entirely. */
+  minSwimmers?: number;
+}
+
+export function useRanking(
+  rows: RawSwimmerRow[],
+  categories: string[],
+  options: UseRankingOptions = {}
+): UseRankingResult {
   const [category, setCategory] = useState<string>(
     categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : (categories[0] ?? '')
   );
-  const [topN, setTopN] = useState<TopN>(DEFAULT_TOP_N);
+  const initialTopN = (TOP_N_OPTIONS as readonly number[]).includes(options.initialTopN ?? -1)
+    ? (options.initialTopN as TopN)
+    : DEFAULT_TOP_N;
+  const [topN, setTopN] = useState<TopN>(initialTopN);
 
   useEffect(() => {
     if (categories.length === 0 || categories.includes(category)) {
@@ -43,8 +57,8 @@ export function useRanking(rows: RawSwimmerRow[], categories: string[]): UseRank
   }, [categories, category]);
 
   const teamResults = useMemo(
-    () => computeTeamRanking(rows, { category, topN }),
-    [rows, category, topN]
+    () => computeTeamRanking(rows, { category, topN, minSwimmers: options.minSwimmers }),
+    [rows, category, topN, options.minSwimmers]
   );
 
   return { category, setCategory, topN, setTopN, teamResults };

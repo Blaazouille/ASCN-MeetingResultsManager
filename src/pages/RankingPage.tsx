@@ -5,6 +5,7 @@ import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
 import { buildPrintMeta } from '@/lib/print-data';
+import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
@@ -15,8 +16,15 @@ export default function RankingPage(): JSX.Element {
   const [search, setSearch] = useState('');
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
-  const ranking = useRanking(rows, categories);
+  const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
+  const categories = useMemo(
+    () => resolveActiveCategories(presentCategories, meetingState.currentMeeting?.activeCategories ?? null),
+    [presentCategories, meetingState.currentMeeting]
+  );
+  const ranking = useRanking(rows, categories, {
+    initialTopN: meetingState.currentMeeting?.defaultTopN,
+    minSwimmers: meetingState.currentMeeting?.minSwimmers,
+  });
   const meta = useMemo(
     () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
     [meetingState.currentMeeting]
@@ -48,6 +56,7 @@ export default function RankingPage(): JSX.Element {
       <RankingToolbar
         topN={ranking.topN}
         onTopNChange={ranking.setTopN}
+        status={meeting.status}
         onPrint={() => window.print()}
         onExportPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
         onExportExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}

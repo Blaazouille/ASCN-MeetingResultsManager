@@ -1,10 +1,33 @@
 import type { RawSwimmerRow } from './csv-parser';
 
+/** The three FFN result categories this app supports, in the order they should be offered as UI options. */
+export const ALL_CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'] as const;
+
+/**
+ * Resolves which categories the ranking UI should offer: the intersection
+ * of `present` (categories actually found in the imported data, in their
+ * original order) and `active` (the meeting's configured active
+ * categories). `active === null` means "all active" — the historical
+ * behavior before Paramètres existed. Falls back to all present categories
+ * if the configured active set doesn't overlap with what's present, so a
+ * meeting never ends up with zero selectable categories.
+ */
+export function resolveActiveCategories(present: string[], active: string[] | null): string[] {
+  if (active === null) {
+    return present;
+  }
+  const activeSet = new Set(active);
+  const intersection = present.filter((category) => activeSet.has(category));
+  return intersection.length > 0 ? intersection : present;
+}
+
 export interface RankingParams {
   /** Category to compute, e.g. "Classement Mixte". */
   category: string;
   /** Number of top swimmers per club to retain. */
   topN: number;
+  /** Clubs with fewer than this many swimmers in the category are excluded entirely. 0 or omitted = no threshold. */
+  minSwimmers?: number;
 }
 
 export interface SwimmerEntry {
@@ -47,8 +70,13 @@ export function computeTeamRanking(
     clubRows.push(row);
   }
 
+  const minSwimmers = params.minSwimmers ?? 0;
+
   const unranked: Omit<TeamResult, 'rank'>[] = [];
   for (const [club, clubRows] of byClub) {
+    if (clubRows.length < minSwimmers) {
+      continue;
+    }
     const sorted = [...clubRows].sort((a, b) => b.points - a.points);
     const retained = sorted.slice(0, Math.min(params.topN, sorted.length));
 

@@ -72,6 +72,65 @@ describe('meeting CRUD', () => {
 
     expect(getAllMeetings(db)).toEqual([]);
   });
+
+  it('creates a meeting with ranking-rule defaults', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026', date: '2026-11-16' });
+
+    expect(meeting.defaultTopN).toBe(5);
+    expect(meeting.minSwimmers).toBe(0);
+    expect(meeting.activeCategories).toBeNull();
+  });
+
+  it('creates a meeting with explicit ranking rules', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, {
+      name: 'Test',
+      date: '2026-01-01',
+      defaultTopN: 7,
+      minSwimmers: 3,
+      activeCategories: ['Classement Mixte', 'Classement Dames'],
+    });
+
+    expect(meeting.defaultTopN).toBe(7);
+    expect(meeting.minSwimmers).toBe(3);
+    expect(meeting.activeCategories).toEqual(['Classement Mixte', 'Classement Dames']);
+  });
+
+  it('updates ranking rules independently of meeting info', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+
+    const updated = updateMeeting(db, meeting.id, {
+      defaultTopN: 10,
+      minSwimmers: 2,
+      activeCategories: ['Classement Mixte'],
+    });
+
+    expect(updated.defaultTopN).toBe(10);
+    expect(updated.minSwimmers).toBe(2);
+    expect(updated.activeCategories).toEqual(['Classement Mixte']);
+    expect(updated.name).toBe('Test');
+  });
+
+  it('round-trips activeCategories back to null', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, {
+      name: 'Test',
+      date: '2026-01-01',
+      activeCategories: ['Classement Mixte'],
+    });
+
+    const updated = updateMeeting(db, meeting.id, { activeCategories: null });
+
+    expect(updated.activeCategories).toBeNull();
+  });
+
+  it('runs the schema migration idempotently on repeated opens', () => {
+    const db = freshDb();
+    createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    expect(() => createDatabase(':memory:')).not.toThrow();
+  });
 });
 
 function sampleRows(): RawSwimmerRow[] {

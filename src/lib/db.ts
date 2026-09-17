@@ -12,6 +12,9 @@ export interface Meeting {
   status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
+  defaultTopN: number;
+  minSwimmers: number;
+  activeCategories: string[] | null;
 }
 
 export interface MeetingInput {
@@ -19,6 +22,9 @@ export interface MeetingInput {
   date: string;
   location?: string | null;
   status?: MeetingStatus;
+  defaultTopN?: number;
+  minSwimmers?: number;
+  activeCategories?: string[] | null;
 }
 
 const SCHEMA_SQL = `
@@ -70,9 +76,26 @@ export function createDatabase(filePath: string): Database.Database {
   const db = new Database(filePath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  db.pragma('user_version = 1');
   db.exec(SCHEMA_SQL);
+  migrateSchema(db);
   return db;
+}
+
+/**
+ * Schema migrations, gated on `PRAGMA user_version`. A fresh (or `:memory:`)
+ * database starts at version 0 and runs every migration in order; an
+ * existing on-disk database only runs the ones it hasn't seen yet.
+ */
+function migrateSchema(db: Database.Database): void {
+  const version = db.pragma('user_version', { simple: true }) as number;
+  if (version < 2) {
+    db.exec(`
+      ALTER TABLE meeting ADD COLUMN default_top_n INTEGER NOT NULL DEFAULT 5;
+      ALTER TABLE meeting ADD COLUMN min_swimmers INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE meeting ADD COLUMN active_categories TEXT;
+    `);
+    db.pragma('user_version = 2');
+  }
 }
 
 interface MeetingRow {
@@ -83,6 +106,9 @@ interface MeetingRow {
   status: MeetingStatus;
   created_at: string;
   updated_at: string;
+  default_top_n: number;
+  min_swimmers: number;
+  active_categories: string | null;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -94,6 +120,9 @@ function rowToMeeting(row: MeetingRow): Meeting {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    defaultTopN: row.default_top_n,
+    minSwimmers: row.min_swimmers,
+    activeCategories: row.active_categories ? (JSON.parse(row.active_categories) as string[]) : null,
   };
 }
 
@@ -104,8 +133,19 @@ export function getAllMeetings(db: Database.Database): Meeting[] {
 
 export function createMeeting(db: Database.Database, input: MeetingInput): Meeting {
   const result = db
-    .prepare('INSERT INTO meeting (name, date, location, status) VALUES (?, ?, ?, ?)')
-    .run(input.name, input.date, input.location ?? null, input.status ?? 'provisional');
+    .prepare(
+      `INSERT INTO meeting (name, date, location, status, default_top_n, min_swimmers, active_categories)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      input.name,
+      input.date,
+      input.location ?? null,
+      input.status ?? 'provisional',
+      input.defaultTopN ?? 5,
+      input.minSwimmers ?? 0,
+      input.activeCategories ? JSON.stringify(input.activeCategories) : null
+    );
   const row = db.prepare('SELECT * FROM meeting WHERE id = ?').get(result.lastInsertRowid) as MeetingRow;
   return rowToMeeting(row);
 }
@@ -120,10 +160,29 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
     date: input.date ?? current.date,
     location: input.location !== undefined ? input.location : current.location,
     status: input.status ?? current.status,
+    defaultTopN: input.defaultTopN ?? current.default_top_n,
+    minSwimmers: input.minSwimmers ?? current.min_swimmers,
+    activeCategories:
+      input.activeCategories !== undefined
+        ? input.activeCategories
+          ? JSON.stringify(input.activeCategories)
+          : null
+        : current.active_categories,
   };
   db.prepare(
-    `UPDATE meeting SET name = ?, date = ?, location = ?, status = ?, updated_at = datetime('now') WHERE id = ?`
-  ).run(merged.name, merged.date, merged.location, merged.status, id);
+    `UPDATE meeting
+     SET name = ?, date = ?, location = ?, status = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
+     WHERE id = ?`
+  ).run(
+    merged.name,
+    merged.date,
+    merged.location,
+    merged.status,
+    merged.defaultTopN,
+    merged.minSwimmers,
+    merged.activeCategories,
+    id
+  );
   const row = db.prepare('SELECT * FROM meeting WHERE id = ?').get(id) as MeetingRow;
   return rowToMeeting(row);
 }
