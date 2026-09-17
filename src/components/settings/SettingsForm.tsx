@@ -39,9 +39,16 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
   const [error, setError] = useState<string | null>(null);
 
   const toggleCategory = (category: string): void => {
-    setActiveCategories((current) =>
-      current.includes(category) ? current.filter((entry) => entry !== category) : [...current, category]
-    );
+    setActiveCategories((current) => {
+      const isActive = current.includes(category);
+      // At least one category must stay active — an empty selection would
+      // silently fall back to "all categories" downstream (resolveActiveCategories),
+      // discarding the user's choice with no feedback.
+      if (isActive && current.length === 1) {
+        return current;
+      }
+      return isActive ? current.filter((entry) => entry !== category) : [...current, category];
+    });
     setSavedAt(null);
   };
 
@@ -180,17 +187,28 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
           <div>
             <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500">Catégories actives</span>
             <div className="mt-2 space-y-2">
-              {ALL_CATEGORIES.map((category) => (
-                <label key={category} className="flex items-center gap-2 text-sm text-neutral-700">
-                  <input
-                    type="checkbox"
-                    checked={activeCategories.includes(category)}
-                    onChange={() => toggleCategory(category)}
-                    className="h-4 w-4 rounded border-neutral-300 text-secondary-600 focus:ring-secondary-400"
-                  />
-                  {categoryLabel(category)}
-                </label>
-              ))}
+              {ALL_CATEGORIES.map((category) => {
+                const isChecked = activeCategories.includes(category);
+                const isLastActive = isChecked && activeCategories.length === 1;
+                return (
+                  <label
+                    key={category}
+                    className={cn(
+                      'flex items-center gap-2 text-sm',
+                      isLastActive ? 'text-neutral-400' : 'text-neutral-700'
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={isLastActive}
+                      onChange={() => toggleCategory(category)}
+                      className="h-4 w-4 rounded border-neutral-300 text-secondary-600 focus:ring-secondary-400 disabled:cursor-not-allowed"
+                    />
+                    {categoryLabel(category)}
+                  </label>
+                );
+              })}
             </div>
           </div>
           <div>

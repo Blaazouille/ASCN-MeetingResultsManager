@@ -61,6 +61,14 @@ export function useRanking(
     setCategory(categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : categories[0]!);
   }, [categories, category]);
 
+  // Re-adopts the meeting's default top N when it changes (e.g. switching to
+  // another meeting without this hook's owning component unmounting) — same
+  // "stale state on prop change" concern as the category effect above, but
+  // for topN there's no invalid-value case to guard, just a value to re-sync.
+  useEffect(() => {
+    setTopN(initialTopN);
+  }, [initialTopN]);
+
   const teamResults = useMemo(
     () => computeTeamRanking(rows, { category, topN, minSwimmers: options.minSwimmers }),
     [rows, category, topN, options.minSwimmers]
