@@ -7,7 +7,7 @@ import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { registerIpcHandlers } from './ipc-handlers';
-import { createDatabase } from '../src/lib/db';
+import { createDatabase } from '../src/lib/db-schema';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

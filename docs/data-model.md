@@ -1,6 +1,6 @@
 # Modèle de données
 
-> Schéma SQLite et types TypeScript correspondants. Source de vérité : `src/lib/db.ts`.
+> Schéma SQLite et types TypeScript correspondants. Source de vérité : `src/lib/db-schema.ts` (schéma, migrations) et `src/lib/db.ts` (types, CRUD).
 
 ## Schéma SQLite
 

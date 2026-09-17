@@ -44,7 +44,8 @@ Le classement par équipes est calculé côté renderer (`useRanking` → `compu
 │   ├── lib/
 │   │   ├── csv-parser.ts      # Parseur CSV FFN extraNat
 │   │   ├── ranking-engine.ts  # Algorithme de classement
-│   │   ├── db.ts              # Opérations SQLite
+│   │   ├── db-schema.ts       # Schéma SQLite et migrations
+│   │   ├── db.ts              # Opérations CRUD SQLite
 │   │   ├── export-data.ts     # Métadonnées et helpers pour les exports
 │   │   ├── pdf-export.tsx     # Génération PDF
 │   │   ├── excel-export.ts    # Génération Excel

@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { computeTeamRanking, type TeamResult } from '../src/lib/ranking-engine';
 import { parseCsv } from '../src/lib/csv-parser';
+import { createDatabase } from '../src/lib/db-schema';
 import {
-  createDatabase,
   createMeeting,
   deleteMeeting,
   getAllMeetings,

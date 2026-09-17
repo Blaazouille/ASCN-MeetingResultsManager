@@ -121,7 +121,8 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/desi
 │   ├── lib/
 │   │   ├── csv-parser.ts     # Parseur CSV (wrapper Papa Parse)
 │   │   ├── ranking-engine.ts # Algorithme de classement
-│   │   ├── db.ts             # Opérations SQLite
+│   │   ├── db-schema.ts      # Schéma SQLite et migrations
+│   │   ├── db.ts             # Opérations CRUD SQLite
 │   │   ├── export-data.ts    # Métadonnées et helpers pour les exports
 │   │   ├── pdf-export.tsx    # Génération PDF
 │   │   ├── excel-export.ts   # Génération Excel
