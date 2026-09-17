@@ -53,6 +53,11 @@
   --color-neutral-50: #f4f7f6;
   --color-neutral-0: #ffffff;
 
+  /* Medal (podium ranking) */
+  --color-medal-gold: #d4af37;
+  --color-medal-silver: #a8a9ad;
+  --color-medal-bronze: #cd7f32;
+
   /* Semantic */
   --color-success: #22c55e;
   --color-success-light: #dcfce7;

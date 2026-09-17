@@ -35,7 +35,9 @@ function createWindow(): void {
     height: 900,
     minWidth: 1280,
     minHeight: 800,
-    title: 'ASCN Meeting Results',
+    autoHideMenuBar: true,
+    title: 'MDLM Ranking',
+    icon: path.join(process.env.APP_ROOT ?? '', 'resources', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,

@@ -30,6 +30,10 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Les canaux IPC de calcul/sauvegarde de classement existent et sont testés, mais ne sont pas encore appelés — réservés à un usage futur (historique de classements).
 
+## Configuration Electron
+
+La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: true` — la barre de menus native est cachée par défaut et accessible via la touche Alt. Le layout utilise une sidebar en position `fixed` et un header `sticky` : seul le contenu principal (`<main>`) défile, la sidebar et le header restent visibles en permanence.
+
 ## Organisation des dossiers
 
 ```

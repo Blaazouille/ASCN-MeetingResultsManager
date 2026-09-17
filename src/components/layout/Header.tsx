@@ -1,12 +1,38 @@
 /**
- * Responsabilité : bandeau d'en-tête statique de l'application.
+ * Responsabilité : bandeau d'en-tête affichant le meeting actif.
  * Appelé par : AppShell.tsx.
- * Suppression casserait : l'affichage de l'en-tête (pas de logique).
+ * Suppression casserait : l'affichage de l'en-tête.
  */
-export function Header(): JSX.Element {
+import type { Meeting } from '@/lib/db';
+
+export interface HeaderProps {
+  currentMeeting: Meeting | null;
+}
+
+export function Header({ currentMeeting }: HeaderProps): JSX.Element {
   return (
-    <header className="flex h-14 flex-shrink-0 items-center border-b border-neutral-200 bg-neutral-0 px-6">
-      <p className="text-sm font-medium text-neutral-600">Meeting Results Manager</p>
+    <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-center border-b border-neutral-200 bg-neutral-0 px-6">
+      {currentMeeting && (
+        <>
+          <p className="text-sm font-semibold text-neutral-900">{currentMeeting.name}</p>
+          {currentMeeting.date && (
+            <p className="ml-3 text-xs text-neutral-500">
+              {new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+                new Date(currentMeeting.date)
+              )}
+            </p>
+          )}
+          <span
+            className={`ml-4 rounded-sm px-2 py-0.5 text-xs font-medium ${
+              currentMeeting.status === 'final'
+                ? 'bg-success-light text-success'
+                : 'bg-warning-light text-warning'
+            }`}
+          >
+            {currentMeeting.status === 'final' ? 'Définitif' : 'Provisoire'}
+          </span>
+        </>
+      )}
     </header>
   );
 }

@@ -1,5 +1,5 @@
 {
-  "name": "ascn-meeting-results",
+  "name": "mdlm-ranking",
   "private": true,
   "version": "0.1.0",
   "description": "Application desktop de gestion des classements par équipes pour le Meeting de la Mer (AS Cherbourg Natation).",
@@ -17,14 +17,16 @@
     "build:mac": "npm run build && electron-builder --mac"
   },
   "build": {
-    "appId": "fr.ascn.meeting-results",
-    "productName": "ASCN Meeting Results",
+    "appId": "fr.ascn.mdlm-ranking",
+    "productName": "MDLM Ranking",
+    "icon": "resources/icon.png",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "resources/icon.png"
     ],
     "win": {
       "target": "nsis"

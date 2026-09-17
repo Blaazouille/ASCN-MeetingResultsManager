@@ -5,7 +5,7 @@
 ## Accueil (`/`)
 
 - Liste des meetings existants (`MeetingList` / `MeetingCard`).
-- Bouton pour créer un nouveau meeting (`MeetingForm`).
+- Bouton pour créer un nouveau meeting (`MeetingForm`) : seul le nom est obligatoire, la date est pré-remplie avec la date du jour (modifiable mais non obligatoire).
 - Clic sur une carte pour ouvrir un meeting (le charge en contexte partagé et navigue vers Import ou Classement selon l'état).
 
 ## Import (`/import`)
@@ -16,7 +16,7 @@
 
 ## Classement (`/classement`)
 
-- Tableau des clubs classés par équipe (`TeamRankingTable` / `TeamRow`), avec drill-down nageurs (`SwimmerDetail`).
+- Tableau des clubs classés par équipe (`TeamRankingTable` / `TeamRow`) : cliquer sur une ligne déplie/replie le détail des nageurs (`SwimmerDetail`).
 - Onglets de filtrage par catégorie (`CategoryTabs`), limités aux catégories actives configurées dans Paramètres (`resolveActiveCategories`).
 - Sélecteur du nombre de nageurs retenus par club (top N — `RankingToolbar`), initialisé depuis le top N par défaut du meeting.
 - Badge de statut du meeting (provisoire/définitif).

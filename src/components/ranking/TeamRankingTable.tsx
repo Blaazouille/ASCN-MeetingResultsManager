@@ -18,9 +18,9 @@ import type { TopN } from '@/hooks/use-ranking';
 import { TeamRow } from './TeamRow';
 
 const PODIUM_STYLES: Record<number, string> = {
-  1: 'bg-accent-600 text-neutral-0',
-  2: 'bg-neutral-400 text-neutral-0',
-  3: 'bg-accent-800 text-neutral-0',
+  1: 'bg-medal-gold text-neutral-0',
+  2: 'bg-medal-silver text-neutral-0',
+  3: 'bg-medal-bronze text-neutral-0',
 };
 
 export interface TeamRankingTableProps {
@@ -89,23 +89,17 @@ function buildBaseColumns(topN: TopN): ColumnDef<TeamResult, any>[] {
   ];
 }
 
-function buildExpandColumn(expanded: Set<string>, onToggle: (club: string) => void): ColumnDef<TeamResult, any> {
+function buildExpandColumn(expanded: Set<string>): ColumnDef<TeamResult, any> {
   return columnHelper.display({
     id: 'expand',
     header: '',
     cell: (info) => {
-      const club = info.row.original.club;
-      const isExpanded = expanded.has(club);
+      const isExpanded = expanded.has(info.row.original.club);
       return (
-        <button
-          type="button"
-          aria-label={isExpanded ? `Masquer le détail de ${club}` : `Afficher le détail de ${club}`}
-          aria-expanded={isExpanded}
-          onClick={() => onToggle(club)}
-          className="flex h-7 w-7 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-150 hover:bg-neutral-100"
-        >
-          <ChevronRight className={cn('h-4 w-4 transition-transform duration-150', isExpanded && 'rotate-90')} />
-        </button>
+        <ChevronRight
+          className={cn('h-4 w-4 text-neutral-500 transition-transform duration-150', isExpanded && 'rotate-90')}
+          aria-hidden
+        />
       );
     },
   });
@@ -129,7 +123,7 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
   }
 
   const baseColumns = useMemo(() => buildBaseColumns(topN), [topN]);
-  const expandColumn = useMemo(() => buildExpandColumn(expanded, toggle), [expanded]);
+  const expandColumn = useMemo(() => buildExpandColumn(expanded), [expanded]);
   const columns = useMemo(() => [...baseColumns, expandColumn], [baseColumns, expandColumn]);
 
   const table = useReactTable({
@@ -178,6 +172,7 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
                 row={row}
                 isAscn={row.original.club === ASCN_CLUB_NAME}
                 isExpanded={expanded.has(row.original.club)}
+                onToggle={() => toggle(row.original.club)}
               />
             ))}
           </tbody>

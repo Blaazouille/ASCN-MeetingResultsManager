@@ -131,6 +131,19 @@ describe('meeting CRUD', () => {
     createMeeting(db, { name: 'Test', date: '2026-01-01' });
     expect(() => createDatabase(':memory:')).not.toThrow();
   });
+
+  it('creates a meeting with today as default date when date is omitted', () => {
+    const meeting = createMeeting(freshDb(), { name: 'Test sans date' });
+    const today = new Date().toISOString().slice(0, 10);
+    expect(meeting.date).toBe(today);
+    expect(meeting.name).toBe('Test sans date');
+  });
+
+  it('creates a meeting with today as default date when date is empty string', () => {
+    const meeting = createMeeting(freshDb(), { name: 'Test vide', date: '' });
+    const today = new Date().toISOString().slice(0, 10);
+    expect(meeting.date).toBe(today);
+  });
 });
 
 function sampleRows(): RawSwimmerRow[] {

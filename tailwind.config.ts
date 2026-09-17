@@ -70,6 +70,11 @@ export default {
           DEFAULT: 'var(--color-error)',
           light: 'var(--color-error-light)',
         },
+        medal: {
+          gold: 'var(--color-medal-gold)',
+          silver: 'var(--color-medal-silver)',
+          bronze: 'var(--color-medal-bronze)',
+        },
       },
       fontFamily: {
         display: ['Montserrat', 'system-ui', 'sans-serif'],

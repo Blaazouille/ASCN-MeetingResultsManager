@@ -24,7 +24,7 @@ export interface Meeting {
 
 export interface MeetingInput {
   name: string;
-  date: string;
+  date?: string;
   location?: string | null;
   status?: MeetingStatus;
   defaultTopN?: number;
@@ -66,6 +66,7 @@ export function getAllMeetings(db: Database.Database): Meeting[] {
 }
 
 export function createMeeting(db: Database.Database, input: MeetingInput): Meeting {
+  const date = input.date && input.date.trim() !== '' ? input.date : new Date().toISOString().slice(0, 10);
   const result = db
     .prepare(
       `INSERT INTO meeting (name, date, location, status, default_top_n, min_swimmers, active_categories)
@@ -73,7 +74,7 @@ export function createMeeting(db: Database.Database, input: MeetingInput): Meeti
     )
     .run(
       input.name,
-      input.date,
+      date,
       input.location ?? null,
       input.status ?? 'provisional',
       input.defaultTopN ?? 5,

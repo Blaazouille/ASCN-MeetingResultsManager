@@ -13,7 +13,7 @@ export interface MeetingFormProps {
 
 export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Element {
   const [name, setName] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [location, setLocation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,7 +50,6 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
         <input
           id="meeting-date"
           type="date"
-          required
           value={date}
           onChange={(event) => setDate(event.target.value)}
           className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
@@ -80,7 +79,7 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-md bg-accent-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-accent-700 disabled:opacity-60"
+          className="rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
         >
           Créer le meeting
         </button>
