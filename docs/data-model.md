@@ -6,13 +6,16 @@
 
 ```sql
 CREATE TABLE IF NOT EXISTS meeting (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  name        TEXT NOT NULL,
-  date        TEXT NOT NULL,
-  location    TEXT,
-  status      TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+  name               TEXT NOT NULL,
+  date               TEXT NOT NULL,
+  location           TEXT,
+  status             TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
+  created_at         TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at         TEXT NOT NULL DEFAULT (datetime('now')),
+  default_top_n      INTEGER NOT NULL DEFAULT 5,      -- ajouté en migration user_version 2
+  min_swimmers       INTEGER NOT NULL DEFAULT 0,       -- ajouté en migration user_version 2
+  active_categories  TEXT                              -- ajouté en migration user_version 2 (JSON, NULL = toutes actives)
 );
 
 CREATE TABLE IF NOT EXISTS swimmer_result (
@@ -48,7 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 ```
 
-`user_version` est fixé à `1` à l'ouverture de la base (`createDatabase`). Toute migration future de schéma devra l'incrémenter et gérer la transition.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `2` (ajout de `default_top_n`, `min_swimmers`, `active_categories`). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
@@ -63,6 +66,9 @@ interface Meeting {
   status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
+  defaultTopN: number;
+  minSwimmers: number;
+  activeCategories: string[] | null; // null = toutes les catégories présentes sont actives
 }
 
 interface MeetingInput {
@@ -70,6 +76,9 @@ interface MeetingInput {
   date: string;
   location?: string | null;
   status?: MeetingStatus;
+  defaultTopN?: number;
+  minSwimmers?: number;
+  activeCategories?: string[] | null;
 }
 ```
 
@@ -104,6 +113,12 @@ interface TeamResult {
   totalPoints: number;
   swimmers: SwimmerEntry[];   // les topN nageurs retenus
   swimmerCount: number;       // total de nageurs du club dans la catégorie
+}
+
+interface RankingParams {
+  category: string;
+  topN: number;
+  minSwimmers?: number; // clubs avec moins de nageurs que ce seuil exclus (0/omis = pas de seuil)
 }
 ```
 

@@ -7,12 +7,13 @@ Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
 ```
 1. Filtrer les lignes où name === catégorie choisie (ex: "Classement Mixte")
 2. Grouper par club
-3. Pour chaque club :
+3. Exclure les clubs avec moins de nageurs que le seuil minSwimmers configuré (défaut : pas de seuil)
+4. Pour chaque club restant :
    a. Trier les nageurs par points DESC
-   b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5
+   b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5 (issu du top N par défaut du meeting)
    c. Sommer leurs points → totalPoints
-4. Trier les clubs par totalPoints DESC
-5. Attribuer le rang (1-indexed, sans gaps)
+5. Trier les clubs par totalPoints DESC
+6. Attribuer le rang (1-indexed, sans gaps)
 ```
 
 ### Résultat de référence (Classement Mixte, top 5)
@@ -31,6 +32,10 @@ Les 38 clubs doivent correspondre exactement à `test/fixtures/expected-ranking.
 ## Recherche par club
 
 `filterTeamResultsByClub` filtre les résultats déjà classés par nom de club, insensible à la casse. Une requête vide ou blanche retourne tous les résultats.
+
+## Catégories actives
+
+`resolveActiveCategories(present, active)` détermine les catégories proposées par l'écran Classement : l'intersection entre `present` (catégories réellement présentes dans les données importées) et `active` (catégories configurées dans Paramètres). `active === null` signifie « toutes actives ». Si l'intersection est vide, retombe sur toutes les catégories présentes pour ne jamais laisser un meeting sans catégorie sélectionnable.
 
 ## À venir
 

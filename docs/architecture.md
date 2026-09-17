@@ -60,7 +60,8 @@ Le classement par équipes est calculé côté renderer (`useRanking` → `compu
 │   │   ├── layout/            # AppShell, Sidebar, Header
 │   │   ├── meeting/            # MeetingCard, MeetingList, MeetingForm
 │   │   ├── import/             # DropZone
-│   │   └── ranking/            # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
+│   │   ├── ranking/            # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
+│   │   └── settings/           # SettingsForm
 │   └── pages/
 │       ├── HomePage.tsx
 │       ├── ImportPage.tsx

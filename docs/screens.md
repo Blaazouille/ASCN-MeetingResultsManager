@@ -17,13 +17,15 @@
 ## Classement (`/classement`)
 
 - Tableau des clubs classés par équipe (`TeamRankingTable` / `TeamRow`), avec drill-down nageurs (`SwimmerDetail`).
-- Onglets de filtrage par catégorie (`CategoryTabs`).
-- Sélecteur du nombre de nageurs retenus par club (top N — `RankingToolbar`).
+- Onglets de filtrage par catégorie (`CategoryTabs`), limités aux catégories actives configurées dans Paramètres (`resolveActiveCategories`).
+- Sélecteur du nombre de nageurs retenus par club (top N — `RankingToolbar`), initialisé depuis le top N par défaut du meeting.
+- Badge de statut du meeting (provisoire/définitif).
 - Recherche par nom de club.
 - Export PDF et export Excel du classement affiché.
 
 ## Paramètres (`/parametres`)
 
-- Écran actuellement en placeholder. Accueillera la configuration du meeting (nom, date, lieu, statut) et les règles de calcul (top N par défaut, catégories).
+- Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut.
+- Règles de calcul : top N par défaut, catégories actives, seuil minimum de nageurs par club.
 
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.
