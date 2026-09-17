@@ -17,11 +17,11 @@ export interface UsePrintExportResult {
   exportExcel: (meeting: Meeting, category: string, results: TeamResult[]) => Promise<void>;
 }
 
-const PDF_ERROR_MESSAGE = "Échec de l'export PDF. Vous pouvez réessayer ou utiliser l'impression directe.";
+const PDF_ERROR_MESSAGE = "Échec de l'export PDF. Vous pouvez réessayer.";
 const EXCEL_ERROR_MESSAGE = "Échec de l'export Excel. Vous pouvez réessayer.";
 
 /**
- * Shared export logic for the Classement and Impression screens: builds a
+ * Shared export logic for the Classement screen: builds a
  * fresh `PrintMeta` at export time (so the "Calculé le …" timestamp reflects
  * when the export actually ran, not when the screen was mounted), tracks the
  * in-flight state, and turns a rejected export promise into a readable

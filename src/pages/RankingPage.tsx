@@ -3,12 +3,13 @@
  * Appelé par : App.tsx (route "classement").
  * Suppression casserait : l'écran de classement, cœur de l'application.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
+import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
@@ -18,8 +19,15 @@ export default function RankingPage(): JSX.Element {
   const [search, setSearch] = useState('');
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
-  const ranking = useRanking(rows, categories);
+  const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
+  const categories = useMemo(
+    () => resolveActiveCategories(presentCategories, meetingState.currentMeeting?.activeCategories ?? null),
+    [presentCategories, meetingState.currentMeeting]
+  );
+  const ranking = useRanking(rows, categories, {
+    initialTopN: meetingState.currentMeeting?.defaultTopN,
+    minSwimmers: meetingState.currentMeeting?.minSwimmers,
+  });
   const { isExporting, error, exportPdf, exportExcel } = usePrintExport();
 
   const meeting = meetingState.currentMeeting;
@@ -47,6 +55,7 @@ export default function RankingPage(): JSX.Element {
       <RankingToolbar
         topN={ranking.topN}
         onTopNChange={ranking.setTopN}
+        status={meeting.status}
         onExportPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
         onExportExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
         isExporting={isExporting}

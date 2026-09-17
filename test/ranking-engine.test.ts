@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
-import { computeTeamRanking, filterTeamResultsByClub, type TeamResult } from '../src/lib/ranking-engine';
+import { computeTeamRanking, filterTeamResultsByClub, resolveActiveCategories, type TeamResult } from '../src/lib/ranking-engine';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
@@ -117,6 +117,20 @@ describe('computeTeamRanking — algorithm behavior', () => {
     expect(sharedRank45.map((swimmer) => swimmer.lastname).sort()).toEqual(['CHEVALLIER', 'KNODEL']);
     expect(sharedRank45.every((swimmer) => swimmer.points === 925)).toBe(true);
   });
+
+  it('excludes clubs with fewer swimmers than minSwimmers', () => {
+    const withoutThreshold = computeTeamRanking(rows, { category: 'Classement Dames', topN: 5 });
+    const withThreshold = computeTeamRanking(rows, { category: 'Classement Dames', topN: 5, minSwimmers: 3 });
+
+    expect(withThreshold.length).toBeLessThan(withoutThreshold.length);
+    expect(withThreshold.every((team) => team.swimmerCount >= 3)).toBe(true);
+  });
+
+  it('ignores minSwimmers of 0 (no threshold)', () => {
+    const a = computeTeamRanking(rows, { category: 'Classement Dames', topN: 5 });
+    const b = computeTeamRanking(rows, { category: 'Classement Dames', topN: 5, minSwimmers: 0 });
+    expect(b).toEqual(a);
+  });
 });
 
 describe('filterTeamResultsByClub', () => {
@@ -147,5 +161,31 @@ describe('filterTeamResultsByClub', () => {
     const originalLength = results.length;
     filterTeamResultsByClub(results, 'viry');
     expect(results).toHaveLength(originalLength);
+  });
+});
+
+describe('resolveActiveCategories', () => {
+  it('returns all present categories when active is null', () => {
+    expect(resolveActiveCategories(['Classement Mixte', 'Classement Dames'], null)).toEqual([
+      'Classement Mixte',
+      'Classement Dames',
+    ]);
+  });
+
+  it('intersects present categories with the active list, preserving present order', () => {
+    expect(
+      resolveActiveCategories(
+        ['Classement Mixte', 'Classement Dames', 'Classement Messieurs'],
+        ['Classement Messieurs', 'Classement Mixte']
+      )
+    ).toEqual(['Classement Mixte', 'Classement Messieurs']);
+  });
+
+  it('falls back to all present categories when the intersection is empty', () => {
+    expect(resolveActiveCategories(['Classement Mixte'], ['Classement Dames'])).toEqual(['Classement Mixte']);
+  });
+
+  it('returns an empty array when no categories are present', () => {
+    expect(resolveActiveCategories([], ['Classement Mixte'])).toEqual([]);
   });
 });

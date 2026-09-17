@@ -5,10 +5,14 @@
  */
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
+import type { MeetingStatus } from '@/lib/db';
+import { meetingStatusLabel } from '@/lib/export-data';
+import { cn } from '@/lib/utils';
 
 export interface RankingToolbarProps {
   topN: TopN;
   onTopNChange: (topN: TopN) => void;
+  status: MeetingStatus;
   onExportPdf: () => void;
   onExportExcel: () => void;
   isExporting: boolean;
@@ -18,6 +22,7 @@ export interface RankingToolbarProps {
 export function RankingToolbar({
   topN,
   onTopNChange,
+  status,
   onExportPdf,
   onExportExcel,
   isExporting,
@@ -40,8 +45,13 @@ export function RankingToolbar({
           </select>
         </label>
 
-        <span className="rounded-sm bg-warning-light px-2 py-1 text-xs font-medium uppercase tracking-wide text-warning">
-          Provisoire
+        <span
+          className={cn(
+            'rounded-sm px-2 py-1 text-xs font-medium uppercase tracking-wide',
+            status === 'final' ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
+          )}
+        >
+          {meetingStatusLabel(status)}
         </span>
       </div>
 
