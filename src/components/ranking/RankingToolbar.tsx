@@ -1,20 +1,18 @@
-import { Download, FileSpreadsheet, Printer } from 'lucide-react';
+import { Download, FileSpreadsheet } from 'lucide-react';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
 
 export interface RankingToolbarProps {
   topN: TopN;
   onTopNChange: (topN: TopN) => void;
-  onPrint: () => void;
   onExportPdf: () => void;
   onExportExcel: () => void;
   isExporting: boolean;
 }
 
-/** Top N selector, meeting status badge, and print/export actions. */
+/** Top N selector, meeting status badge, and export actions. */
 export function RankingToolbar({
   topN,
   onTopNChange,
-  onPrint,
   onExportPdf,
   onExportExcel,
   isExporting,
@@ -43,14 +41,6 @@ export function RankingToolbar({
       </div>
 
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onPrint}
-          className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
-        >
-          <Printer className="h-4 w-4" aria-hidden />
-          Imprimer
-        </button>
         <button
           type="button"
           onClick={onExportPdf}

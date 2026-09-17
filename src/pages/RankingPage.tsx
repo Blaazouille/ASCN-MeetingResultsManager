@@ -1,14 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
-import { buildPrintMeta } from '@/lib/print-data';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
-import { A4Page } from '@/components/print/A4Page';
 
 export default function RankingPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -17,10 +15,6 @@ export default function RankingPage(): JSX.Element {
   const meetingId = meetingState.currentMeeting?.id ?? null;
   const { rows, categories, isLoading, error: rowsError } = useMeetingRows(meetingId);
   const ranking = useRanking(rows, categories);
-  const meta = useMemo(
-    () => (meetingState.currentMeeting ? buildPrintMeta(meetingState.currentMeeting) : null),
-    [meetingState.currentMeeting]
-  );
   const { isExporting, error, exportPdf, exportExcel } = usePrintExport();
 
   const meeting = meetingState.currentMeeting;
@@ -48,7 +42,6 @@ export default function RankingPage(): JSX.Element {
       <RankingToolbar
         topN={ranking.topN}
         onTopNChange={ranking.setTopN}
-        onPrint={() => window.print()}
         onExportPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
         onExportExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
         isExporting={isExporting}
@@ -60,12 +53,6 @@ export default function RankingPage(): JSX.Element {
         search={search}
         onSearchChange={setSearch}
       />
-
-      {meta && (
-        <div className="fixed -left-[9999px] top-0 print:static print:left-auto print:top-auto">
-          <A4Page meta={meta} category={ranking.category} results={ranking.teamResults} />
-        </div>
-      )}
     </div>
   );
 }
