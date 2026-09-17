@@ -1,7 +1,7 @@
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { TeamResult } from './ranking-engine';
-import type { PrintMeta } from './print-data';
-import { slugifyCategory } from './print-data';
+import type { PrintMeta } from './export-data';
+import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 

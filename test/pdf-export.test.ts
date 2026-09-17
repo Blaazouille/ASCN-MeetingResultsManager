@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
-import { buildPrintMeta } from '../src/lib/print-data';
+import { buildPrintMeta } from '../src/lib/export-data';
 import { buildRankingPdfBlob } from '../src/lib/pdf-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');

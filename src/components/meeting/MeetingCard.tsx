@@ -1,5 +1,5 @@
 import type { Meeting } from '@/lib/db';
-import { meetingStatusLabel, parseMeetingDate } from '@/lib/print-data';
+import { meetingStatusLabel, parseMeetingDate } from '@/lib/export-data';
 import { cn } from '@/lib/utils';
 
 export interface MeetingCardProps {

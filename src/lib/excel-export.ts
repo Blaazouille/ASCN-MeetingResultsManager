@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
-import type { PrintMeta } from './print-data';
-import { slugifyCategory } from './print-data';
+import type { PrintMeta } from './export-data';
+import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
 const COLUMN_HEADERS = ['Rang', 'Club', 'Points', 'Nageurs retenus'];

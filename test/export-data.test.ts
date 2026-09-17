@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, parseMeetingDate, slugifyCategory } from '../src/lib/print-data';
+import { buildPrintMeta, parseMeetingDate, slugifyCategory } from '../src/lib/export-data';
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {

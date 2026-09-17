@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { buildPrintMeta } from '@/lib/print-data';
+import { buildPrintMeta } from '@/lib/export-data';
 import { exportRankingToPdf } from '@/lib/pdf-export';
 import { exportRankingToExcel } from '@/lib/excel-export';
 import type { Meeting } from '@/lib/db';

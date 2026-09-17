@@ -4,7 +4,7 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { parseCsv } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
-import { buildPrintMeta } from '../src/lib/print-data';
+import { buildPrintMeta } from '../src/lib/export-data';
 import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
