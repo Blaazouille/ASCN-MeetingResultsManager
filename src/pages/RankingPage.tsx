@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : écran de classement par équipes (tableau, filtres, exports PDF/Excel).
+ * Appelé par : App.tsx (route "classement").
+ * Suppression casserait : l'écran de classement, cœur de l'application.
+ */
 import { useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';

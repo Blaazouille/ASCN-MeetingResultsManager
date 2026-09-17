@@ -1,7 +1,7 @@
 /**
- * Shared IPC channel names between the main process (ipc-handlers.ts)
- * and the renderer bridge (preload.ts). Keeping them in one place avoids
- * magic-string drift between the two sides of the bridge.
+ * Responsabilité : noms de canaux IPC partagés entre main et renderer.
+ * Appelé par : ipc-handlers.ts et preload.ts.
+ * Suppression casserait : la correspondance des canaux entre les deux côtés du bridge.
  */
 export const IpcChannels = {
   getMeetings: 'meeting:getAll',
@@ -17,7 +17,7 @@ export const IpcChannels = {
 
   // Computes AND persists (saveTeamRanking) in one round-trip.
   //
-  // NOT CURRENTLY CALLED BY THE RENDERER: RankingPage/PrintPage compute the
+  // NOT CURRENTLY CALLED BY THE RENDERER: RankingPage computes the
   // ranking client-side via useRanking()/computeTeamRanking() instead, which
   // is correct and simpler for the MVP (no round-trip needed to react to a
   // topN/category change). These channels are wired up and unit-tested

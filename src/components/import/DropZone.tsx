@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : zone de drag & drop / sélection de fichier CSV.
+ * Appelé par : ImportPage.tsx.
+ * Suppression casserait : l'entrée du flux d'import CSV.
+ */
 import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
 import { FileUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';

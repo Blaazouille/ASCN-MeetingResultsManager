@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : barre d'outils du classement (top N, statut, exports PDF/Excel).
+ * Appelé par : RankingPage.tsx.
+ * Suppression casserait : le contrôle du top N et le déclenchement des exports.
+ */
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
 

@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : onglets de sélection de catégorie de classement (Dames/Messieurs/Mixte).
+ * Appelé par : RankingPage.tsx.
+ * Suppression casserait : le filtrage du classement par catégorie.
+ */
 import { cn } from '@/lib/utils';
 
 export interface CategoryTabsProps {

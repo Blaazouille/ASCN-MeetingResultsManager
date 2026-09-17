@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : bandeau d'en-tête statique de l'application.
+ * Appelé par : AppShell.tsx.
+ * Suppression casserait : l'affichage de l'en-tête (pas de logique).
+ */
 export function Header(): JSX.Element {
   return (
     <header className="flex h-14 flex-shrink-0 items-center border-b border-neutral-200 bg-neutral-0 px-6">

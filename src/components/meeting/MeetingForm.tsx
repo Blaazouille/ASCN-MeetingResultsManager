@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : formulaire de création/édition d'un meeting.
+ * Appelé par : HomePage.tsx, SettingsPage.tsx.
+ * Suppression casserait : la création et la modification des meetings.
+ */
 import { useState, type FormEvent } from 'react';
 import type { MeetingInput } from '@/lib/db';
 

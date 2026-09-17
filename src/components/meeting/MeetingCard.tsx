@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : carte résumant un meeting (nom, date, statut) sur l'écran d'accueil.
+ * Appelé par : MeetingList.tsx.
+ * Suppression casserait : l'affichage de la liste des meetings.
+ */
 import type { Meeting } from '@/lib/db';
 import { meetingStatusLabel, parseMeetingDate } from '@/lib/export-data';
 import { cn } from '@/lib/utils';

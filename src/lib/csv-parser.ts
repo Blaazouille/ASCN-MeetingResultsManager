@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : parse les fichiers CSV FFN extraNat en lignes structurées.
+ * Appelé par : ImportPage (via use-import.ts) et les tests.
+ * Suppression casserait : l'import de fichiers CSV.
+ */
 import Papa from 'papaparse';
 
 export interface CsvParseOptions {

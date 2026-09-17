@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : charge et met en cache les lignes nageurs d'un meeting (via IPC).
+ * Appelé par : RankingPage.tsx.
+ * Suppression casserait : l'affichage du classement (plus de données nageurs).
+ */
 import { useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
 

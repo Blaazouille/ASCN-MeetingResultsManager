@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : génère et télécharge le PDF du classement par équipes.
+ * Appelé par : use-print-export.ts (bouton "Export PDF" de RankingPage).
+ * Suppression casserait : l'export PDF du classement.
+ */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { TeamResult } from './ranking-engine';
 import type { PrintMeta } from './export-data';

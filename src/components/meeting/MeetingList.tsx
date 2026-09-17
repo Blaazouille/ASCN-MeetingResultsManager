@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : liste des meetings (grille de MeetingCard).
+ * Appelé par : HomePage.tsx.
+ * Suppression casserait : l'affichage de la liste des meetings sur l'accueil.
+ */
 import type { Meeting } from '@/lib/db';
 import { MeetingCard } from './MeetingCard';
 

@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : expose l'API IPC au renderer via contextBridge.
+ * Appelé par : Electron (chargé avant le renderer).
+ * Suppression casserait : toute communication renderer ↔ main process.
+ */
 import { contextBridge, ipcRenderer } from 'electron';
 import { IpcChannels } from './ipc-channels';
 import type { Meeting, MeetingInput } from '../src/lib/db';

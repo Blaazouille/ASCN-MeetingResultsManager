@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : état du fichier CSV importé et déclenchement du parsing.
+ * Appelé par : AppShell.tsx (contexte partagé), consommé par ImportPage.
+ * Suppression casserait : l'import et la preview de fichiers CSV.
+ */
 import { useCallback, useState } from 'react';
 import { parseCsv, type CsvParseResult } from '@/lib/csv-parser';
 

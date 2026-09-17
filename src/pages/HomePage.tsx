@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : écran d'accueil (liste des meetings, création, ouverture).
+ * Appelé par : App.tsx (route index).
+ * Suppression casserait : l'écran d'accueil de l'application.
+ */
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';

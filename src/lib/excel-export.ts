@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : génère et télécharge le classeur Excel du classement par équipes.
+ * Appelé par : use-print-export.ts (bouton "Export Excel" de RankingPage).
+ * Suppression casserait : l'export Excel du classement.
+ */
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import type { PrintMeta } from './export-data';

@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : tableau des clubs classés (colonnes, tri, recherche) via TanStack Table.
+ * Appelé par : RankingPage.tsx.
+ * Suppression casserait : l'affichage du tableau de classement.
+ */
 import { useMemo, useState } from 'react';
 import {
   createColumnHelper,

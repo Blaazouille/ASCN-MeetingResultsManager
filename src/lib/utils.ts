@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : helpers partagés (cn, formatPoints, ASCN_CLUB_NAME).
+ * Appelé par : la plupart des composants et modules.
+ * Suppression casserait : le formatage des classes CSS et des points.
+ */
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

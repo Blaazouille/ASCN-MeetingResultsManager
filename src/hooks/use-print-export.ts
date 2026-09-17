@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : orchestre les exports PDF/Excel du classement (état de chargement, erreurs).
+ * Appelé par : RankingPage.tsx (boutons "Export PDF" et "Export Excel").
+ * Suppression casserait : les exports PDF/Excel du classement.
+ */
 import { useState } from 'react';
 import { buildPrintMeta } from '@/lib/export-data';
 import { exportRankingToPdf } from '@/lib/pdf-export';

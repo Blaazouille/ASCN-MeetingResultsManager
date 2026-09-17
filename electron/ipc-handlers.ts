@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : enregistre les handlers IPC pour les opérations DB et fichiers.
+ * Appelé par : electron/main.ts au démarrage.
+ * Suppression casserait : toutes les opérations de persistance (meetings, imports, exports).
+ */
 import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
 import { IpcChannels } from './ipc-channels';

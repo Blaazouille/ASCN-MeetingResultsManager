@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : ligne de club du tableau de classement, avec drill-down nageurs.
+ * Appelé par : TeamRankingTable.tsx.
+ * Suppression casserait : l'affichage des lignes de classement et le détail nageurs.
+ */
 import { Fragment, memo } from 'react';
 import { flexRender, type Row } from '@tanstack/react-table';
 import { cn } from '@/lib/utils';

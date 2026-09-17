@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : layout applicatif (sidebar + header) et contexte partagé (meeting, import) via Outlet.
+ * Appelé par : App.tsx (route racine).
+ * Suppression casserait : la navigation et le partage d'état entre toutes les pages.
+ */
 import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';

@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : navigation latérale entre les écrans de l'application.
+ * Appelé par : AppShell.tsx.
+ * Suppression casserait : la navigation entre écrans.
+ */
 import { NavLink } from 'react-router-dom';
 import { Home, Settings, Trophy, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';

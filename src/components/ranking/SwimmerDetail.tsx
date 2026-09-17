@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : liste détaillée des nageurs d'un club (drill-down).
+ * Appelé par : TeamRow.tsx.
+ * Suppression casserait : le détail nageurs affiché au clic sur une ligne club.
+ */
 import { formatPoints } from '@/lib/utils';
 import type { SwimmerEntry } from '@/lib/ranking-engine';
 

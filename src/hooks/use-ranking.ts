@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : état de la catégorie/top N sélectionnés et calcul du classement dérivé.
+ * Appelé par : RankingPage.tsx.
+ * Suppression casserait : l'affichage et le filtrage du classement par équipes.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
 import { computeTeamRanking, type TeamResult } from '@/lib/ranking-engine';

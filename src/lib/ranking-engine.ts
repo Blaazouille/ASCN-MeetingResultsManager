@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : calcule le classement par équipes à partir des lignes nageurs.
+ * Appelé par : use-ranking.ts, ipc-handlers.ts, et les tests.
+ * Suppression casserait : tout le calcul de classement.
+ */
 import type { RawSwimmerRow } from './csv-parser';
 
 export interface RankingParams {

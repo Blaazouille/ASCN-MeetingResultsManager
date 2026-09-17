@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : routeur principal de l'application (définit les routes et le layout).
+ * Appelé par : src/main.tsx.
+ * Suppression casserait : toute la navigation entre écrans.
+ */
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import HomePage from '@/pages/HomePage';

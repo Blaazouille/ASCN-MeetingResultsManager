@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : état et opérations CRUD sur les meetings (via IPC).
+ * Appelé par : AppShell.tsx (contexte partagé à toutes les pages).
+ * Suppression casserait : la liste, création, modification et suppression des meetings.
+ */
 import { useCallback, useEffect, useState } from 'react';
 import type { Meeting, MeetingInput } from '@/lib/db';
 

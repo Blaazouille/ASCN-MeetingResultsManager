@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : point d'entrée du process principal Electron (fenêtre, DB, IPC).
+ * Appelé par : Electron au démarrage de l'application.
+ * Suppression casserait : l'application ne démarre plus.
+ */
 import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

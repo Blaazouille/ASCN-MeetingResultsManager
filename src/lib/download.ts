@@ -1,7 +1,8 @@
 /**
- * Triggers a browser download of the given blob via a transient object URL.
- * Relies on `document`/`URL.createObjectURL`, so this only runs in a real
- * browser (or Electron renderer) — not exercised by the Node test suite.
+ * Responsabilité : déclenche le téléchargement navigateur d'un blob (URL objet transitoire).
+ * Appelé par : pdf-export.tsx, excel-export.ts.
+ * Suppression casserait : les exports PDF/Excel (rien ne déclencherait le téléchargement).
+ * Note : dépend de `document`/`URL.createObjectURL`, non exercé par la suite de tests Node.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);

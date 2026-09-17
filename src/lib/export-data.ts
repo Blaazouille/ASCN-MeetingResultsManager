@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
+ * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx.
+ * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
+ */
 import type { Meeting, MeetingStatus } from './db';
 
 export interface PrintMeta {

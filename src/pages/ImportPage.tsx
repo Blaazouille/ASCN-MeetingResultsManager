@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : écran d'import CSV (drop, preview, validation, persistance).
+ * Appelé par : App.tsx (route "import").
+ * Suppression casserait : l'import de nouveaux fichiers CSV.
+ */
 import { useCallback, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';

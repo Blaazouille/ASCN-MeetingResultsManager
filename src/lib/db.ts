@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : opérations SQLite (CRUD meetings, swimmer_result, team_ranking).
+ * Appelé par : electron/ipc-handlers.ts (main process uniquement).
+ * Suppression casserait : toute la persistance de données.
+ */
 import Database from 'better-sqlite3';
 import type { RawSwimmerRow } from './csv-parser';
 import type { TeamResult } from './ranking-engine';
