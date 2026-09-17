@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Printer, Settings, Trophy, Upload } from 'lucide-react';
+import { Home, Settings, Trophy, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Accueil', icon: Home },
   { to: '/import', label: 'Import', icon: Upload },
   { to: '/classement', label: 'Classement', icon: Trophy },
-  { to: '/impression', label: 'Impression', icon: Printer },
   { to: '/parametres', label: 'Paramètres', icon: Settings },
 ] as const;
 

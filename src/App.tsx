@@ -3,7 +3,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import HomePage from '@/pages/HomePage';
 import ImportPage from '@/pages/ImportPage';
 import RankingPage from '@/pages/RankingPage';
-import PrintPage from '@/pages/PrintPage';
 import SettingsPage from '@/pages/SettingsPage';
 
 export default function App(): JSX.Element {
@@ -14,7 +13,6 @@ export default function App(): JSX.Element {
           <Route index element={<HomePage />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="classement" element={<RankingPage />} />
-          <Route path="impression" element={<PrintPage />} />
           <Route path="parametres" element={<SettingsPage />} />
         </Route>
       </Routes>
