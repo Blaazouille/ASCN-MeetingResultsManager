@@ -43,7 +43,7 @@ Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `
 
 ```
 1. Regrouper tous les nageurs de la session (toutes catégories)
-2. Dédupliquer par (nom, prénom, année de naissance) — les doublons sont ignorés
+2. Dédupliquer par (nom, prénom, année de naissance, club) — les doublons sont ignorés
 3. Détecter le genre (Homme/Femme) pour chaque nageur :
    - Analyse du prénom français (liste de prénoms féminins / masculins)
    - Fallback : catégorie de la première occurrence (ex: "Classement Dames")
@@ -72,8 +72,8 @@ Implémenté dans `src/lib/fun-awards.ts` (`computeFunAwards`).
 | **Doyen** | Année de naissance la plus ancienne | L'expérience, c'est bien en natation |
 | **Relève** | Année de naissance la plus récente | L'avenir de la natation française |
 | **Loup Solitaire** | Club unique (seul nageur du club) | Pas facile de représenter son club seul |
-| **Photo-Finish** | Écart minimal (moins de 10 points) entre deux nageurs consécutifs | Des points qui se jouent à rien |
-| **Régulier** | Club avec le plus de nageurs présents | Continuité et implication du club |
-| **Armada** | Club avec le plus de points totalisés | Force brute du classement par équipes |
+| **Photo-Finish** | Écart minimal entre deux nageurs consécutifs | Des points qui se jouent à rien |
+| **Régulier** | Nageur dont le score est le plus proche de la moyenne générale de tous les nageurs | Équilibre et régularité |
+| **Armada** | Club avec le plus grand nombre de nageurs inscrits (dédupliqués) | Force du club en nombre |
 
 **Affichage** : section "Palmarès des rigolos" visible uniquement en vue `Tous` (non-filtrée), au bas de la page Individuels.
