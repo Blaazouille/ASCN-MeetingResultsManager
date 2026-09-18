@@ -263,6 +263,10 @@ TESTING
 - All functions must be covered by tests.
 - Write tests that verify expected behavior, not implementation details.
 - Never write a test that only confirms what the code currently does — test what it should do per the spec.
+
+WORKFLOW
+- Every change must go through a Pull Request — no direct commits to main.
+- Full PR rules and merge checklist: see `.ai/pull-request.md`.
 ```
 
 ## AI Reference Files
@@ -275,6 +279,7 @@ Deeper rule sets live in `.ai/`. Load the relevant file when the task calls for 
 | `.ai/file-hygiene.md` | Creating new files, refactoring, or when a file is growing |
 | `.ai/testing.md` | Writing or reviewing tests |
 | `.ai/architecture.md` | Adding dependencies, creating new modules, structural decisions |
+| `.ai/pull-request.md` | Before opening or merging any PR |
 | `.ai/review-checklist.md` | Before any PR or code review |
 | `.ai/unfamiliar-stack.md` | When reviewing tech you don't master directly |
 | `.ai/PRINCIPLES.md` | Core principles — humans own "what/why", AI owns "how" |

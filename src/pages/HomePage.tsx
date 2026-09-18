@@ -31,7 +31,7 @@ export default function HomePage(): JSX.Element {
           <button
             type="button"
             onClick={() => setIsCreating(true)}
-            className="rounded-md bg-accent-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-accent-700"
+            className="rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700"
           >
             Nouveau meeting
           </button>

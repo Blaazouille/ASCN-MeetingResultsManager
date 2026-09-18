@@ -18,9 +18,9 @@ import type { TopN } from '@/hooks/use-ranking';
 import { TeamRow } from './TeamRow';
 
 const PODIUM_STYLES: Record<number, string> = {
-  1: 'bg-accent-600 text-neutral-0',
-  2: 'bg-neutral-400 text-neutral-0',
-  3: 'bg-accent-800 text-neutral-0',
+  1: 'bg-medal-gold text-neutral-0',
+  2: 'bg-medal-silver text-neutral-0',
+  3: 'bg-medal-bronze text-neutral-0',
 };
 
 export interface TeamRankingTableProps {
@@ -31,6 +31,14 @@ export interface TeamRankingTableProps {
 }
 
 const columnHelper = createColumnHelper<TeamResult>();
+
+const COLUMN_WIDTHS: Record<string, string> = {
+  rank: 'w-[8%]',
+  club: 'w-[58%]',
+  totalPoints: 'w-[14%]',
+  swimmerBadge: 'w-[13%]',
+  expand: 'w-[7%]',
+};
 
 /**
  * Rank/club/points/swimmer-count columns — independent of expand state, so
@@ -89,23 +97,17 @@ function buildBaseColumns(topN: TopN): ColumnDef<TeamResult, any>[] {
   ];
 }
 
-function buildExpandColumn(expanded: Set<string>, onToggle: (club: string) => void): ColumnDef<TeamResult, any> {
+function buildExpandColumn(expanded: Set<string>): ColumnDef<TeamResult, any> {
   return columnHelper.display({
     id: 'expand',
     header: '',
     cell: (info) => {
-      const club = info.row.original.club;
-      const isExpanded = expanded.has(club);
+      const isExpanded = expanded.has(info.row.original.club);
       return (
-        <button
-          type="button"
-          aria-label={isExpanded ? `Masquer le détail de ${club}` : `Afficher le détail de ${club}`}
-          aria-expanded={isExpanded}
-          onClick={() => onToggle(club)}
-          className="flex h-7 w-7 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-150 hover:bg-neutral-100"
-        >
-          <ChevronRight className={cn('h-4 w-4 transition-transform duration-150', isExpanded && 'rotate-90')} />
-        </button>
+        <ChevronRight
+          className={cn('h-4 w-4 text-neutral-500 transition-transform duration-150', isExpanded && 'rotate-90')}
+          aria-hidden
+        />
       );
     },
   });
@@ -129,7 +131,7 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
   }
 
   const baseColumns = useMemo(() => buildBaseColumns(topN), [topN]);
-  const expandColumn = useMemo(() => buildExpandColumn(expanded, toggle), [expanded]);
+  const expandColumn = useMemo(() => buildExpandColumn(expanded), [expanded]);
   const columns = useMemo(() => [...baseColumns, expandColumn], [baseColumns, expandColumn]);
 
   const table = useReactTable({
@@ -159,12 +161,12 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
             : 'Aucun classement pour cette catégorie.'}
         </p>
       ) : (
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="text-left text-xs uppercase tracking-wide text-neutral-500">
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="px-3 py-2">
+                  <th key={header.id} className={cn('px-3 py-2', COLUMN_WIDTHS[header.id])}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
@@ -178,6 +180,7 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
                 row={row}
                 isAscn={row.original.club === ASCN_CLUB_NAME}
                 isExpanded={expanded.has(row.original.club)}
+                onToggle={() => toggle(row.original.club)}
               />
             ))}
           </tbody>

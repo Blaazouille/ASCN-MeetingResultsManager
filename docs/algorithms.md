@@ -37,7 +37,43 @@ Les 38 clubs doivent correspondre exactement à `test/fixtures/expected-ranking.
 
 `resolveActiveCategories(present, active)` détermine les catégories proposées par l'écran Classement : l'intersection entre `present` (catégories réellement présentes dans les données importées) et `active` (catégories configurées dans Paramètres). `active === null` signifie « toutes actives ». Si l'intersection est vide, retombe sur toutes les catégories présentes pour ne jamais laisser un meeting sans catégorie sélectionnable.
 
-## À venir
+## Classement individuel
 
-- Classement individuel (nageur par nageur, toutes catégories).
-- Prix rigolos (fun awards) — calculs additionnels sur les mêmes données sources.
+Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `detectGender`, `filterByGender`).
+
+```
+1. Regrouper tous les nageurs de la session (toutes catégories)
+2. Dédupliquer par (nom, prénom, année de naissance, club) — les doublons sont ignorés
+3. Détecter le genre (Homme/Femme) pour chaque nageur :
+   - Analyse du prénom français (liste de prénoms féminins / masculins)
+   - Fallback : catégorie de la première occurrence (ex: "Classement Dames")
+4. Filtrer optionnellement par genre (Dames, Messieurs) ou retourner tous
+5. Trier par points DESC
+6. Attribuer le rang (1-indexed, sans gaps)
+```
+
+### Badges de prix
+
+- **1er Prix** : 1er nageur (toute catégories) ou 1er par genre (vue filtrée)
+- **2e Prix** : 2e nageur (toute catégories) ou 2e par genre (vue filtrée)
+
+### Recherche par nom ou club
+
+Même logique que le classement par équipes : filtre insensible à la casse, requête vide retourne tous les résultats.
+
+## Prix rigolos (Fun Awards)
+
+Implémenté dans `src/lib/fun-awards.ts` (`computeFunAwards`).
+
+6 prix humoristiques calculés sur tous les nageurs présents :
+
+| Prix | Critère | Description |
+|------|---------|-------------|
+| **Doyen** | Année de naissance la plus ancienne | L'expérience, c'est bien en natation |
+| **Relève** | Année de naissance la plus récente | L'avenir de la natation française |
+| **Loup Solitaire** | Club unique (seul nageur du club) | Pas facile de représenter son club seul |
+| **Photo-Finish** | Écart minimal entre deux nageurs consécutifs | Des points qui se jouent à rien |
+| **Régulier** | Nageur dont le score est le plus proche de la moyenne générale de tous les nageurs | Équilibre et régularité |
+| **Armada** | Club avec le plus grand nombre de nageurs inscrits (dédupliqués) | Force du club en nombre |
+
+**Affichage** : section "Palmarès des rigolos" visible uniquement en vue `Tous` (non-filtrée), au bas de la page Individuels.

@@ -27,14 +27,13 @@ const styles = StyleSheet.create({
   footer: { marginTop: 24, fontSize: 9, color: '#5B6B7D', flexDirection: 'row', justifyContent: 'space-between' },
 });
 
-export interface RankingPdfDocumentProps {
+interface RankingPdfDocumentProps {
   meta: PrintMeta;
   category: string;
   results: TeamResult[];
 }
 
-/** The PDF document tree for one category's team ranking. */
-export function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps): JSX.Element {
+function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps): JSX.Element {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -78,7 +77,6 @@ export function RankingPdfDocument({ meta, category, results }: RankingPdfDocume
   );
 }
 
-/** Renders the ranking PDF to an in-memory Blob, without triggering a download. */
 export async function buildRankingPdfBlob(
   meta: PrintMeta,
   category: string,

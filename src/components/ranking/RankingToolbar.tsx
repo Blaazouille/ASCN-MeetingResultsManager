@@ -69,7 +69,7 @@ export function RankingToolbar({
           type="button"
           onClick={onExportExcel}
           disabled={isExporting}
-          className="flex items-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-accent-700 disabled:opacity-60"
+          className="flex items-center gap-2 rounded-md bg-secondary-600 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
         >
           <FileSpreadsheet className="h-4 w-4" aria-hidden />
           Export Excel
