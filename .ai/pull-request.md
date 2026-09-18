@@ -28,10 +28,12 @@ Règles obligatoires pour toute PR sur ce projet. Aucun merge sans validation co
 - [ ] **Humanizer** — Tous les textes visibles par l'utilisateur ont été validés par le skill `/humanizer`.
 - [ ] **Règles linguistiques** — Les libellés, messages d'erreur et placeholders sont exclusivement en français, avec une typographie et ponctuation correctes.
 
-### 📐 Architecture & Limites
+### 📐 Architecture, Limites & Versionnement
 - [ ] **Taille** — Aucun fichier ne dépasse les 300 lignes de code.
 - [ ] **Responsabilité (SRP)** — Aucun fichier n'a acquis une seconde responsabilité ou une raison supplémentaire de changer.
-- [ ] **Dépendances** — Aucun package externe (`npm install`) n'a été ajouté sans approbation explicite de l'équipe.
+- [ ] **SemVer (package.json)** — La version a été incrémentée selon la règle : `Major` (changement cassant / rupture de compatibilité des données locales), `Minor` (nouvelle fonctionnalité), `Patch` (correctif) [https://electronjs.org].
+- [ ] **Compatibilité des données locales** — Si le format de stockage local change (SQLite, IndexedDB, localStorage, fichiers de config), un script de migration/retro-compatibilité est inclus pour ne pas corrompre les données des utilisateurs existants lors de la mise à jour.
+- [ ] **Dépendances** — Aucun package externe (`npm install`) n'a été ajouté sans approbation explicite (attention au poids final de l'exécutable !).
 
 ## 🤖 Consignes pour la Revue de Code (`/code-review`)
 
