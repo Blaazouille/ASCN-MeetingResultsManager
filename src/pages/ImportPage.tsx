@@ -79,10 +79,17 @@ export default function ImportPage(): JSX.Element {
 
       {result && (
         <div className="rounded-lg bg-neutral-0 p-6 shadow-card">
-          <p className="mb-3 text-sm text-neutral-600">
-            {fileName}, encodage <span className="font-mono">{result.encoding}</span>, délimiteur{' '}
-            <span className="font-mono">&quot;{result.delimiter}&quot;</span>
-          </p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-neutral-800">{fileName}</p>
+            <div className="flex gap-1.5">
+              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-500">
+                {result.encoding}
+              </span>
+              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-500">
+                &quot;{result.delimiter}&quot;
+              </span>
+            </div>
+          </div>
           <StatBlock
             swimmerCount={result.swimmerCount}
             clubCount={result.clubCount}
