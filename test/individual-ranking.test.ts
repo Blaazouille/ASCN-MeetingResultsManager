@@ -5,7 +5,7 @@ import { parseCsv } from '../src/lib/csv-parser';
 import {
   computeIndividualRanking,
   detectGender,
-  filterByGender,
+  filterByCategory,
 } from '../src/lib/individual-ranking';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
@@ -70,24 +70,24 @@ describe('computeIndividualRanking', () => {
   });
 });
 
-describe('filterByGender', () => {
+describe('filterByCategory', () => {
   const rows = loadRows();
   const results = computeIndividualRanking(rows);
 
-  it('returns only female swimmers for gender F', () => {
-    const dames = filterByGender(results, 'F');
-    expect(dames.every((r) => r.gender === 'F')).toBe(true);
+  it('returns only swimmers from "Classement Dames"', () => {
+    const dames = filterByCategory(results, 'Classement Dames');
+    expect(dames.every((r) => r.category === 'Classement Dames')).toBe(true);
     expect(dames.length).toBeGreaterThan(0);
   });
 
-  it('returns only male swimmers for gender M', () => {
-    const messieurs = filterByGender(results, 'M');
-    expect(messieurs.every((r) => r.gender === 'M')).toBe(true);
+  it('returns only swimmers from "Classement Messieurs"', () => {
+    const messieurs = filterByCategory(results, 'Classement Messieurs');
+    expect(messieurs.every((r) => r.category === 'Classement Messieurs')).toBe(true);
     expect(messieurs.length).toBeGreaterThan(0);
   });
 
   it('re-ranks filtered results starting at 1', () => {
-    const dames = filterByGender(results, 'F');
+    const dames = filterByCategory(results, 'Classement Dames');
     dames.forEach((result, index) => {
       expect(result.rank).toBe(index + 1);
     });
