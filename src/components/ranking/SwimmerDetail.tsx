@@ -13,7 +13,7 @@ export interface SwimmerDetailProps {
 /** Sub-table shown when a club row is expanded: the topN retained swimmers. */
 export function SwimmerDetail({ swimmers }: SwimmerDetailProps): JSX.Element {
   return (
-    <table className="w-full text-xs">
+    <table className="w-full max-w-xl text-xs">
       <thead>
         <tr className="text-left uppercase tracking-wide text-neutral-500">
           <th className="w-10 py-1 text-center">Rang</th>

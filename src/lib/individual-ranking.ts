@@ -7,9 +7,6 @@ import type { RawSwimmerRow } from './csv-parser';
 
 export type Gender = 'F' | 'M' | null;
 
-export const GENDER_LABEL: Record<string, string> = { all: 'Toutes catégories', F: 'Dames', M: 'Messieurs' };
-export const GENDER_SLUG: Record<string, string> = { all: 'tous', F: 'dames', M: 'messieurs' };
-
 export interface IndividualResult {
   rank: number;
   lastname: string;
@@ -62,8 +59,8 @@ export function computeIndividualRanking(rows: RawSwimmerRow[]): IndividualResul
   }));
 }
 
-export function filterByGender(results: IndividualResult[], gender: 'F' | 'M'): IndividualResult[] {
+export function filterByCategory(results: IndividualResult[], category: string): IndividualResult[] {
   return results
-    .filter((r) => r.gender === gender)
+    .filter((r) => r.category === category)
     .map((r, index) => ({ ...r, rank: index + 1 }));
 }

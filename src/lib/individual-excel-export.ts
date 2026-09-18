@@ -5,24 +5,22 @@
  */
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
-import { GENDER_LABEL, GENDER_SLUG } from './individual-ranking';
-import type { GenderFilter } from '@/components/ranking/GenderTabs';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 
 export async function exportIndividualToExcel(
   meta: PrintMeta,
-  genderFilter: GenderFilter,
+  category: string,
   results: IndividualResult[]
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetLabel = GENDER_LABEL[genderFilter] ?? genderFilter;
+  const sheetLabel = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
   const sheet = workbook.addWorksheet(sheetLabel);
 
-  const showCategory = genderFilter === 'all';
+  const showCategory = category === 'Tous';
 
   const columns: Partial<ExcelJS.Column>[] = [
     { header: 'Rang', key: 'rank', width: 8 },
@@ -58,6 +56,6 @@ export async function exportIndividualToExcel(
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
   const today = new Date().toISOString().slice(0, 10);
-  const slug = GENDER_SLUG[genderFilter] ?? genderFilter;
+  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
   downloadBlob(blob, `classement-individuel-${slug}-${today}.xlsx`);
 }

@@ -53,15 +53,15 @@ export function IndividualRankingTable({ results, prizeCount, showCategory }: In
           {search.trim() ? 'Aucun nageur ne correspond à la recherche.' : 'Aucun résultat individuel.'}
         </p>
       ) : (
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-neutral-500">
-              <th className="px-3 py-2">Rang</th>
-              <th className="px-3 py-2">Nom</th>
-              <th className="px-3 py-2">Année</th>
-              <th className="px-3 py-2">Club</th>
-              <th className="px-3 py-2">Points</th>
-              {showCategory && <th className="px-3 py-2">Catégorie</th>}
+              <th className="w-[14%] px-3 py-2">Rang</th>
+              <th className="w-[25%] px-3 py-2">Nom</th>
+              <th className="w-[9%] px-3 py-2">Année</th>
+              <th className="w-[38%] px-3 py-2">Club</th>
+              <th className="w-[14%] px-3 py-2">Points</th>
+              {showCategory && <th className="w-[16%] px-3 py-2">Catégorie</th>}
             </tr>
           </thead>
           <tbody>

@@ -11,23 +11,19 @@ import { computeFunAwards } from '@/lib/fun-awards';
 import { FunAwardsGrid } from '@/components/ranking/FunAwardsGrid';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 
-const ALL_TAB = 'Tous';
-
 export default function PalmaresPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
-  const [activeCategory, setActiveCategory] = useState<string>(ALL_TAB);
+  const [activeCategory, setActiveCategory] = useState('');
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, isLoading, error } = useMeetingRows(meetingId);
+  const { rows, categories, isLoading, error } = useMeetingRows(meetingId);
 
-  const tabs = useMemo(
-    () => [ALL_TAB, ...[...new Set(rows.map((r) => r.name))].sort()],
-    [rows]
-  );
+  // Default to first available category; keep selection if still valid.
+  const currentTab = categories.includes(activeCategory) ? activeCategory : (categories[0] ?? '');
 
   const filteredRows = useMemo(
-    () => (activeCategory === ALL_TAB ? rows : rows.filter((r) => r.name === activeCategory)),
-    [rows, activeCategory]
+    () => rows.filter((r) => r.name === currentTab),
+    [rows, currentTab]
   );
 
   const awards = useMemo(() => computeFunAwards(filteredRows), [filteredRows]);
@@ -45,7 +41,7 @@ export default function PalmaresPage(): JSX.Element {
         <p className="text-neutral-600">{meeting.name}</p>
       </header>
 
-      <CategoryTabs categories={tabs} active={activeCategory} onChange={setActiveCategory} />
+      <CategoryTabs categories={categories} active={currentTab} onChange={setActiveCategory} />
 
       {awards.length === 0 ? (
         <p className="text-sm text-neutral-600">Aucun prix disponible pour cette catégorie.</p>
