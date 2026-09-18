@@ -5,8 +5,10 @@
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
+import { FileSpreadsheet, FileText } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
+import { useIndividualExport } from '@/hooks/use-individual-export';
 import { computeIndividualRanking, filterByGender } from '@/lib/individual-ranking';
 import { GenderTabs, type GenderFilter } from '@/components/ranking/GenderTabs';
 import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTable';
@@ -17,6 +19,7 @@ const PRIZE_COUNT = 2;
 export default function IndividualPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
+  const { isExporting, error: exportError, exportPdf, exportExcel } = useIndividualExport();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
   const { rows, isLoading, error } = useMeetingRows(meetingId);
@@ -38,13 +41,41 @@ export default function IndividualPage(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-primary-800">Classement individuel</h1>
-        <p className="text-neutral-600">{meeting.name}</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-primary-800">Classement individuel</h1>
+          <p className="text-neutral-600">{meeting.name}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => void exportPdf(meeting, genderFilter, displayedResults)}
+            disabled={isExporting || displayedResults.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-0 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-card transition-colors duration-150 hover:bg-neutral-50 disabled:opacity-50"
+          >
+            <FileText className="h-4 w-4" aria-hidden />
+            PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportExcel(meeting, genderFilter, displayedResults)}
+            disabled={isExporting || displayedResults.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-0 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-card transition-colors duration-150 hover:bg-neutral-50 disabled:opacity-50"
+          >
+            <FileSpreadsheet className="h-4 w-4" aria-hidden />
+            Excel
+          </button>
+        </div>
       </header>
 
+      {exportError && <p className="text-sm text-error">{exportError}</p>}
+
       <GenderTabs active={genderFilter} onChange={setGenderFilter} />
-      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} />
+      <IndividualRankingTable
+        results={displayedResults}
+        prizeCount={PRIZE_COUNT}
+        showCategory={genderFilter === 'all'}
+      />
     </div>
   );
 }
