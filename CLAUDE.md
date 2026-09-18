@@ -267,6 +267,7 @@ TESTING
 WORKFLOW
 - Every change must go through a Pull Request — no direct commits to main.
 - Before merging any PR, run /code-review via a fresh isolated agent (no context from the current session).
+- Every PR must explicitly validate the three principles: DRY (no duplication), YAGNI (no unused/speculative code), KISS (simplest solution that works). Block merge if any principle is violated.
 - All user-facing text (UI labels, error messages, tooltips, copy) must pass through the /humanizer skill before being shipped.
 ```
 
