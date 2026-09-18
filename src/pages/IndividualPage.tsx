@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
-import { FileSpreadsheet, FileText } from 'lucide-react';
+import { Download, FileSpreadsheet } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
@@ -51,19 +51,19 @@ export default function IndividualPage(): JSX.Element {
             type="button"
             onClick={() => void exportPdf(meeting, genderFilter, displayedResults)}
             disabled={isExporting || displayedResults.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-0 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-card transition-colors duration-150 hover:bg-neutral-50 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100 disabled:opacity-60"
           >
-            <FileText className="h-4 w-4" aria-hidden />
-            PDF
+            <Download className="h-4 w-4" aria-hidden />
+            Export PDF
           </button>
           <button
             type="button"
             onClick={() => void exportExcel(meeting, genderFilter, displayedResults)}
             disabled={isExporting || displayedResults.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-0 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-card transition-colors duration-150 hover:bg-neutral-50 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md bg-secondary-600 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
           >
             <FileSpreadsheet className="h-4 w-4" aria-hidden />
-            Excel
+            Export Excel
           </button>
         </div>
       </header>
