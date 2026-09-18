@@ -117,6 +117,18 @@ describe('computeFunAwards edge cases', () => {
     expect(awards.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('photo-finish shows ex-aequo text when gap is zero', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Mixte', place: 1, lastname: 'A', firstname: 'B', birthyear: 1990, nation: 'FRA', club: 'CLUB A', points: 1000, comment: '' },
+      { name: 'Classement Mixte', place: 2, lastname: 'C', firstname: 'D', birthyear: 1991, nation: 'FRA', club: 'CLUB B', points: 1000, comment: '' },
+      { name: 'Classement Mixte', place: 3, lastname: 'E', firstname: 'F', birthyear: 1992, nation: 'FRA', club: 'CLUB C', points: 800, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const photo = awards.find((a) => a.id === 'photo-finish');
+    expect(photo).toBeDefined();
+    expect(photo!.winner.detail).toContain('Ex æquo');
+  });
+
   it('omits loup-solitaire when all swimmers share the same club', () => {
     const rows: RawSwimmerRow[] = [
       { name: 'Classement Mixte', place: 1, lastname: 'A', firstname: 'B', birthyear: 1990, nation: 'FRA', club: 'SAME', points: 800, comment: '' },

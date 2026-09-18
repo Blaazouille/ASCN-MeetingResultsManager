@@ -128,7 +128,9 @@ function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
     winner: {
       name: `${formatName(pairA)} et ${formatName(pairB)}`,
       club: pairA.club === pairB.club ? pairA.club : `${pairA.club} / ${pairB.club}`,
-      detail: `Seulement ${minGap} pt${minGap !== 1 ? 's' : ''} d'écart (${pairA.points} vs ${pairB.points})`,
+      detail: minGap === 0
+        ? `Ex æquo ! (${pairA.points} pts chacun)`
+        : `Seulement ${minGap} pt${minGap !== 1 ? 's' : ''} d'écart (${pairA.points} vs ${pairB.points})`,
     },
   };
 }
