@@ -32,6 +32,14 @@ export interface TeamRankingTableProps {
 
 const columnHelper = createColumnHelper<TeamResult>();
 
+const COLUMN_WIDTHS: Record<string, string> = {
+  rank: 'w-[8%]',
+  club: 'w-[58%]',
+  totalPoints: 'w-[14%]',
+  swimmerBadge: 'w-[13%]',
+  expand: 'w-[7%]',
+};
+
 /**
  * Rank/club/points/swimmer-count columns — independent of expand state, so
  * they're memoized separately from the expand column to avoid rebuilding
@@ -153,12 +161,12 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
             : 'Aucun classement pour cette catégorie.'}
         </p>
       ) : (
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="text-left text-xs uppercase tracking-wide text-neutral-500">
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="px-3 py-2">
+                  <th key={header.id} className={cn('px-3 py-2', COLUMN_WIDTHS[header.id])}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}

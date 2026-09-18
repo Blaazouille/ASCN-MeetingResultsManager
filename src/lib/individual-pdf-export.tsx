@@ -5,8 +5,6 @@
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { IndividualResult } from './individual-ranking';
-import { GENDER_LABEL, GENDER_SLUG } from './individual-ranking';
-import type { GenderFilter } from '@/components/ranking/GenderTabs';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
@@ -31,13 +29,13 @@ const styles = StyleSheet.create({
 
 interface IndividualPdfDocumentProps {
   meta: PrintMeta;
-  genderFilter: GenderFilter;
+  category: string;
   results: IndividualResult[];
 }
 
-function IndividualPdfDocument({ meta, genderFilter, results }: IndividualPdfDocumentProps): JSX.Element {
-  const showCategory = genderFilter === 'all';
-  const subtitle = GENDER_LABEL[genderFilter] ?? genderFilter;
+function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumentProps): JSX.Element {
+  const showCategory = category === 'Tous';
+  const subtitle = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
 
   return (
     <Document>
@@ -87,11 +85,11 @@ function IndividualPdfDocument({ meta, genderFilter, results }: IndividualPdfDoc
 
 export async function exportIndividualToPdf(
   meta: PrintMeta,
-  genderFilter: GenderFilter,
+  category: string,
   results: IndividualResult[]
 ): Promise<void> {
-  const blob = await pdf(<IndividualPdfDocument meta={meta} genderFilter={genderFilter} results={results} />).toBlob();
+  const blob = await pdf(<IndividualPdfDocument meta={meta} category={category} results={results} />).toBlob();
   const today = new Date().toISOString().slice(0, 10);
-  const slug = GENDER_SLUG[genderFilter] ?? genderFilter;
+  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
   downloadBlob(blob, `classement-individuel-${slug}-${today}.pdf`);
 }
