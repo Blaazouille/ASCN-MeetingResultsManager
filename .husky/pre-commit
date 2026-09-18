@@ -1,0 +1,24 @@
+#!/bin/sh
+# Blocks commits when a staged source file exceeds 300 lines.
+# Rule: .ai/pull-request.md > Architecture & Limites
+
+MAX_LINES=300
+FAILED=0
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|css)$' || true)
+
+for FILE in $STAGED; do
+  [ -f "$FILE" ] || continue
+  LINE_COUNT=$(wc -l < "$FILE")
+  if [ "$LINE_COUNT" -gt "$MAX_LINES" ]; then
+    echo "BLOCKED: $FILE has $LINE_COUNT lines (limit: $MAX_LINES)"
+    FAILED=1
+  fi
+done
+
+if [ "$FAILED" -eq 1 ]; then
+  echo ""
+  echo "Commit blocked -- split oversized files before committing."
+  echo "See: .ai/pull-request.md > Architecture & Limites"
+  exit 1
+fi
