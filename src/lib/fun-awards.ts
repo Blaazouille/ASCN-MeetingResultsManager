@@ -22,6 +22,7 @@ interface UniqueSwimmer {
   birthyear: number;
   club: string;
   points: number;
+  category: string;
 }
 
 function deduplicateSwimmers(rows: RawSwimmerRow[]): UniqueSwimmer[] {
@@ -36,6 +37,7 @@ function deduplicateSwimmers(rows: RawSwimmerRow[]): UniqueSwimmer[] {
         birthyear: row.birthyear,
         club: row.club,
         points: row.points,
+        category: row.name,
       });
     }
   }
@@ -107,20 +109,29 @@ function findLoupSolitaire(swimmers: UniqueSwimmer[]): FunAward | null {
   };
 }
 
+function categoryLabel(cat: string): string {
+  return cat.replace(/^Classement\s+/i, '');
+}
+
 function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
   if (swimmers.length < 2) return null;
   const sorted = [...swimmers].sort((a, b) => b.points - a.points);
   let minGap = Infinity;
-  let pairA = sorted[0]!;
-  let pairB = sorted[1]!;
+  let minIdx = 0;
   for (let i = 0; i < sorted.length - 1; i++) {
     const gap = sorted[i]!.points - sorted[i + 1]!.points;
-    if (gap < minGap && gap >= 0) {
+    if (gap < minGap) {
       minGap = gap;
-      pairA = sorted[i]!;
-      pairB = sorted[i + 1]!;
+      minIdx = i;
     }
   }
+  const pairA = sorted[minIdx]!;
+  const pairB = sorted[minIdx + 1]!;
+  const rankA = minIdx + 1;
+  const rankB = minIdx + 2;
+  const catA = categoryLabel(pairA.category);
+  const catB = categoryLabel(pairB.category);
+  const catDetail = catA === catB ? catA : `${catA} / ${catB}`;
   return {
     id: 'photo-finish',
     title: 'Le Photo-Finish',
@@ -129,8 +140,8 @@ function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
       name: `${formatName(pairA)} et ${formatName(pairB)}`,
       club: pairA.club === pairB.club ? pairA.club : `${pairA.club} / ${pairB.club}`,
       detail: minGap === 0
-        ? `Ex æquo ! (${pairA.points} pts chacun)`
-        : `Seulement ${minGap} pt${minGap !== 1 ? 's' : ''} d'écart (${pairA.points} vs ${pairB.points})`,
+        ? `Ex æquo au rang ${rankA} — ${pairA.points} pts (${catDetail})`
+        : `${minGap} pt${minGap !== 1 ? 's' : ''} d'écart — rangs ${rankA} et ${rankB} (${pairA.points} vs ${pairB.points}, ${catDetail})`,
     },
   };
 }

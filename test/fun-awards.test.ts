@@ -127,6 +127,8 @@ describe('computeFunAwards edge cases', () => {
     const photo = awards.find((a) => a.id === 'photo-finish');
     expect(photo).toBeDefined();
     expect(photo!.winner.detail).toContain('Ex æquo');
+    expect(photo!.winner.detail).toContain('rang 1');
+    expect(photo!.winner.detail).toContain('1000 pts');
   });
 
   it('omits loup-solitaire when all swimmers share the same club', () => {
