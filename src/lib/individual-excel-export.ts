@@ -5,24 +5,14 @@
  */
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
+import { GENDER_LABEL, GENDER_SLUG } from './individual-ranking';
+import type { GenderFilter } from '@/components/ranking/GenderTabs';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 
-const GENDER_LABEL: Record<string, string> = {
-  all: 'Tous',
-  F: 'Dames',
-  M: 'Messieurs',
-};
-
-const GENDER_SLUG: Record<string, string> = {
-  all: 'tous',
-  F: 'dames',
-  M: 'messieurs',
-};
-
 export async function exportIndividualToExcel(
   meta: PrintMeta,
-  genderFilter: string,
+  genderFilter: GenderFilter,
   results: IndividualResult[]
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();

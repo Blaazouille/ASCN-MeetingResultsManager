@@ -15,7 +15,6 @@ function formatSwimmerList(team: TeamResult): string {
   return team.swimmers.map((swimmer) => `${swimmer.lastname} ${swimmer.firstname}`).join(', ');
 }
 
-/** Builds the ranking workbook and returns its raw bytes, without triggering a download. */
 export async function buildRankingWorkbookBuffer(
   meta: PrintMeta,
   category: string,

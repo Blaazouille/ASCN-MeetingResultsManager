@@ -5,6 +5,8 @@
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { IndividualResult } from './individual-ranking';
+import { GENDER_LABEL, GENDER_SLUG } from './individual-ranking';
+import type { GenderFilter } from '@/components/ranking/GenderTabs';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
@@ -27,25 +29,13 @@ const styles = StyleSheet.create({
   footer: { marginTop: 24, fontSize: 9, color: '#5B6B7D', flexDirection: 'row', justifyContent: 'space-between' },
 });
 
-const GENDER_LABEL: Record<string, string> = {
-  all: 'Toutes catégories',
-  F: 'Dames',
-  M: 'Messieurs',
-};
-
-const GENDER_SLUG: Record<string, string> = {
-  all: 'tous',
-  F: 'dames',
-  M: 'messieurs',
-};
-
-export interface IndividualPdfDocumentProps {
+interface IndividualPdfDocumentProps {
   meta: PrintMeta;
-  genderFilter: string;
+  genderFilter: GenderFilter;
   results: IndividualResult[];
 }
 
-export function IndividualPdfDocument({ meta, genderFilter, results }: IndividualPdfDocumentProps): JSX.Element {
+function IndividualPdfDocument({ meta, genderFilter, results }: IndividualPdfDocumentProps): JSX.Element {
   const showCategory = genderFilter === 'all';
   const subtitle = GENDER_LABEL[genderFilter] ?? genderFilter;
 
@@ -97,7 +87,7 @@ export function IndividualPdfDocument({ meta, genderFilter, results }: Individua
 
 export async function exportIndividualToPdf(
   meta: PrintMeta,
-  genderFilter: string,
+  genderFilter: GenderFilter,
   results: IndividualResult[]
 ): Promise<void> {
   const blob = await pdf(<IndividualPdfDocument meta={meta} genderFilter={genderFilter} results={results} />).toBlob();

@@ -9,19 +9,20 @@ import { exportIndividualToPdf } from '@/lib/individual-pdf-export';
 import { exportIndividualToExcel } from '@/lib/individual-excel-export';
 import type { Meeting } from '@/lib/db';
 import type { IndividualResult } from '@/lib/individual-ranking';
+import type { GenderFilter } from '@/components/ranking/GenderTabs';
 
 export interface UseIndividualExportResult {
   isExporting: boolean;
   error: string | null;
-  exportPdf: (meeting: Meeting, genderFilter: string, results: IndividualResult[]) => Promise<void>;
-  exportExcel: (meeting: Meeting, genderFilter: string, results: IndividualResult[]) => Promise<void>;
+  exportPdf: (meeting: Meeting, genderFilter: GenderFilter, results: IndividualResult[]) => Promise<void>;
+  exportExcel: (meeting: Meeting, genderFilter: GenderFilter, results: IndividualResult[]) => Promise<void>;
 }
 
 export function useIndividualExport(): UseIndividualExportResult {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function exportPdf(meeting: Meeting, genderFilter: string, results: IndividualResult[]): Promise<void> {
+  async function exportPdf(meeting: Meeting, genderFilter: GenderFilter, results: IndividualResult[]): Promise<void> {
     setIsExporting(true);
     setError(null);
     try {
@@ -33,7 +34,7 @@ export function useIndividualExport(): UseIndividualExportResult {
     }
   }
 
-  async function exportExcel(meeting: Meeting, genderFilter: string, results: IndividualResult[]): Promise<void> {
+  async function exportExcel(meeting: Meeting, genderFilter: GenderFilter, results: IndividualResult[]): Promise<void> {
     setIsExporting(true);
     setError(null);
     try {

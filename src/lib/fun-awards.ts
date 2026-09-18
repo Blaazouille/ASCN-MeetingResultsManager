@@ -4,6 +4,7 @@
  * Suppression casserait : la section "Palmarès des rigolos".
  */
 import type { RawSwimmerRow } from './csv-parser';
+import { detectGender } from './individual-ranking';
 
 export interface FunAward {
   id: string;
@@ -48,18 +49,12 @@ function formatName(s: UniqueSwimmer): string {
   return `${s.lastname} ${s.firstname}`;
 }
 
-function swimmerGender(s: UniqueSwimmer): 'F' | 'M' | null {
-  if (/dames/i.test(s.category)) return 'F';
-  if (/messieurs/i.test(s.category)) return 'M';
-  return null;
-}
-
 function findDoyen(swimmers: UniqueSwimmer[]): FunAward | null {
   const valid = swimmers.filter((s) => s.birthyear > 0);
   if (valid.length === 0) return null;
   const oldest = valid.reduce((a, b) => (a.birthyear < b.birthyear ? a : b));
   const age = new Date().getFullYear() - oldest.birthyear;
-  const isFemale = swimmerGender(oldest) === 'F';
+  const isFemale = detectGender(oldest.category) === 'F';
   return {
     id: 'doyen',
     title: isFemale ? 'La Doyenne' : 'Le Doyen',
@@ -77,7 +72,7 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
   if (valid.length === 0) return null;
   const youngest = valid.reduce((a, b) => (a.birthyear > b.birthyear ? a : b));
   const age = new Date().getFullYear() - youngest.birthyear;
-  const isFemale = swimmerGender(youngest) === 'F';
+  const isFemale = detectGender(youngest.category) === 'F';
   return {
     id: 'releve',
     title: 'La Relève',

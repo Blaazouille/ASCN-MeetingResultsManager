@@ -7,6 +7,9 @@ import type { RawSwimmerRow } from './csv-parser';
 
 export type Gender = 'F' | 'M' | null;
 
+export const GENDER_LABEL: Record<string, string> = { all: 'Toutes catégories', F: 'Dames', M: 'Messieurs' };
+export const GENDER_SLUG: Record<string, string> = { all: 'tous', F: 'dames', M: 'messieurs' };
+
 export interface IndividualResult {
   rank: number;
   lastname: string;
