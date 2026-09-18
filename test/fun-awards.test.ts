@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : tests du moteur de prix humoristiques.
+ * Appelé par : Vitest.
+ * Suppression casserait : la couverture de fun-awards.ts.
+ */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -67,19 +72,29 @@ describe('computeFunAwards', () => {
     }
   });
 
-  it('regulier finds the swimmer closest to the average', () => {
-    const regulier = findAward(awards, 'regulier');
-    expect(regulier).toBeDefined();
-  });
-
-  it('armada finds the club with the most swimmers', () => {
-    const armada = findAward(awards, 'armada');
-    expect(armada).toBeDefined();
-  });
-
   it('photo-finish finds the smallest point gap', () => {
     const photo = findAward(awards, 'photo-finish');
     expect(photo).toBeDefined();
+  });
+
+  it('club-anciens finds the club with the highest average age (≥3 swimmers)', () => {
+    const anciens = findAward(awards, 'club-anciens');
+    expect(anciens).toBeDefined();
+    expect(anciens!.winner.detail).toMatch(/Moyenne d'âge : \d+ ans \(\d+ nageurs\)/);
+  });
+
+  it('jeune-garde finds the club with the lowest average age (≥3 swimmers)', () => {
+    const jeune = findAward(awards, 'jeune-garde');
+    expect(jeune).toBeDefined();
+    expect(jeune!.winner.detail).toMatch(/Moyenne d'âge : \d+ ans \(\d+ nageurs\)/);
+  });
+
+  it('club-anciens and jeune-garde are different clubs', () => {
+    const anciens = findAward(awards, 'club-anciens');
+    const jeune = findAward(awards, 'jeune-garde');
+    if (anciens && jeune) {
+      expect(anciens.winner.club).not.toBe(jeune.winner.club);
+    }
   });
 });
 
@@ -110,5 +125,35 @@ describe('computeFunAwards edge cases', () => {
     const awards = computeFunAwards(rows);
     const loup = findAward(awards, 'loup-solitaire');
     expect(loup).toBeUndefined();
+  });
+
+  it('omits club-anciens and jeune-garde when no club has 3 or more swimmers', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Mixte', place: 1, lastname: 'A', firstname: 'B', birthyear: 1980, nation: 'FRA', club: 'CLUB A', points: 900, comment: '' },
+      { name: 'Classement Mixte', place: 2, lastname: 'C', firstname: 'D', birthyear: 1990, nation: 'FRA', club: 'CLUB A', points: 800, comment: '' },
+      { name: 'Classement Mixte', place: 3, lastname: 'E', firstname: 'F', birthyear: 2000, nation: 'FRA', club: 'CLUB B', points: 700, comment: '' },
+      { name: 'Classement Mixte', place: 4, lastname: 'G', firstname: 'H', birthyear: 2005, nation: 'FRA', club: 'CLUB B', points: 600, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    expect(findAward(awards, 'club-anciens')).toBeUndefined();
+    expect(findAward(awards, 'jeune-garde')).toBeUndefined();
+  });
+
+  it('includes club-anciens and jeune-garde when at least one club has 3+ swimmers', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Mixte', place: 1, lastname: 'A', firstname: 'B', birthyear: 1970, nation: 'FRA', club: 'OLD CLUB', points: 900, comment: '' },
+      { name: 'Classement Mixte', place: 2, lastname: 'C', firstname: 'D', birthyear: 1972, nation: 'FRA', club: 'OLD CLUB', points: 800, comment: '' },
+      { name: 'Classement Mixte', place: 3, lastname: 'E', firstname: 'F', birthyear: 1975, nation: 'FRA', club: 'OLD CLUB', points: 700, comment: '' },
+      { name: 'Classement Mixte', place: 4, lastname: 'G', firstname: 'H', birthyear: 2005, nation: 'FRA', club: 'YOUNG CLUB', points: 600, comment: '' },
+      { name: 'Classement Mixte', place: 5, lastname: 'I', firstname: 'J', birthyear: 2007, nation: 'FRA', club: 'YOUNG CLUB', points: 500, comment: '' },
+      { name: 'Classement Mixte', place: 6, lastname: 'K', firstname: 'L', birthyear: 2008, nation: 'FRA', club: 'YOUNG CLUB', points: 400, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const anciens = findAward(awards, 'club-anciens');
+    const jeune = findAward(awards, 'jeune-garde');
+    expect(anciens).toBeDefined();
+    expect(anciens!.winner.club).toBe('OLD CLUB');
+    expect(jeune).toBeDefined();
+    expect(jeune!.winner.club).toBe('YOUNG CLUB');
   });
 });

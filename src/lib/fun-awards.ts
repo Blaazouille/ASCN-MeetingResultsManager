@@ -133,53 +133,81 @@ function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
   };
 }
 
-function findRegulier(swimmers: UniqueSwimmer[]): FunAward | null {
-  if (swimmers.length === 0) return null;
-  const avg = swimmers.reduce((sum, s) => sum + s.points, 0) / swimmers.length;
-  const closest = swimmers.reduce((a, b) =>
-    Math.abs(a.points - avg) < Math.abs(b.points - avg) ? a : b
-  );
+const MIN_CLUB_SIZE = 3;
+
+function groupByClub(swimmers: UniqueSwimmer[]): Map<string, UniqueSwimmer[]> {
+  const clubs = new Map<string, UniqueSwimmer[]>();
+  for (const s of swimmers) {
+    const list = clubs.get(s.club);
+    if (list) list.push(s);
+    else clubs.set(s.club, [s]);
+  }
+  return clubs;
+}
+
+function findClubAnciens(swimmers: UniqueSwimmer[]): FunAward | null {
+  const currentYear = new Date().getFullYear();
+  const clubs = groupByClub(swimmers);
+  let bestClub = '';
+  let bestAvgAge = -Infinity;
+  let bestCount = 0;
+
+  for (const [club, members] of clubs) {
+    const valid = members.filter((s) => s.birthyear > 0);
+    if (valid.length < MIN_CLUB_SIZE) continue;
+    const avgAge = valid.reduce((sum, s) => sum + (currentYear - s.birthyear), 0) / valid.length;
+    if (avgAge > bestAvgAge) {
+      bestAvgAge = avgAge;
+      bestClub = club;
+      bestCount = valid.length;
+    }
+  }
+  if (!bestClub) return null;
   return {
-    id: 'regulier',
-    title: 'Le Régulier',
-    emoji: '📏',
+    id: 'club-anciens',
+    title: 'Le Club des Anciens',
+    emoji: '🧓',
     winner: {
-      name: formatName(closest),
-      club: closest.club,
-      detail: `${closest.points} pts (moyenne : ${Math.round(avg)} pts)`,
+      name: bestClub,
+      club: bestClub,
+      detail: `Moyenne d'âge : ${Math.round(bestAvgAge)} ans (${bestCount} nageurs)`,
     },
   };
 }
 
-function findArmada(swimmers: UniqueSwimmer[]): FunAward | null {
-  if (swimmers.length === 0) return null;
-  const clubCounts = new Map<string, number>();
-  for (const s of swimmers) {
-    clubCounts.set(s.club, (clubCounts.get(s.club) ?? 0) + 1);
-  }
-  let maxClub = '';
-  let maxCount = 0;
-  for (const [club, count] of clubCounts) {
-    if (count > maxCount) {
-      maxClub = club;
-      maxCount = count;
+function findJeuneGarde(swimmers: UniqueSwimmer[]): FunAward | null {
+  const currentYear = new Date().getFullYear();
+  const clubs = groupByClub(swimmers);
+  let bestClub = '';
+  let bestAvgAge = Infinity;
+  let bestCount = 0;
+
+  for (const [club, members] of clubs) {
+    const valid = members.filter((s) => s.birthyear > 0);
+    if (valid.length < MIN_CLUB_SIZE) continue;
+    const avgAge = valid.reduce((sum, s) => sum + (currentYear - s.birthyear), 0) / valid.length;
+    if (avgAge < bestAvgAge) {
+      bestAvgAge = avgAge;
+      bestClub = club;
+      bestCount = valid.length;
     }
   }
+  if (!bestClub) return null;
   return {
-    id: 'armada',
-    title: "L'Armada",
-    emoji: '⚓',
+    id: 'jeune-garde',
+    title: 'La Jeune Garde',
+    emoji: '🐣',
     winner: {
-      name: maxClub,
-      club: maxClub,
-      detail: `${maxCount} nageur${maxCount > 1 ? 's' : ''} inscrits`,
+      name: bestClub,
+      club: bestClub,
+      detail: `Moyenne d'âge : ${Math.round(bestAvgAge)} ans (${bestCount} nageurs)`,
     },
   };
 }
 
 export function computeFunAwards(rows: RawSwimmerRow[]): FunAward[] {
   const swimmers = deduplicateSwimmers(rows);
-  const finders = [findDoyen, findReleve, findLoupSolitaire, findPhotoFinish, findRegulier, findArmada];
+  const finders = [findDoyen, findReleve, findLoupSolitaire, findPhotoFinish, findClubAnciens, findJeuneGarde];
   const awards: FunAward[] = [];
   for (const finder of finders) {
     const award = finder(swimmers);
