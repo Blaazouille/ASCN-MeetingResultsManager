@@ -4,7 +4,7 @@
  * Suppression casserait : la navigation entre écrans.
  */
 import { NavLink } from 'react-router-dom';
-import { Home, Settings, Trophy, Upload, Users } from 'lucide-react';
+import { Award, Home, Settings, Trophy, Upload, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ALWAYS_VISIBLE = [{ to: '/', label: 'Accueil', icon: Home }] as const;
@@ -13,6 +13,7 @@ const MEETING_ITEMS = [
   { to: '/import', label: 'Import', icon: Upload },
   { to: '/classement', label: 'Classement', icon: Trophy },
   { to: '/individuels', label: 'Individuels', icon: Users },
+  { to: '/palmares', label: 'Palmarès', icon: Award },
   { to: '/parametres', label: 'Paramètres', icon: Settings },
 ] as const;
 

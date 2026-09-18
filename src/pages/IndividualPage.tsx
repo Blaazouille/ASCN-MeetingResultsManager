@@ -1,5 +1,5 @@
 /**
- * Responsabilité : page du classement individuel et des prix rigolos.
+ * Responsabilité : page du classement individuel (tous nageurs, filtre par genre).
  * Appelé par : App.tsx (route /individuels).
  * Suppression casserait : l'écran de classement individuel.
  */
@@ -8,10 +8,8 @@ import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { computeIndividualRanking, filterByGender } from '@/lib/individual-ranking';
-import { computeFunAwards } from '@/lib/fun-awards';
 import { GenderTabs, type GenderFilter } from '@/components/ranking/GenderTabs';
 import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTable';
-import { FunAwardsGrid } from '@/components/ranking/FunAwardsGrid';
 
 /** Number of top swimmers highlighted with a prize badge (1er Prix, 2e Prix…). */
 const PRIZE_COUNT = 2;
@@ -32,10 +30,6 @@ export default function IndividualPage(): JSX.Element {
     [allResults, genderFilter]
   );
 
-  // Fun awards are always computed from the full dataset regardless of the
-  // gender filter — they make sense only as a global view.
-  const awards = useMemo(() => computeFunAwards(rows), [rows]);
-
   const meeting = meetingState.currentMeeting;
   if (!meeting) return <Navigate to="/" replace />;
   if (isLoading) return <p className="text-neutral-600">Chargement…</p>;
@@ -51,14 +45,6 @@ export default function IndividualPage(): JSX.Element {
 
       <GenderTabs active={genderFilter} onChange={setGenderFilter} />
       <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} />
-
-      {/* Fun awards are shown only in the "Tous" view to avoid partial context */}
-      {genderFilter === 'all' && awards.length > 0 && (
-        <>
-          <h2 className="text-xl font-bold text-primary-800">Palmarès des rigolos</h2>
-          <FunAwardsGrid awards={awards} />
-        </>
-      )}
     </div>
   );
 }
