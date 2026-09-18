@@ -235,6 +235,14 @@ npm run build:mac    # Build macOS (.dmg)
 | 3 | Export PDF + Excel + aperçu impression | Exports fonctionnels |
 | 4 | SQLite + historique + packaging Electron | App installable |
 | 5 | Multi-classements, personnalisation, polish | Version complète |
+| 6 | Cleanup — suppression de l'impression, renommage `print-data.ts` → `export-data.ts`, en-têtes de fichiers, limite 300 lignes, docs vivantes | Base de code assainie |
+| 7 | UX polish — création de meeting simplifiée, sidebar/header fixes, masquage de la barre de menus Electron, lignes de tableau cliquables, renommage de l'app | Confort d'usage amélioré |
+| 8 | Classement individuel + palmarès des rigolos (récompenses humoristiques auto-générées) | Classement individuel affiché |
+| 9 | Versioning automatique (SemVer + release notes), installeur soigné (NSIS custom / DMG signé), auto-updater in-app | App distribuable et auto-maintenue |
+
+> Détail des phases 6-8 : `docs/archive/2026-09-16-phase-6-cleanup.md`, `docs/superpowers/plans/2026-09-16-phase-7-ux-polish.md`, `docs/superpowers/plans/2026-09-16-phase-8-individual-ranking.md`.
+>
+> **Phase 9** : à activer seulement quand une diffusion hors machine de dev devient nécessaire (plusieurs bénévoles/postes, mises à jour hors présence du mainteneur). Pas de valeur tant que l'app tourne sur un seul poste géré manuellement — voir `docs/architecture.md` pour le détail technique une fois lancée.
 
 ---
 
