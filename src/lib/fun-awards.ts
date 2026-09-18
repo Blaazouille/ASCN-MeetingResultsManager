@@ -48,19 +48,26 @@ function formatName(s: UniqueSwimmer): string {
   return `${s.lastname} ${s.firstname}`;
 }
 
+function swimmerGender(s: UniqueSwimmer): 'F' | 'M' | null {
+  if (/dames/i.test(s.category)) return 'F';
+  if (/messieurs/i.test(s.category)) return 'M';
+  return null;
+}
+
 function findDoyen(swimmers: UniqueSwimmer[]): FunAward | null {
   const valid = swimmers.filter((s) => s.birthyear > 0);
   if (valid.length === 0) return null;
   const oldest = valid.reduce((a, b) => (a.birthyear < b.birthyear ? a : b));
   const age = new Date().getFullYear() - oldest.birthyear;
+  const isFemale = swimmerGender(oldest) === 'F';
   return {
     id: 'doyen',
-    title: 'Le Doyen',
-    emoji: '👴',
+    title: isFemale ? 'La Doyenne' : 'Le Doyen',
+    emoji: isFemale ? '👵' : '👴',
     winner: {
       name: formatName(oldest),
       club: oldest.club,
-      detail: `Né(e) en ${oldest.birthyear} (${age} ans)`,
+      detail: `${isFemale ? 'Née' : 'Né'} en ${oldest.birthyear} (${age} ans)`,
     },
   };
 }
@@ -70,6 +77,7 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
   if (valid.length === 0) return null;
   const youngest = valid.reduce((a, b) => (a.birthyear > b.birthyear ? a : b));
   const age = new Date().getFullYear() - youngest.birthyear;
+  const isFemale = swimmerGender(youngest) === 'F';
   return {
     id: 'releve',
     title: 'La Relève',
@@ -77,7 +85,7 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
     winner: {
       name: formatName(youngest),
       club: youngest.club,
-      detail: `Né(e) en ${youngest.birthyear} (${age} ans)`,
+      detail: `${isFemale ? 'Née' : 'Né'} en ${youngest.birthyear} (${age} ans)`,
     },
   };
 }
