@@ -266,9 +266,7 @@ TESTING
 
 WORKFLOW
 - Every change must go through a Pull Request — no direct commits to main.
-- Before merging any PR, run /code-review via a fresh isolated agent (no context from the current session).
-- Every PR must explicitly validate the three principles: DRY (no duplication), YAGNI (no unused/speculative code), KISS (simplest solution that works). Block merge if any principle is violated.
-- All user-facing text (UI labels, error messages, tooltips, copy) must pass through the /humanizer skill before being shipped.
+- Full PR rules and merge checklist: see `.ai/pull-request.md`.
 ```
 
 ## AI Reference Files
@@ -281,6 +279,7 @@ Deeper rule sets live in `.ai/`. Load the relevant file when the task calls for 
 | `.ai/file-hygiene.md` | Creating new files, refactoring, or when a file is growing |
 | `.ai/testing.md` | Writing or reviewing tests |
 | `.ai/architecture.md` | Adding dependencies, creating new modules, structural decisions |
+| `.ai/pull-request.md` | Before opening or merging any PR |
 | `.ai/review-checklist.md` | Before any PR or code review |
 | `.ai/unfamiliar-stack.md` | When reviewing tech you don't master directly |
 | `.ai/PRINCIPLES.md` | Core principles — humans own "what/why", AI owns "how" |
