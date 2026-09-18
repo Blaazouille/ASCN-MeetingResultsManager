@@ -1,42 +1,39 @@
 # Pull Request Rules
 
-Règles obligatoires pour toute PR sur ce projet. Aucune merge sans validation complète.
+Règles obligatoires pour toute PR sur ce projet. Aucun merge sans validation complète.
 
-## Flux obligatoire
+## 🔄 Flux obligatoire
 
 1. Créer une branche depuis `main`
-2. Coder + commiter
-3. Ouvrir la PR
+2. Coder + commiter (utiliser des commits atomiques)
+3. Ouvrir la PR sur le dépôt
 4. Lancer `/code-review` via un **agent isolé, sans contexte de session**
-5. Corriger les findings bloquants
-6. Merger uniquement si toutes les cases ci-dessous sont cochées
+5. Corriger 100% des findings bloquants remontés par l'agent
+6. Merger uniquement si toute la checklist ci-dessous est validée
 
-## Checklist de validation
+## 📋 Checklist de validation
 
-### Code
+### ⚙️ Conception & Principes (KISS, DRY, YAGNI)
+- [ ] **DRY** — Aucune logique dupliquée. Toute duplication (≥ 3 lignes identiques) est extraite en fonction ou constante partagée.
+- [ ] **YAGNI** — Aucun code spéculatif, export inutilisé, abstraction prématurée ou structure "au cas où".
+- [ ] **KISS** — La solution la plus simple possible. Pas de généricité injustifiée, maximum 3 niveaux d'imbrication (if/loops) par fonction.
 
-- [ ] **DRY** — aucune logique dupliquée ; toute duplication est extraite en fonction ou constante partagée
-- [ ] **YAGNI** — aucun code spéculatif, export inutilisé, abstraction prématurée ou fonctionnalité non demandée
-- [ ] **KISS** — la solution la plus simple qui fonctionne ; pas de généricité injustifiée
+### 🛠️ Qualité & Validation Technique
+- [ ] `npm run test` passe à 100 %.
+- [ ] `npx tsc --noEmit` ne retourne aucune erreur.
+- [ ] **Aucun Dead Code** — Aucun import inutilisé, variable fantôme ou fonction orpheline.
+- [ ] **Documentation** — Chaque nouveau fichier possède son en-tête standardisé (Responsabilité, Appelant, Impact de suppression).
 
-### Qualité
+### 🎨 UI / Textes & Internationalisation
+- [ ] **Humanizer** — Tous les textes visibles par l'utilisateur ont été validés par le skill `/humanizer`.
+- [ ] **Règles linguistiques** — Les libellés, messages d'erreur et placeholders sont exclusivement en français, avec une typographie et ponctuation correctes.
 
-- [ ] `npm run test` passe à 100 %
-- [ ] `npx tsc --noEmit` ne retourne aucune erreur
-- [ ] Aucun dead code : imports inutilisés, variables non utilisées, fonctions orphelines
-- [ ] Chaque nouveau fichier a son commentaire d'en-tête (responsabilité, appelant, impact de suppression)
+### 📐 Architecture & Limites
+- [ ] **Taille** — Aucun fichier ne dépasse les 300 lignes de code.
+- [ ] **Responsabilité (SRP)** — Aucun fichier n'a acquis une seconde responsabilité ou une raison supplémentaire de changer.
+- [ ] **Dépendances** — Aucun package externe (`npm install`) n'a été ajouté sans approbation explicite de l'équipe.
 
-### UI / Textes
+## 🤖 Consignes pour la Revue de Code (`/code-review`)
 
-- [ ] Tous les textes visibles par l'utilisateur ont passé le skill `/humanizer`
-- [ ] Les libellés, messages d'erreur et copies sont en français avec ponctuation correcte
-
-### Architecture
-
-- [ ] Aucun fichier ne dépasse 300 lignes
-- [ ] Aucun fichier n'a acquis une deuxième responsabilité
-- [ ] Aucune dépendance ajoutée sans approbation explicite
-
-## Revue de code
-
-Lancer `/code-review` en début de revue avec un **agent frais** (pas de contexte de la session courante) pour garantir une lecture objective du diff. Traiter chaque finding avant merge.
+L'agent effectuant le `/code-review` doit impérativement démarrer sur une **session vierge** (sans historique de la phase de build).
+Son rôle est de valider point par point cette checklist sur le `git diff` fourni et de lister les manquements sous forme de tâches bloquantes.
