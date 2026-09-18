@@ -263,6 +263,11 @@ TESTING
 - All functions must be covered by tests.
 - Write tests that verify expected behavior, not implementation details.
 - Never write a test that only confirms what the code currently does — test what it should do per the spec.
+
+WORKFLOW
+- Every change must go through a Pull Request — no direct commits to main.
+- Before merging any PR, run /code-review via a fresh isolated agent (no context from the current session).
+- All user-facing text (UI labels, error messages, tooltips, copy) must pass through the /humanizer skill before being shipped.
 ```
 
 ## AI Reference Files
