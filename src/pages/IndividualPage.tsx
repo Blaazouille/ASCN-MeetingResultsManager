@@ -71,11 +71,7 @@ export default function IndividualPage(): JSX.Element {
 
       {exportError && <p className="text-sm text-error">{exportError}</p>}
 
-      <IndividualRankingTable
-        results={displayedResults}
-        prizeCount={PRIZE_COUNT}
-        showCategory={false}
-      />
+      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} />
     </div>
   );
 }

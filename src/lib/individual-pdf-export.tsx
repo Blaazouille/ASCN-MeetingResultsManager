@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
   year: { width: 46, textAlign: 'right' },
   club: { width: 150 },
   points: { width: 56, textAlign: 'right', fontWeight: 500 },
-  category: { width: 64, textAlign: 'right', color: '#5B6B7D' },
   headerCell: { fontSize: 8, textTransform: 'uppercase', color: '#5B6B7D' },
   footer: { marginTop: 24, fontSize: 9, color: '#5B6B7D', flexDirection: 'row', justifyContent: 'space-between' },
 });
@@ -34,8 +33,7 @@ interface IndividualPdfDocumentProps {
 }
 
 function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumentProps): JSX.Element {
-  const showCategory = category === 'Tous';
-  const subtitle = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
+  const subtitle = category.replace(/^Classement\s+/i, '');
 
   return (
     <Document>
@@ -54,7 +52,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
               <Text style={[styles.headerCell, styles.year]}>Née</Text>
               <Text style={[styles.headerCell, styles.club]}>Club</Text>
               <Text style={[styles.headerCell, styles.points]}>Points</Text>
-              {showCategory && <Text style={[styles.headerCell, styles.category]}>Catégorie</Text>}
             </View>
             {results.map((r) => (
               <View
@@ -66,9 +63,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
                 <Text style={styles.year}>{r.birthyear}</Text>
                 <Text style={styles.club}>{r.club}</Text>
                 <Text style={styles.points}>{formatPoints(r.points)}</Text>
-                {showCategory && (
-                  <Text style={styles.category}>{r.category.replace(/^Classement\s+/i, '')}</Text>
-                )}
               </View>
             ))}
           </View>
@@ -90,6 +84,6 @@ export async function exportIndividualToPdf(
 ): Promise<void> {
   const blob = await pdf(<IndividualPdfDocument meta={meta} category={category} results={results} />).toBlob();
   const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
+  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-');
   downloadBlob(blob, `classement-individuel-${slug}-${today}.pdf`);
 }

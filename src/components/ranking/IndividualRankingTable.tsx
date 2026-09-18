@@ -11,16 +11,9 @@ import type { IndividualResult } from '@/lib/individual-ranking';
 export interface IndividualRankingTableProps {
   results: IndividualResult[];
   prizeCount: number;
-  /** Hide the category column when already filtered to a single gender. */
-  showCategory: boolean;
 }
 
-/** Strips the "Classement " prefix for the badge, e.g. "Classement Mixte" → "Mixte". */
-function categoryBadgeLabel(category: string): string {
-  return category.replace(/^Classement\s+/i, '');
-}
-
-export function IndividualRankingTable({ results, prizeCount, showCategory }: IndividualRankingTableProps): JSX.Element {
+export function IndividualRankingTable({ results, prizeCount }: IndividualRankingTableProps): JSX.Element {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -61,7 +54,6 @@ export function IndividualRankingTable({ results, prizeCount, showCategory }: In
               <th className="w-[9%] px-3 py-2">Année</th>
               <th className="w-[38%] px-3 py-2">Club</th>
               <th className="w-[14%] px-3 py-2">Points</th>
-              {showCategory && <th className="w-[16%] px-3 py-2">Catégorie</th>}
             </tr>
           </thead>
           <tbody>
@@ -108,15 +100,6 @@ export function IndividualRankingTable({ results, prizeCount, showCategory }: In
                 <td className="px-3 py-2 font-mono tabular-nums text-neutral-900">
                   {formatPoints(r.points)}
                 </td>
-
-                {/* Category badge — hidden when already filtered to one gender */}
-                {showCategory && (
-                  <td className="px-3 py-2">
-                    <span className="rounded-sm bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                      {categoryBadgeLabel(r.category)}
-                    </span>
-                  </td>
-                )}
               </tr>
             ))}
           </tbody>

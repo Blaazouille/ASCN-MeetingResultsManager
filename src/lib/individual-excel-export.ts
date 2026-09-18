@@ -17,10 +17,8 @@ export async function exportIndividualToExcel(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetLabel = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
+  const sheetLabel = category.replace(/^Classement\s+/i, '');
   const sheet = workbook.addWorksheet(sheetLabel);
-
-  const showCategory = category === 'Tous';
 
   const columns: Partial<ExcelJS.Column>[] = [
     { header: 'Rang', key: 'rank', width: 8 },
@@ -30,25 +28,18 @@ export async function exportIndividualToExcel(
     { header: 'Club', key: 'club', width: 36 },
     { header: 'Points', key: 'points', width: 10 },
   ];
-  if (showCategory) {
-    columns.push({ header: 'Catégorie', key: 'category', width: 16 });
-  }
   sheet.columns = columns as ExcelJS.Column[];
   sheet.getRow(1).font = { bold: true };
 
   for (const r of results) {
-    const row: Record<string, unknown> = {
+    sheet.addRow({
       rank: r.rank,
       lastname: r.lastname,
       firstname: r.firstname,
       birthyear: r.birthyear,
       club: r.club,
       points: r.points,
-    };
-    if (showCategory) {
-      row['category'] = r.category.replace(/^Classement\s+/i, '');
-    }
-    sheet.addRow(row);
+    });
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
@@ -56,6 +47,6 @@ export async function exportIndividualToExcel(
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
   const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
+  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-');
   downloadBlob(blob, `classement-individuel-${slug}-${today}.xlsx`);
 }
