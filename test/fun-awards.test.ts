@@ -54,21 +54,10 @@ describe('computeFunAwards', () => {
     expect(releve!.winner.detail).toContain(String(maxBirthyear));
   });
 
-  it('loup-solitaire finds a swimmer whose club has only one representative', () => {
-    const loup = findAward(awards, 'loup-solitaire');
-    if (loup) {
-      const uniqueSwimmers = new Map<string, Set<string>>();
-      for (const row of rows) {
-        const key = `${row.lastname}|${row.firstname}|${row.birthyear}`;
-        if (!uniqueSwimmers.has(row.club)) {
-          uniqueSwimmers.set(row.club, new Set());
-        }
-        uniqueSwimmers.get(row.club)!.add(key);
-      }
-      const soloClubs = Array.from(uniqueSwimmers.entries())
-        .filter(([, swimmers]) => swimmers.size === 1)
-        .map(([club]) => club);
-      expect(soloClubs).toContain(loup.winner.club);
+  it('duo-mixte finds a club with exactly one female and one male swimmer', () => {
+    const duo = findAward(awards, 'duo-mixte');
+    if (duo) {
+      expect(duo.winner.detail).toMatch(/\d+ \+ \d+ = \d+ pts/);
     }
   });
 
@@ -131,14 +120,29 @@ describe('computeFunAwards edge cases', () => {
     expect(photo!.winner.detail).toContain('1000 pts');
   });
 
-  it('omits loup-solitaire when all swimmers share the same club', () => {
+  it('omits duo-mixte when no club has exactly one swimmer of each gender', () => {
     const rows: RawSwimmerRow[] = [
-      { name: 'Classement Mixte', place: 1, lastname: 'A', firstname: 'B', birthyear: 1990, nation: 'FRA', club: 'SAME', points: 800, comment: '' },
-      { name: 'Classement Mixte', place: 2, lastname: 'C', firstname: 'D', birthyear: 1995, nation: 'FRA', club: 'SAME', points: 700, comment: '' },
+      { name: 'Classement Dames', place: 1, lastname: 'A', firstname: 'B', birthyear: 1990, nation: 'FRA', club: 'CLUB A', points: 800, comment: '' },
+      { name: 'Classement Dames', place: 2, lastname: 'C', firstname: 'D', birthyear: 1995, nation: 'FRA', club: 'CLUB A', points: 700, comment: '' },
     ];
     const awards = computeFunAwards(rows);
-    const loup = findAward(awards, 'loup-solitaire');
-    expect(loup).toBeUndefined();
+    expect(findAward(awards, 'duo-mixte')).toBeUndefined();
+  });
+
+  it('finds duo-mixte when a club has exactly one female and one male swimmer', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Dames', place: 1, lastname: 'MARTIN', firstname: 'Alice', birthyear: 1998, nation: 'FRA', club: 'PETIT CLUB', points: 900, comment: '' },
+      { name: 'Classement Messieurs', place: 1, lastname: 'DURAND', firstname: 'Bob', birthyear: 1996, nation: 'FRA', club: 'PETIT CLUB', points: 950, comment: '' },
+      { name: 'Classement Dames', place: 2, lastname: 'X', firstname: 'Y', birthyear: 2000, nation: 'FRA', club: 'GRAND CLUB', points: 800, comment: '' },
+      { name: 'Classement Messieurs', place: 2, lastname: 'Z', firstname: 'W', birthyear: 2001, nation: 'FRA', club: 'GRAND CLUB', points: 810, comment: '' },
+      { name: 'Classement Dames', place: 3, lastname: 'V', firstname: 'U', birthyear: 2002, nation: 'FRA', club: 'GRAND CLUB', points: 700, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const duo = findAward(awards, 'duo-mixte');
+    expect(duo).toBeDefined();
+    expect(duo!.winner.club).toBe('PETIT CLUB');
+    expect(duo!.winner.detail).toContain('900');
+    expect(duo!.winner.detail).toContain('950');
   });
 
   it('omits club-anciens and jeune-garde when no club has 3 or more swimmers', () => {

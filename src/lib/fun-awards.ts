@@ -82,29 +82,37 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
   };
 }
 
-function findLoupSolitaire(swimmers: UniqueSwimmer[]): FunAward | null {
-  const clubCounts = new Map<string, UniqueSwimmer[]>();
-  for (const s of swimmers) {
-    const list = clubCounts.get(s.club);
-    if (list) {
-      list.push(s);
-    } else {
-      clubCounts.set(s.club, [s]);
+function findDuoMixte(swimmers: UniqueSwimmer[]): FunAward | null {
+  const clubs = groupByClub(swimmers);
+  let bestClub = '';
+  let bestPoints = -1;
+  let bestF: UniqueSwimmer | null = null;
+  let bestM: UniqueSwimmer | null = null;
+
+  for (const [club, members] of clubs) {
+    const females = members.filter((s) => /dames/i.test(s.category));
+    const males = members.filter((s) => /messieurs/i.test(s.category));
+    // Club avec exactement 1 femme et 1 homme — le plus petit duo mixte possible
+    if (females.length === 1 && males.length === 1) {
+      const total = females[0]!.points + males[0]!.points;
+      if (total > bestPoints) {
+        bestPoints = total;
+        bestClub = club;
+        bestF = females[0]!;
+        bestM = males[0]!;
+      }
     }
   }
-  const soloSwimmers = Array.from(clubCounts.entries())
-    .filter(([, members]) => members.length === 1)
-    .map(([, members]) => members[0]!);
-  if (soloSwimmers.length === 0) return null;
-  const best = soloSwimmers.reduce((a, b) => (a.points > b.points ? a : b));
+
+  if (!bestClub || !bestF || !bestM) return null;
   return {
-    id: 'loup-solitaire',
-    title: 'Le Loup Solitaire',
-    emoji: '🐺',
+    id: 'duo-mixte',
+    title: 'Le Duo Mixte',
+    emoji: '🤝',
     winner: {
-      name: formatName(best),
-      club: best.club,
-      detail: `Seul(e) représentant(e) de son club (${best.points} pts)`,
+      name: `${formatName(bestF)} & ${formatName(bestM)}`,
+      club: bestClub,
+      detail: `Seul duo de leur club (${bestF.points} + ${bestM.points} = ${bestPoints} pts)`,
     },
   };
 }
@@ -220,7 +228,7 @@ function findJeuneGarde(swimmers: UniqueSwimmer[]): FunAward | null {
 
 export function computeFunAwards(rows: RawSwimmerRow[]): FunAward[] {
   const swimmers = deduplicateSwimmers(rows);
-  const finders = [findDoyen, findReleve, findLoupSolitaire, findPhotoFinish, findClubAnciens, findJeuneGarde];
+  const finders = [findDoyen, findReleve, findDuoMixte, findPhotoFinish, findClubAnciens, findJeuneGarde];
   const awards: FunAward[] = [];
   for (const finder of finders) {
     const award = finder(swimmers);
