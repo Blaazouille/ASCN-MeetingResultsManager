@@ -5,7 +5,6 @@
  */
 import { useState } from 'react';
 import { Download, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 type BackupState =
   | { step: 'idle' }
@@ -93,7 +92,7 @@ export function BackupSection(): JSX.Element {
       )}
 
       {state.step === 'preview' && (
-        <div className="space-y-3 rounded-md border border-warning bg-warning/10 p-4">
+        <div className="space-y-3 rounded-md bg-warning-light p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-neutral-900">
             <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />
             {state.meetingCount} meeting(s), {state.swimmerCount} nageur(s) dans ce fichier.
@@ -103,14 +102,16 @@ export function BackupSection(): JSX.Element {
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded-md bg-secondary-600 px-3 py-1.5 text-sm font-medium text-neutral-0 hover:bg-secondary-700"
+              disabled={isBusy}
+              className="rounded-md bg-secondary-600 px-3 py-1.5 text-sm font-medium text-neutral-0 hover:bg-secondary-700 disabled:opacity-60"
             >
               Confirmer l'import
             </button>
             <button
               type="button"
               onClick={() => setState({ step: 'idle' })}
-              className="rounded-md bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
+              disabled={isBusy}
+              className="rounded-md bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-200 disabled:opacity-60"
             >
               Annuler
             </button>
@@ -125,9 +126,7 @@ export function BackupSection(): JSX.Element {
         </p>
       )}
 
-      {state.step === 'error' && (
-        <p className={cn('text-sm text-error')}>Erreur : {state.error}</p>
-      )}
+      {state.step === 'error' && <p className="text-sm text-error">Erreur : {state.error}</p>}
     </div>
   );
 }
