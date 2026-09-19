@@ -13,15 +13,18 @@ export interface MeetingFormProps {
 
 export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Element {
   const [name, setName] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [location, setLocation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit({ name, date, location: location || null });
+      // Date defaults to today and location stays empty — createMeeting
+      // fills the date itself (src/lib/db.ts) when it's omitted. Both can
+      // be set precisely afterward from Paramètres; asking for them here
+      // just slows down getting to the CSV import, which is the actual
+      // first thing a volunteer needs to do.
+      await onSubmit({ name });
     } finally {
       setIsSubmitting(false);
     }
@@ -37,36 +40,15 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
           id="meeting-name"
           type="text"
           required
+          autoFocus
           value={name}
           onChange={(event) => setName(event.target.value)}
           className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
           placeholder="Meeting de la Mer 2026"
         />
-      </div>
-      <div>
-        <label htmlFor="meeting-date" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Date
-        </label>
-        <input
-          id="meeting-date"
-          type="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-          className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label htmlFor="meeting-location" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Lieu (optionnel)
-        </label>
-        <input
-          id="meeting-location"
-          type="text"
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
-          placeholder="Cherbourg-en-Cotentin"
-        />
+        <p className="mt-1 text-xs text-neutral-500">
+          Date et lieu se règlent ensuite dans Paramètres — la date par défaut est celle d'aujourd'hui.
+        </p>
       </div>
       <div className="flex justify-end gap-2">
         <button
