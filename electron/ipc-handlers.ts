@@ -20,7 +20,7 @@ import {
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import { exportDatabase, validateBackup, restoreDatabase, type BackupData } from '../src/lib/backup';
-import { performAutoBackup } from './auto-backup';
+import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -150,5 +150,17 @@ export function registerIpcHandlers(db: Database.Database): void {
       pendingImport = null;
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
+  });
+
+  ipcMain.handle(IpcChannels.backupGetConfig, async () => loadBackupConfig());
+
+  ipcMain.handle(IpcChannels.backupSetConfig, async (_event, config: BackupConfig) => {
+    saveBackupConfig(config);
+    return { success: true };
+  });
+
+  ipcMain.handle(IpcChannels.backupChooseDir, async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+    return result.canceled ? null : (result.filePaths[0] ?? null);
   });
 }

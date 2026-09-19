@@ -40,6 +40,11 @@ export const IpcChannels = {
   backupExport: 'backup:export',
   backupImport: 'backup:import',
   backupConfirmImport: 'backup:confirm-import',
+
+  // Configuration des sauvegardes automatiques (dossier, nombre conservé) — voir electron/auto-backup.ts.
+  backupGetConfig: 'backup:get-config',
+  backupSetConfig: 'backup:set-config',
+  backupChooseDir: 'backup:choose-dir',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

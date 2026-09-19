@@ -9,6 +9,7 @@ import type { Meeting, MeetingInput } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import type { RankingParams, TeamResult } from '../src/lib/ranking-engine';
 import type { RestoreResult } from '../src/lib/backup';
+import type { BackupConfig } from './auto-backup';
 
 interface FileFilter {
   name: string;
@@ -56,6 +57,12 @@ const electronAPI = {
   }> => ipcRenderer.invoke(IpcChannels.backupImport),
   confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.backupConfirmImport),
+
+  // Backup config (folder + rotation limit)
+  getBackupConfig: (): Promise<BackupConfig> => ipcRenderer.invoke(IpcChannels.backupGetConfig),
+  setBackupConfig: (config: BackupConfig): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke(IpcChannels.backupSetConfig, config),
+  chooseBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IpcChannels.backupChooseDir),
 };
 
 export type ElectronAPI = typeof electronAPI;
