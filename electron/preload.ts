@@ -8,6 +8,7 @@ import { IpcChannels } from './ipc-channels';
 import type { Meeting, MeetingInput } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import type { RankingParams, TeamResult } from '../src/lib/ranking-engine';
+import type { RestoreResult } from '../src/lib/backup';
 
 interface FileFilter {
   name: string;
@@ -44,6 +45,17 @@ const electronAPI = {
   openFileDialog: (filters?: FileFilter[]): Promise<string | null> => ipcRenderer.invoke(IpcChannels.openFileDialog, filters),
   saveFileDialog: (defaultName: string, filters?: FileFilter[]): Promise<string | null> =>
     ipcRenderer.invoke(IpcChannels.saveFileDialog, defaultName, filters),
+
+  // Backup
+  exportBackup: (): Promise<{ success: boolean; path?: string; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupExport),
+  importBackup: (): Promise<{
+    success: boolean;
+    preview?: { meetingCount: number; swimmerCount: number; existingCount: number };
+    error?: string;
+  }> => ipcRenderer.invoke(IpcChannels.backupImport),
+  confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupConfirmImport),
 };
 
 export type ElectronAPI = typeof electronAPI;

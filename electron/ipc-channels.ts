@@ -36,6 +36,10 @@ export const IpcChannels = {
 
   openFileDialog: 'dialog:openFile',
   saveFileDialog: 'dialog:saveFile',
+
+  backupExport: 'backup:export',
+  backupImport: 'backup:import',
+  backupConfirmImport: 'backup:confirm-import',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

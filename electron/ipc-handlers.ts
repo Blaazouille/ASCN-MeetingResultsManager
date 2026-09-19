@@ -5,6 +5,7 @@
  */
 import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { IpcChannels } from './ipc-channels';
 import {
   createMeeting,
@@ -18,6 +19,7 @@ import {
 } from '../src/lib/db';
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
+import { exportDatabase, validateBackup, restoreDatabase, type BackupData } from '../src/lib/backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -79,5 +81,72 @@ export function registerIpcHandlers(db: Database.Database): void {
       filters,
     });
     return result.canceled ? null : (result.filePath ?? null);
+  });
+
+  // Holds the validated backup between the import preview step (backupImport)
+  // and the confirm step (backupConfirmImport), so the renderer can show a
+  // preview and let the user cancel before anything is written to the DB.
+  let pendingImport: BackupData | null = null;
+
+  ipcMain.handle(IpcChannels.backupExport, async () => {
+    try {
+      const data = exportDatabase(db);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const result = await dialog.showSaveDialog({
+        defaultPath: `mdlm-backup-${timestamp}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (result.canceled || !result.filePath) {
+        return { success: false };
+      }
+      writeFileSync(result.filePath, JSON.stringify(data, null, 2), 'utf-8');
+      return { success: true, path: result.filePath };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupImport, async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (result.canceled || !result.filePaths[0]) {
+        return { success: false };
+      }
+      const raw = readFileSync(result.filePaths[0], 'utf-8');
+      const parsed: unknown = JSON.parse(raw);
+      const validated = validateBackup(parsed);
+
+      const swimmerCount = validated.meetings.reduce((sum, m) => sum + m.swimmers.length, 0);
+      let existingCount = 0;
+      for (const m of validated.meetings) {
+        const found = db.prepare('SELECT id FROM meeting WHERE name = ? AND date = ?').get(m.name, m.date);
+        if (found) existingCount++;
+      }
+
+      pendingImport = validated;
+      return {
+        success: true,
+        preview: { meetingCount: validated.meetings.length, swimmerCount, existingCount },
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupConfirmImport, async () => {
+    try {
+      if (!pendingImport) {
+        return { success: false, error: 'Aucune sauvegarde en attente de confirmation' };
+      }
+      const result = restoreDatabase(db, pendingImport);
+      pendingImport = null;
+      return { success: true, result };
+    } catch (error) {
+      pendingImport = null;
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
   });
 }
