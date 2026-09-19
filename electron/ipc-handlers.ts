@@ -20,6 +20,7 @@ import {
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import { exportDatabase, validateBackup, restoreDatabase, type BackupData } from '../src/lib/backup';
+import { performAutoBackup } from './auto-backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -37,6 +38,7 @@ export function registerIpcHandlers(db: Database.Database): void {
 
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
     insertSwimmerResults(db, meetingId, rows);
+    performAutoBackup(db);
   });
 
   ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>
