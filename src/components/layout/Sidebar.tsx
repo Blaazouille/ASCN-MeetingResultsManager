@@ -73,15 +73,17 @@ export function Sidebar({ hasMeeting }: SidebarProps): JSX.Element {
                 Palmarès
               </NavLink>
             </li>
-
-            <li>
-              <NavLink to="/parametres" className={navLinkClass}>
-                <Settings className="h-4 w-4" aria-hidden />
-                Paramètres
-              </NavLink>
-            </li>
           </>
         )}
+
+        {/* Not gated on hasMeeting: restoring a backup on a fresh install is
+            the one thing you need Paramètres for before any meeting exists. */}
+        <li>
+          <NavLink to="/parametres" className={navLinkClass}>
+            <Settings className="h-4 w-4" aria-hidden />
+            Paramètres
+          </NavLink>
+        </li>
       </ul>
     </nav>
   );
