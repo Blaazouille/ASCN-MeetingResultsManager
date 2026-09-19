@@ -176,48 +176,32 @@ describe('restoreDatabase', () => {
   it('imports meetings, swimmers, and rankings into an empty database', () => {
     const backup = exportDatabase(sourceDb);
     const result = restoreDatabase(targetDb, backup);
+    expect(result.meetingsRemoved).toBe(0);
     expect(result.meetingsImported).toBe(1);
-    expect(result.meetingsReplaced).toBe(0);
-    expect(result.meetingsSkipped).toBe(0);
     expect(result.swimmersImported).toBe(2);
   });
 
-  it('skips meetings that already exist (same name + date) by default', () => {
-    const backup = exportDatabase(sourceDb);
-    restoreDatabase(targetDb, backup);
-    const result = restoreDatabase(targetDb, backup);
-    expect(result.meetingsImported).toBe(0);
-    expect(result.meetingsReplaced).toBe(0);
-    expect(result.meetingsSkipped).toBe(1);
-  });
-
-  it('replaces an existing meeting when overwrite is true', () => {
-    const backup = exportDatabase(sourceDb);
-    restoreDatabase(targetDb, backup);
-
-    // Mutate the target so we can tell the replace actually happened, not
-    // just a no-op skip: add an extra swimmer to the meeting already there.
-    const existing = targetDb.prepare('SELECT id FROM meeting WHERE name = ? AND date = ?').get('Test Meeting', '2026-09-01') as {
-      id: number;
-    };
+  it('wipes every meeting currently in the database, even ones the backup never mentions', () => {
+    // A meeting with no relation to anything in the backup — a point-in-time
+    // restore must still remove it, since it didn't exist at backup time.
+    const unrelated = createMeeting(targetDb, { name: 'Unrelated Meeting', date: '2020-01-01' });
     targetDb
       .prepare(
         `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(existing.id, 'Classement Mixte', 3, 'EXTRA', 'Swimmer', 2000, 'FRA', 'CN EXTRA', 500, null);
+      .run(unrelated.id, 'Classement Mixte', 1, 'GHOST', 'Swimmer', 2000, 'FRA', 'CN GHOST', 999, null);
 
-    const result = restoreDatabase(targetDb, backup, { overwrite: true });
-    expect(result.meetingsImported).toBe(0);
-    expect(result.meetingsReplaced).toBe(1);
-    expect(result.meetingsSkipped).toBe(0);
+    const backup = exportDatabase(sourceDb);
+    const result = restoreDatabase(targetDb, backup);
+
+    expect(result.meetingsRemoved).toBe(1);
+    expect(result.meetingsImported).toBe(1);
     expect(result.swimmersImported).toBe(2);
 
-    // The replaced meeting has only the backup's 2 swimmers, not 3 — the
-    // extra one from the mutation above was deleted along with the old row.
     const reExported = exportDatabase(targetDb);
     expect(reExported.meetings).toHaveLength(1);
-    expect(reExported.meetings[0]!.swimmers).toHaveLength(2);
+    expect(reExported.meetings[0]!.name).toBe('Test Meeting');
   });
 
   it('round-trip preserves all data including ranking rules', () => {

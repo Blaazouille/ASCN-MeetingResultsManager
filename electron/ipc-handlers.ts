@@ -14,7 +14,6 @@ import {
   getAllMeetings,
   getSwimmerResults,
   insertSwimmerResults,
-  meetingExistsByNameAndDate,
   saveTeamRanking,
   updateMeeting,
   type MeetingInput,
@@ -131,24 +130,27 @@ export function registerIpcHandlers(db: Database.Database): void {
       const validated = validateBackup(parsed);
 
       const swimmerCount = validated.meetings.reduce((sum, m) => sum + m.swimmers.length, 0);
-      const existingCount = validated.meetings.filter((m) => meetingExistsByNameAndDate(db, m.name, m.date)).length;
+      // A restore always replaces the whole database, so the preview warns
+      // about everything currently there, not just meetings that happen to
+      // share a name/date with the backup.
+      const currentMeetingCount = getAllMeetings(db).length;
 
       pendingImport = validated;
       return {
         success: true,
-        preview: { meetingCount: validated.meetings.length, swimmerCount, existingCount },
+        preview: { meetingCount: validated.meetings.length, swimmerCount, currentMeetingCount },
       };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
-  ipcMain.handle(IpcChannels.backupConfirmImport, async (_event, overwrite?: boolean) => {
+  ipcMain.handle(IpcChannels.backupConfirmImport, async () => {
     try {
       if (!pendingImport) {
         return { success: false, error: 'Aucune sauvegarde en attente de confirmation' };
       }
-      const result = restoreDatabase(db, pendingImport, { overwrite });
+      const result = restoreDatabase(db, pendingImport);
       pendingImport = null;
       return { success: true, result };
     } catch (error) {

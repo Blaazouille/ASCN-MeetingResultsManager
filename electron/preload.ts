@@ -52,11 +52,11 @@ const electronAPI = {
     ipcRenderer.invoke(IpcChannels.backupExport),
   importBackup: (): Promise<{
     success: boolean;
-    preview?: { meetingCount: number; swimmerCount: number; existingCount: number };
+    preview?: { meetingCount: number; swimmerCount: number; currentMeetingCount: number };
     error?: string;
   }> => ipcRenderer.invoke(IpcChannels.backupImport),
-  confirmImport: (overwrite?: boolean): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
-    ipcRenderer.invoke(IpcChannels.backupConfirmImport, overwrite),
+  confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupConfirmImport),
   cancelImport: (): Promise<{ success: boolean }> => ipcRenderer.invoke(IpcChannels.backupCancelImport),
 
   // Backup config (folder + rotation limit)

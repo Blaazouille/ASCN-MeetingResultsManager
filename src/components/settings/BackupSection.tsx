@@ -10,14 +10,8 @@ type BackupState =
   | { step: 'idle' }
   | { step: 'busy' }
   | { step: 'export-success'; path: string }
-  | { step: 'preview'; meetingCount: number; swimmerCount: number; existingCount: number }
-  | {
-      step: 'import-success';
-      meetingsImported: number;
-      meetingsReplaced: number;
-      swimmersImported: number;
-      meetingsSkipped: number;
-    }
+  | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number }
+  | { step: 'import-success'; meetingsRemoved: number; meetingsImported: number; swimmersImported: number }
   | { step: 'error'; error: string };
 
 export interface BackupSectionProps {
@@ -38,9 +32,6 @@ function resolveBackupState<T extends { success: boolean; error?: string }>(
 
 export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   const [state, setState] = useState<BackupState>({ step: 'idle' });
-  // Only meaningful while state.step === 'preview' — reset on every new
-  // preview so a leftover check from a previous import can't carry over.
-  const [overwrite, setOverwrite] = useState(false);
 
   async function handleExport(): Promise<void> {
     setState({ step: 'busy' });
@@ -50,14 +41,13 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
 
   async function handleImport(): Promise<void> {
     setState({ step: 'busy' });
-    setOverwrite(false);
     const result = await window.electronAPI.importBackup();
     setState(resolveBackupState(result, (r) => (r.preview ? { step: 'preview', ...r.preview } : null)));
   }
 
   async function handleConfirm(): Promise<void> {
     setState({ step: 'busy' });
-    const result = await window.electronAPI.confirmImport(overwrite);
+    const result = await window.electronAPI.confirmImport();
     if (result.success && result.result) {
       setState({ step: 'import-success', ...result.result });
       // Refresh the renderer's meeting list after the restore actually wrote
@@ -76,7 +66,8 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
         Sauvegarde et restauration
       </h2>
       <p className="text-sm text-neutral-600">
-        Exportez l'ensemble des meetings dans un fichier JSON, ou restaurez-les depuis une sauvegarde.
+        Exportez l'ensemble des meetings dans un fichier JSON, ou restaurez la base exactement telle qu'elle
+        était au moment d'une sauvegarde.
       </p>
       <div className="flex flex-wrap gap-3">
         <button
@@ -107,35 +98,29 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       )}
 
       {state.step === 'preview' && (
-        <div className="space-y-3 rounded-md bg-warning-light p-4">
+        <div className="space-y-3 rounded-md bg-error-light p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-neutral-900">
-            <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />
-            {state.meetingCount} meeting(s), {state.swimmerCount} ligne(s) de résultats dans ce fichier
+            <AlertTriangle className="h-4 w-4 text-error" aria-hidden="true" />
+            Ce fichier contient {state.meetingCount} meeting(s) et {state.swimmerCount} ligne(s) de résultats
             {/* Un nageur compte une fois par catégorie (Dames/Messieurs + Mixte),
                 donc ce nombre est plus élevé que le nombre réel de nageurs. */}
+            {' '}
             (comptées par catégorie).
-            {state.existingCount > 0 &&
-              ` ${state.existingCount} meeting(s) déjà présent(s) — ${overwrite ? 'seront remplacés' : 'seront ignorés'}.`}
           </p>
-          {state.existingCount > 0 && (
-            <label className="flex items-center gap-2 text-sm text-neutral-700">
-              <input
-                type="checkbox"
-                checked={overwrite}
-                onChange={(event) => setOverwrite(event.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-secondary-600 focus:ring-secondary-400"
-              />
-              Remplacer les meetings déjà présents au lieu de les ignorer
-            </label>
-          )}
+          <p className="text-sm font-medium text-error">
+            La restauration remplace toute la base actuelle par le contenu de ce fichier
+            {state.currentMeetingCount > 0 &&
+              ` — les ${state.currentMeetingCount} meeting(s) actuellement présents seront définitivement supprimés`}
+            .
+          </p>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={handleConfirm}
               disabled={isBusy}
-              className="rounded-md bg-secondary-600 px-3 py-1.5 text-sm font-medium text-neutral-0 hover:bg-secondary-700 disabled:opacity-60"
+              className="rounded-md bg-error px-3 py-1.5 text-sm font-medium text-neutral-0 hover:opacity-90 disabled:opacity-60"
             >
-              Confirmer l'import
+              Confirmer la restauration
             </button>
             <button
               type="button"
@@ -157,9 +142,8 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       {state.step === 'import-success' && (
         <p className="flex items-center gap-2 text-sm text-success">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          {state.meetingsImported} meeting(s) importé(s)
-          {state.meetingsReplaced > 0 && `, ${state.meetingsReplaced} remplacé(s)`}, {state.swimmersImported} nageur(s)
-          {state.meetingsSkipped > 0 && `, ${state.meetingsSkipped} déjà présent(s) ignoré(s)`}.
+          Base restaurée : {state.meetingsImported} meeting(s), {state.swimmersImported} nageur(s)
+          {state.meetingsRemoved > 0 && ` (${state.meetingsRemoved} ancien(s) meeting(s) remplacé(s))`}.
         </p>
       )}
 

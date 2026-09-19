@@ -4,7 +4,6 @@
  * Suppression casserait : la fonctionnalité de sauvegarde et restauration.
  */
 import type Database from 'better-sqlite3';
-import { meetingExistsByNameAndDate } from './db';
 import { validateBackup, type BackupData, type MeetingBackup, type RestoreResult } from './backup-validation';
 
 // Re-exported so existing callers (ipc-handlers.ts, tests) can keep importing
@@ -117,33 +116,24 @@ export function exportDatabase(db: Database.Database): BackupData {
   };
 }
 
-export interface RestoreOptions {
-  /** When a meeting in the backup already exists (same name + date), delete
-   * it (cascading to its swimmers/rankings) and re-insert the backup's
-   * version instead of skipping it. Off by default — the safer, additive
-   * behavior — so callers must opt in explicitly. */
-  overwrite?: boolean;
-}
-
-export function restoreDatabase(db: Database.Database, data: BackupData, options: RestoreOptions = {}): RestoreResult {
-  const overwrite = options.overwrite ?? false;
-  const result: RestoreResult = { meetingsImported: 0, meetingsReplaced: 0, meetingsSkipped: 0, swimmersImported: 0 };
+/**
+ * A backup is a snapshot: restoring one puts the database back exactly as it
+ * was at export time, nothing more, nothing less. Every meeting currently in
+ * the database is deleted first (cascading to its swimmers/rankings via the
+ * ON DELETE CASCADE foreign keys in db-schema.ts) — including meetings the
+ * backup file never mentions — and the backup's meetings are inserted fresh.
+ * Whole operation runs in one transaction, so a failure partway through
+ * leaves the pre-restore database untouched rather than half-wiped.
+ */
+export function restoreDatabase(db: Database.Database, data: BackupData): RestoreResult {
+  const result: RestoreResult = { meetingsRemoved: 0, meetingsImported: 0, swimmersImported: 0 };
 
   const transaction = db.transaction(() => {
+    result.meetingsRemoved = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
+    db.exec('DELETE FROM meeting');
+
     for (const meeting of data.meetings) {
-      const exists = meetingExistsByNameAndDate(db, meeting.name, meeting.date);
-      if (exists && !overwrite) {
-        result.meetingsSkipped++;
-        continue;
-      }
-      if (exists) {
-        // Cascades to swimmer_result/team_ranking via their ON DELETE CASCADE
-        // foreign keys (db-schema.ts) — no separate cleanup needed here.
-        db.prepare('DELETE FROM meeting WHERE name = ? AND date = ?').run(meeting.name, meeting.date);
-        result.meetingsReplaced++;
-      } else {
-        result.meetingsImported++;
-      }
+      result.meetingsImported++;
 
       const insertMeeting = db.prepare(
         `INSERT INTO meeting (name, date, location, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)

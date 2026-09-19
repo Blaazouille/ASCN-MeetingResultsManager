@@ -48,9 +48,10 @@ export interface TeamRankingBackup {
 }
 
 export interface RestoreResult {
+  /** How many meetings existed before the restore and were wiped — a
+   * restore always replaces the whole database with the backup's contents. */
+  meetingsRemoved: number;
   meetingsImported: number;
-  meetingsReplaced: number;
-  meetingsSkipped: number;
   swimmersImported: number;
 }
 

@@ -42,9 +42,8 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 ### Sauvegarde et restauration
 
 - Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, de la date, des nageurs et des classements.
-- Import depuis un fichier JSON avec aperçu préalable : affiche le nombre de meetings et de lignes de résultats à importer (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), ainsi que le nombre de meetings déjà présents dans la base (mêmes name/date).
-- Si des meetings existants sont détectés, une case à cocher permet de choisir leur sort avant de confirmer : laissés tels quels (par défaut) ou remplacés par la version du fichier importé (l'ancien meeting et ses nageurs/classements sont supprimés puis réinsérés).
-- Confirmation explicite avant d'écrire la base — l'utilisateur voit les impacts potentiels avant validation.
+- Import = restauration à l'identique : la base est remplacée entièrement par le contenu du fichier, exactement comme elle était au moment de l'export. Tous les meetings actuellement présents sont supprimés au profit de ceux du fichier, y compris un meeting créé après la sauvegarde et absent du fichier — ce n'est pas une fusion.
+- Aperçu préalable avant d'écrire la base : nombre de meetings et de lignes de résultats dans le fichier (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), et nombre de meetings actuellement dans la base qui seront supprimés. Confirmation explicite requise.
 
 ### Sauvegardes automatiques
 
