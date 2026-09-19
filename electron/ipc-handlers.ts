@@ -6,6 +6,7 @@
 import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
 import { readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { IpcChannels } from './ipc-channels';
 import {
   createMeeting,
@@ -98,8 +99,11 @@ export function registerIpcHandlers(db: Database.Database): void {
     try {
       const data = exportDatabase(db);
       const timestamp = formatBackupTimestamp();
+      // Opens on the same folder auto-backups already land in, so a manual
+      // export and a restore both start from the place the volunteer
+      // already knows to look.
       const result = await dialog.showSaveDialog({
-        defaultPath: `mdlm-backup-${timestamp}.json`,
+        defaultPath: path.join(loadBackupConfig().backupDir, `mdlm-backup-${timestamp}.json`),
         filters: [{ name: 'JSON', extensions: ['json'] }],
       });
       if (result.canceled || !result.filePath) {
@@ -115,6 +119,7 @@ export function registerIpcHandlers(db: Database.Database): void {
   ipcMain.handle(IpcChannels.backupImport, async () => {
     try {
       const result = await dialog.showOpenDialog({
+        defaultPath: loadBackupConfig().backupDir,
         properties: ['openFile'],
         filters: [{ name: 'JSON', extensions: ['json'] }],
       });
