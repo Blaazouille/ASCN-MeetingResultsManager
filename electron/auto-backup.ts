@@ -7,7 +7,7 @@ import { app } from 'electron';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
-import { exportDatabase } from '../src/lib/backup';
+import { exportDatabase, formatBackupTimestamp } from '../src/lib/backup';
 
 export interface BackupConfig {
   backupDir: string;
@@ -69,7 +69,7 @@ export function performAutoBackup(db: Database.Database): void {
     }
 
     const data = exportDatabase(db);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const timestamp = formatBackupTimestamp();
     writeFileSync(path.join(config.backupDir, `${BACKUP_PREFIX}${timestamp}.json`), JSON.stringify(data, null, 2), 'utf-8');
 
     rotateBackups(config.backupDir, config.maxBackups);

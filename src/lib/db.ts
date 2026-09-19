@@ -126,6 +126,11 @@ export function deleteMeeting(db: Database.Database, id: number): void {
   db.prepare('DELETE FROM meeting WHERE id = ?').run(id);
 }
 
+/** True if a meeting with this exact (name, date) already exists — the dedup key backup restore uses to skip already-imported meetings. */
+export function meetingExistsByNameAndDate(db: Database.Database, name: string, date: string): boolean {
+  return db.prepare('SELECT 1 FROM meeting WHERE name = ? AND date = ?').get(name, date) !== undefined;
+}
+
 interface SwimmerResultRow {
   category: string;
   rank: number | null;

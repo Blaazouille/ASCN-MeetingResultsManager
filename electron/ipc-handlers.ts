@@ -13,13 +13,14 @@ import {
   getAllMeetings,
   getSwimmerResults,
   insertSwimmerResults,
+  meetingExistsByNameAndDate,
   saveTeamRanking,
   updateMeeting,
   type MeetingInput,
 } from '../src/lib/db';
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
-import { exportDatabase, validateBackup, restoreDatabase, type BackupData } from '../src/lib/backup';
+import { exportDatabase, validateBackup, restoreDatabase, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
@@ -38,7 +39,10 @@ export function registerIpcHandlers(db: Database.Database): void {
 
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
     insertSwimmerResults(db, meetingId, rows);
-    performAutoBackup(db);
+    // Deferred to the next tick: performAutoBackup does a full DB export,
+    // JSON write, and rotation pass, which must not add latency to the
+    // import response the poolside volunteer is waiting on.
+    setImmediate(() => performAutoBackup(db));
   });
 
   ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>
@@ -93,7 +97,7 @@ export function registerIpcHandlers(db: Database.Database): void {
   ipcMain.handle(IpcChannels.backupExport, async () => {
     try {
       const data = exportDatabase(db);
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const timestamp = formatBackupTimestamp();
       const result = await dialog.showSaveDialog({
         defaultPath: `mdlm-backup-${timestamp}.json`,
         filters: [{ name: 'JSON', extensions: ['json'] }],
@@ -122,11 +126,7 @@ export function registerIpcHandlers(db: Database.Database): void {
       const validated = validateBackup(parsed);
 
       const swimmerCount = validated.meetings.reduce((sum, m) => sum + m.swimmers.length, 0);
-      let existingCount = 0;
-      for (const m of validated.meetings) {
-        const found = db.prepare('SELECT id FROM meeting WHERE name = ? AND date = ?').get(m.name, m.date);
-        if (found) existingCount++;
-      }
+      const existingCount = validated.meetings.filter((m) => meetingExistsByNameAndDate(db, m.name, m.date)).length;
 
       pendingImport = validated;
       return {

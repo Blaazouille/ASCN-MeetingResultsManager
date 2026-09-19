@@ -19,31 +19,30 @@ export interface BackupSectionProps {
   onRestored?: () => void | Promise<void>;
 }
 
+/** Maps a {success, error?} IPC result to the next state: `onSuccess` returning null falls through to 'idle' (a plain cancel, e.g. the user closed the file dialog). */
+function resolveBackupState<T extends { success: boolean; error?: string }>(
+  result: T,
+  onSuccess: (result: T) => BackupState | null
+): BackupState {
+  if (result.success) {
+    return onSuccess(result) ?? { step: 'idle' };
+  }
+  return result.error ? { step: 'error', error: result.error } : { step: 'idle' };
+}
+
 export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   const [state, setState] = useState<BackupState>({ step: 'idle' });
 
   async function handleExport(): Promise<void> {
     setState({ step: 'busy' });
     const result = await window.electronAPI.exportBackup();
-    if (result.success && result.path) {
-      setState({ step: 'export-success', path: result.path });
-    } else if (result.error) {
-      setState({ step: 'error', error: result.error });
-    } else {
-      setState({ step: 'idle' });
-    }
+    setState(resolveBackupState(result, (r) => (r.path ? { step: 'export-success', path: r.path } : null)));
   }
 
   async function handleImport(): Promise<void> {
     setState({ step: 'busy' });
     const result = await window.electronAPI.importBackup();
-    if (result.success && result.preview) {
-      setState({ step: 'preview', ...result.preview });
-    } else if (result.error) {
-      setState({ step: 'error', error: result.error });
-    } else {
-      setState({ step: 'idle' });
-    }
+    setState(resolveBackupState(result, (r) => (r.preview ? { step: 'preview', ...r.preview } : null)));
   }
 
   async function handleConfirm(): Promise<void> {
@@ -54,10 +53,8 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       // Refresh the renderer's meeting list after the restore actually wrote
       // to the DB, so restored meetings show up without an app restart.
       await onRestored?.();
-    } else if (result.error) {
-      setState({ step: 'error', error: result.error });
     } else {
-      setState({ step: 'idle' });
+      setState(resolveBackupState(result, () => null));
     }
   }
 

@@ -78,7 +78,11 @@ export function BackupConfigSection(): JSX.Element {
             // Clamp to a positive integer client-side: loadBackupConfig only
             // self-heals non-positive/non-numeric values, not fractional ones,
             // and a fractional value would otherwise flow into rotateBackups.
-            setMaxBackups(Math.max(1, Math.round(Number(event.target.value))));
+            // Number('') / Number('-') is NaN, which Math.max(1, NaN) leaves
+            // as NaN (not 1) — guard explicitly so a mid-edit empty field
+            // can't be saved as NaN (JSON.stringify turns it into `null`).
+            const parsed = Math.round(Number(event.target.value));
+            setMaxBackups(Number.isFinite(parsed) ? Math.max(1, parsed) : 1);
             setSavedAt(null);
           }}
           className="mt-1 w-32 rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"

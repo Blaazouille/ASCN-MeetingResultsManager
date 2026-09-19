@@ -4,54 +4,25 @@
  * Suppression casserait : la fonctionnalité de sauvegarde et restauration.
  */
 import type Database from 'better-sqlite3';
+import { meetingExistsByNameAndDate } from './db';
+import { validateBackup, type BackupData, type MeetingBackup, type RestoreResult } from './backup-validation';
 
-export interface BackupData {
-  version: 1;
-  appName: string;
-  exportedAt: string;
-  meetings: MeetingBackup[];
-}
+// Re-exported so existing callers (ipc-handlers.ts, tests) can keep importing
+// everything backup-related from this one module.
+export { validateBackup };
+export type { BackupData, MeetingBackup, SwimmerBackup, TeamRankingBackup, RestoreResult } from './backup-validation';
 
-export interface MeetingBackup {
-  name: string;
-  date: string;
-  location: string | null;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  defaultTopN: number;
-  minSwimmers: number;
-  activeCategories: string[] | null;
-  swimmers: SwimmerBackup[];
-  teamRankings: TeamRankingBackup[];
-}
-
-export interface SwimmerBackup {
-  category: string;
-  rank: number | null;
-  lastname: string;
-  firstname: string;
-  birthyear: number | null;
-  nation: string | null;
-  club: string;
-  points: number;
-  rawLine: string | null;
-}
-
-export interface TeamRankingBackup {
-  category: string;
-  club: string;
-  rank: number;
-  totalPoints: number;
-  topN: number;
-  swimmers: string;
-  computedAt: string;
-}
-
-export interface RestoreResult {
-  meetingsImported: number;
-  meetingsSkipped: number;
-  swimmersImported: number;
+/**
+ * Filename-safe timestamp for backup files, down to the second plus a short
+ * random suffix. The suffix matters: two backups written within the same
+ * UTC second (a manual export right after an auto-backup, or two imports in
+ * quick succession) would otherwise share a filename and the second write
+ * would silently overwrite the first.
+ */
+export function formatBackupTimestamp(): string {
+  const iso = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${iso}-${suffix}`;
 }
 
 interface MeetingRow {
@@ -146,94 +117,12 @@ export function exportDatabase(db: Database.Database): BackupData {
   };
 }
 
-export function validateBackup(data: unknown): BackupData {
-  if (data === null || typeof data !== 'object') {
-    throw new Error('Format de backup invalide : objet attendu');
-  }
-
-  const obj = data as Record<string, unknown>;
-
-  if (obj.version !== 1) {
-    throw new Error(`Version de backup non supportée : ${String(obj.version ?? 'manquante')}`);
-  }
-
-  if (!Array.isArray(obj.meetings)) {
-    throw new Error('Format de backup invalide : tableau "meetings" manquant');
-  }
-
-  for (const meeting of obj.meetings) {
-    if (typeof meeting !== 'object' || meeting === null) {
-      throw new Error('Format de backup invalide : meeting doit être un objet');
-    }
-    const m = meeting as Record<string, unknown>;
-    if (typeof m.name !== 'string' || typeof m.date !== 'string') {
-      throw new Error('Format de backup invalide : meeting.name et meeting.date requis');
-    }
-    if (!Array.isArray(m.swimmers)) {
-      throw new Error('Format de backup invalide : meeting.swimmers doit être un tableau');
-    }
-
-    // These fields are bound directly into SQL by restoreDatabase (including
-    // a `status` CHECK constraint), so a missing/malformed one would
-    // otherwise surface as a raw, untranslated better-sqlite3/SQLite error in
-    // the UI instead of this French validation message.
-    if (m.status !== 'provisional' && m.status !== 'final') {
-      throw new Error('Format de backup invalide : meeting.status doit être "provisional" ou "final"');
-    }
-    if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
-      throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
-    }
-    if (typeof m.defaultTopN !== 'number' || typeof m.minSwimmers !== 'number') {
-      throw new Error('Format de backup invalide : meeting.defaultTopN et meeting.minSwimmers doivent être des nombres');
-    }
-    if (
-      m.activeCategories !== null &&
-      (!Array.isArray(m.activeCategories) || m.activeCategories.some((c) => typeof c !== 'string'))
-    ) {
-      throw new Error('Format de backup invalide : meeting.activeCategories doit être null ou un tableau de strings');
-    }
-
-    // Validate each swimmer entry
-    for (const swimmer of m.swimmers) {
-      if (typeof swimmer !== 'object' || swimmer === null) {
-        throw new Error('Format de backup invalide : swimmer doit être un objet');
-      }
-      const s = swimmer as Record<string, unknown>;
-      if (typeof s.lastname !== 'string') {
-        throw new Error('Format de backup invalide : swimmer.lastname doit être une string');
-      }
-      if (typeof s.firstname !== 'string') {
-        throw new Error('Format de backup invalide : swimmer.firstname doit être une string');
-      }
-      if (typeof s.club !== 'string') {
-        throw new Error('Format de backup invalide : swimmer.club doit être une string');
-      }
-      if (typeof s.points !== 'number') {
-        throw new Error('Format de backup invalide : swimmer.points doit être un nombre');
-      }
-    }
-
-    // Validate teamRankings if present
-    if (m.teamRankings !== undefined) {
-      if (!Array.isArray(m.teamRankings)) {
-        throw new Error('Format de backup invalide : meeting.teamRankings doit être un tableau');
-      }
-    }
-  }
-
-  return data as BackupData;
-}
-
 export function restoreDatabase(db: Database.Database, data: BackupData): RestoreResult {
   const result: RestoreResult = { meetingsImported: 0, meetingsSkipped: 0, swimmersImported: 0 };
 
   const transaction = db.transaction(() => {
     for (const meeting of data.meetings) {
-      const existing = db
-        .prepare('SELECT id FROM meeting WHERE name = ? AND date = ?')
-        .get(meeting.name, meeting.date) as { id: number } | undefined;
-
-      if (existing) {
+      if (meetingExistsByNameAndDate(db, meeting.name, meeting.date)) {
         result.meetingsSkipped++;
         continue;
       }
