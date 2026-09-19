@@ -152,11 +152,24 @@ export function registerIpcHandlers(db: Database.Database): void {
     }
   });
 
-  ipcMain.handle(IpcChannels.backupGetConfig, async () => loadBackupConfig());
+  ipcMain.handle(IpcChannels.backupGetConfig, async () => {
+    try {
+      // loadBackupConfig reads and JSON.parse's a hand-editable file, which
+      // can throw (corrupted/malformed backup-config.json) — same try/catch
+      // convention as the other backup handlers above.
+      return { success: true, config: loadBackupConfig() };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 
   ipcMain.handle(IpcChannels.backupSetConfig, async (_event, config: BackupConfig) => {
-    saveBackupConfig(config);
-    return { success: true };
+    try {
+      saveBackupConfig(config);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
   });
 
   ipcMain.handle(IpcChannels.backupChooseDir, async () => {

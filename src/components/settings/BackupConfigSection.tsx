@@ -10,11 +10,19 @@ export function BackupConfigSection(): JSX.Element {
   const [backupDir, setBackupDir] = useState('');
   const [maxBackups, setMaxBackups] = useState(5);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void window.electronAPI.getBackupConfig().then((config) => {
-      setBackupDir(config.backupDir);
-      setMaxBackups(config.maxBackups);
+    void window.electronAPI.getBackupConfig().then((result) => {
+      if (result.success && result.config) {
+        setBackupDir(result.config.backupDir);
+        setMaxBackups(result.config.maxBackups);
+      } else if (!result.success) {
+        // loadBackupConfig can throw on a corrupted backup-config.json; fall
+        // back to the empty/default form state and surface the error rather
+        // than leaving an unhandled rejection.
+        setError(result.error ?? 'Erreur inconnue');
+      }
     });
   }, []);
 
@@ -27,8 +35,13 @@ export function BackupConfigSection(): JSX.Element {
   }
 
   async function handleSave(): Promise<void> {
-    await window.electronAPI.setBackupConfig({ backupDir, maxBackups });
-    setSavedAt(Date.now());
+    setError(null);
+    const result = await window.electronAPI.setBackupConfig({ backupDir, maxBackups });
+    if (result.success) {
+      setSavedAt(Date.now());
+    } else {
+      setError(result.error ?? 'Erreur inconnue');
+    }
   }
 
   return (
@@ -62,7 +75,10 @@ export function BackupConfigSection(): JSX.Element {
           min={1}
           value={maxBackups}
           onChange={(event) => {
-            setMaxBackups(Number(event.target.value));
+            // Clamp to a positive integer client-side: loadBackupConfig only
+            // self-heals non-positive/non-numeric values, not fractional ones,
+            // and a fractional value would otherwise flow into rotateBackups.
+            setMaxBackups(Math.max(1, Math.round(Number(event.target.value))));
             setSavedAt(null);
           }}
           className="mt-1 w-32 rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
@@ -79,6 +95,7 @@ export function BackupConfigSection(): JSX.Element {
         </button>
         {savedAt && <span className="text-sm text-success">Configuration enregistrée.</span>}
       </div>
+      {error && <p className="text-sm text-error">Erreur : {error}</p>}
     </div>
   );
 }
