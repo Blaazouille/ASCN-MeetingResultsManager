@@ -45,7 +45,7 @@
 
 ### Sauvegardes automatiques
 
-- Dossier de sauvegarde configurable (bouton parcourir) : stocké dans `backup-config.json` sous `app.getPath('userData')`.
+- Dossier de sauvegarde configurable (bouton parcourir), par défaut `Documents/MDLM Ranking/Sauvegardes` — un emplacement que le bénévole sait déjà retrouver, contrairement au dossier de données d'Electron. Ce choix est stocké dans `backup-config.json` sous `app.getPath('userData')`.
 - Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
 - Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur — tout défaut de sauvegarde est journalisé mais l'import continue.
 

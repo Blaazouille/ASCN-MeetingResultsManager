@@ -22,8 +22,12 @@ function configPath(): string {
   return path.join(app.getPath('userData'), CONFIG_FILENAME);
 }
 
+// Documents, not userData — userData is buried under AppData/Roaming, which
+// a non-technical volunteer has no reason to ever navigate to. Documents is
+// where they already look for their own files, so a restore from a new or
+// reinstalled machine doesn't depend on knowing Electron's data directory.
 function defaultBackupDir(): string {
-  return path.join(app.getPath('userData'), 'backups');
+  return path.join(app.getPath('documents'), 'MDLM Ranking', 'Sauvegardes');
 }
 
 // Config lives in its own JSON file outside SQLite so it survives a database
