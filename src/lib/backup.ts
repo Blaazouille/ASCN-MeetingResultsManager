@@ -1,6 +1,6 @@
 /**
  * Responsabilité : export / import complet de la base de données en JSON.
- * Appelé par : ipc-handlers.ts (export/import), tests.
+ * Appelé par : electron/ipc-handlers.ts (export/import), electron/auto-backup.ts, tests.
  * Suppression casserait : la fonctionnalité de sauvegarde et restauration.
  */
 import type Database from 'better-sqlite3';
@@ -19,6 +19,9 @@ export interface MeetingBackup {
   status: string;
   createdAt: string;
   updatedAt: string;
+  defaultTopN: number;
+  minSwimmers: number;
+  activeCategories: string[] | null;
   swimmers: SwimmerBackup[];
   teamRankings: TeamRankingBackup[];
 }
@@ -32,6 +35,7 @@ export interface SwimmerBackup {
   nation: string | null;
   club: string;
   points: number;
+  rawLine: string | null;
 }
 
 export interface TeamRankingBackup {
@@ -50,33 +54,56 @@ export interface RestoreResult {
   swimmersImported: number;
 }
 
+interface MeetingRow {
+  id: number;
+  name: string;
+  date: string;
+  location: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  default_top_n: number;
+  min_swimmers: number;
+  active_categories: string | null;
+}
+
+interface SwimmerRow {
+  category: string;
+  rank: number | null;
+  lastname: string;
+  firstname: string;
+  birthyear: number | null;
+  nation: string | null;
+  club: string;
+  points: number;
+  raw_line: string | null;
+}
+
+interface TeamRankingRow {
+  category: string;
+  club: string;
+  rank: number;
+  total_pts: number;
+  top_n: number;
+  swimmers: string;
+  computed_at: string;
+}
+
 export function exportDatabase(db: Database.Database): BackupData {
-  const meetings = db.prepare('SELECT * FROM meeting ORDER BY id').all() as Array<{
-    id: number;
-    name: string;
-    date: string;
-    location: string | null;
-    status: string;
-    created_at: string;
-    updated_at: string;
-  }>;
+  const meetings = db.prepare('SELECT * FROM meeting ORDER BY id').all() as MeetingRow[];
 
   const meetingBackups: MeetingBackup[] = meetings.map((m) => {
     const swimmers = db
-      .prepare('SELECT category, rank, lastname, firstname, birthyear, nation, club, points FROM swimmer_result WHERE meeting_id = ?')
-      .all(m.id) as SwimmerBackup[];
+      .prepare(
+        'SELECT category, rank, lastname, firstname, birthyear, nation, club, points, raw_line FROM swimmer_result WHERE meeting_id = ? ORDER BY id'
+      )
+      .all(m.id) as SwimmerRow[];
 
     const rankings = db
-      .prepare('SELECT category, club, rank, total_pts, top_n, swimmers, computed_at FROM team_ranking WHERE meeting_id = ?')
-      .all(m.id) as Array<{
-        category: string;
-        club: string;
-        rank: number;
-        total_pts: number;
-        top_n: number;
-        swimmers: string;
-        computed_at: string;
-      }>;
+      .prepare(
+        'SELECT category, club, rank, total_pts, top_n, swimmers, computed_at FROM team_ranking WHERE meeting_id = ? ORDER BY id'
+      )
+      .all(m.id) as TeamRankingRow[];
 
     return {
       name: m.name,
@@ -85,7 +112,20 @@ export function exportDatabase(db: Database.Database): BackupData {
       status: m.status,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
-      swimmers,
+      defaultTopN: m.default_top_n,
+      minSwimmers: m.min_swimmers,
+      activeCategories: m.active_categories ? (JSON.parse(m.active_categories) as string[]) : null,
+      swimmers: swimmers.map((s) => ({
+        category: s.category,
+        rank: s.rank,
+        lastname: s.lastname,
+        firstname: s.firstname,
+        birthyear: s.birthyear,
+        nation: s.nation,
+        club: s.club,
+        points: s.points,
+        rawLine: s.raw_line,
+      })),
       teamRankings: rankings.map((r) => ({
         category: r.category,
         club: r.club,
@@ -100,7 +140,7 @@ export function exportDatabase(db: Database.Database): BackupData {
 
   return {
     version: 1,
-    appName: 'ASCN Meeting Results',
+    appName: 'MDLM Ranking',
     exportedAt: new Date().toISOString(),
     meetings: meetingBackups,
   };
@@ -132,6 +172,33 @@ export function validateBackup(data: unknown): BackupData {
     if (!Array.isArray(m.swimmers)) {
       throw new Error('Format de backup invalide : meeting.swimmers doit être un tableau');
     }
+
+    // Validate each swimmer entry
+    for (const swimmer of m.swimmers) {
+      if (typeof swimmer !== 'object' || swimmer === null) {
+        throw new Error('Format de backup invalide : swimmer doit être un objet');
+      }
+      const s = swimmer as Record<string, unknown>;
+      if (typeof s.lastname !== 'string') {
+        throw new Error('Format de backup invalide : swimmer.lastname doit être une string');
+      }
+      if (typeof s.firstname !== 'string') {
+        throw new Error('Format de backup invalide : swimmer.firstname doit être une string');
+      }
+      if (typeof s.club !== 'string') {
+        throw new Error('Format de backup invalide : swimmer.club doit être une string');
+      }
+      if (typeof s.points !== 'number') {
+        throw new Error('Format de backup invalide : swimmer.points doit être un nombre');
+      }
+    }
+
+    // Validate teamRankings if present
+    if (m.teamRankings !== undefined) {
+      if (!Array.isArray(m.teamRankings)) {
+        throw new Error('Format de backup invalide : meeting.teamRankings doit être un tableau');
+      }
+    }
   }
 
   return data as BackupData;
@@ -152,19 +219,30 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
       }
 
       const insertMeeting = db.prepare(
-        'INSERT INTO meeting (name, date, location, status) VALUES (?, ?, ?, ?)'
+        `INSERT INTO meeting (name, date, location, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       );
-      const row = insertMeeting.run(meeting.name, meeting.date, meeting.location, meeting.status);
+      const row = insertMeeting.run(
+        meeting.name,
+        meeting.date,
+        meeting.location,
+        meeting.status,
+        meeting.createdAt,
+        meeting.updatedAt,
+        meeting.defaultTopN,
+        meeting.minSwimmers,
+        meeting.activeCategories ? JSON.stringify(meeting.activeCategories) : null
+      );
       const meetingId = row.lastInsertRowid;
       result.meetingsImported++;
 
       const insertSwimmer = db.prepare(
-        `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       );
 
       for (const s of meeting.swimmers) {
-        insertSwimmer.run(meetingId, s.category, s.rank, s.lastname, s.firstname, s.birthyear, s.nation, s.club, s.points);
+        insertSwimmer.run(meetingId, s.category, s.rank, s.lastname, s.firstname, s.birthyear, s.nation, s.club, s.points, s.rawLine);
         result.swimmersImported++;
       }
 
