@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 `;
 
 /** Initializes the schema on an existing Database instance (used for :memory: test databases). */
-export function initDatabase(db: Database.Database): void {
+function initDatabase(db: Database.Database): void {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA_SQL);

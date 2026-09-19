@@ -14,7 +14,12 @@ type BackupState =
   | { step: 'import-success'; meetingsImported: number; swimmersImported: number; meetingsSkipped: number }
   | { step: 'error'; error: string };
 
-export function BackupSection(): JSX.Element {
+export interface BackupSectionProps {
+  /** Called after a successful restore so the caller can refresh any renderer state (e.g. the meeting list) derived from the DB. */
+  onRestored?: () => void | Promise<void>;
+}
+
+export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   const [state, setState] = useState<BackupState>({ step: 'idle' });
 
   async function handleExport(): Promise<void> {
@@ -46,6 +51,9 @@ export function BackupSection(): JSX.Element {
     const result = await window.electronAPI.confirmImport();
     if (result.success && result.result) {
       setState({ step: 'import-success', ...result.result });
+      // Refresh the renderer's meeting list after the restore actually wrote
+      // to the DB, so restored meetings show up without an app restart.
+      await onRestored?.();
     } else if (result.error) {
       setState({ step: 'error', error: result.error });
     } else {
@@ -109,7 +117,12 @@ export function BackupSection(): JSX.Element {
             </button>
             <button
               type="button"
-              onClick={() => setState({ step: 'idle' })}
+              onClick={() => {
+                // Fire-and-forget: releases the pending import held in the
+                // main process; the renderer resets to idle immediately.
+                void window.electronAPI.cancelImport();
+                setState({ step: 'idle' });
+              }}
               disabled={isBusy}
               className="rounded-md bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-200 disabled:opacity-60"
             >

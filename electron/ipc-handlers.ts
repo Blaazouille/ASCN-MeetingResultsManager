@@ -173,7 +173,22 @@ export function registerIpcHandlers(db: Database.Database): void {
   });
 
   ipcMain.handle(IpcChannels.backupChooseDir, async () => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
-    return result.canceled ? null : (result.filePaths[0] ?? null);
+    try {
+      const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+      return result.canceled ? null : (result.filePaths[0] ?? null);
+    } catch {
+      // Contract matches openFileDialog: string | null, no {success, error}
+      // shape, so a failure just resolves to null like a cancel.
+      return null;
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupCancelImport, async () => {
+    // Not a correctness fix (every path into the preview UI step re-runs
+    // backupImport first, which overwrites pendingImport) — just releases a
+    // full backup's worth of JSON from main-process memory when the user
+    // clicks "Annuler" instead of confirming.
+    pendingImport = null;
+    return { success: true };
   });
 }

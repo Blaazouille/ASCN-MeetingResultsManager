@@ -6,6 +6,7 @@ import {
   exportDatabase,
   validateBackup,
   restoreDatabase,
+  type TeamRankingBackup,
 } from '../src/lib/backup';
 
 function freshDb(): Database.Database {
@@ -146,7 +147,13 @@ describe('validateBackup', () => {
 
   it('rejects malformed teamRankings', () => {
     const backup = exportDatabase(db);
-    backup.meetings[0]!.teamRankings = null as unknown as any[];
+    backup.meetings[0]!.teamRankings = null as unknown as TeamRankingBackup[];
+    expect(() => validateBackup(backup)).toThrow();
+  });
+
+  it('rejects invalid meeting.status', () => {
+    const backup = exportDatabase(db);
+    backup.meetings[0]!.status = 'bogus';
     expect(() => validateBackup(backup)).toThrow();
   });
 });

@@ -29,7 +29,7 @@ export default function SettingsPage(): JSX.Element {
           await meetingState.updateMeeting(meeting.id, input);
         }}
       />
-      <BackupSection />
+      <BackupSection onRestored={meetingState.refresh} />
       <BackupConfigSection />
     </div>
   );

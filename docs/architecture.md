@@ -71,7 +71,7 @@ Nouveaux canaux IPC enregistrés dans `electron/ipc-channels.ts` :
 
 La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: true` — la barre de menus native est cachée par défaut et accessible via la touche Alt. Le layout utilise une sidebar en position `fixed` et un header `sticky` : seul le contenu principal (`<main>`) défile, la sidebar et le header restent visibles en permanence.
 
-## Versioning, installeur et auto-update (Phase 9 — non démarré)
+## Versioning, installeur et auto-update (Phase 10 — non démarré)
 
 Non implémenté pour l'instant : l'app est buildée et installée manuellement sur un seul poste. À prévoir quand la diffusion sort de ce cadre (plusieurs postes/bénévoles).
 
@@ -79,7 +79,7 @@ Non implémenté pour l'instant : l'app est buildée et installée manuellement 
 - **Installeur** : remplacer l'installeur NSIS par défaut d'`electron-builder` par une configuration NSIS personnalisée (branding ASCN, choix du dossier, raccourcis) côté Windows ; signer le `.dmg` côté macOS pour éviter l'avertissement Gatekeeper.
 - **Auto-updater in-app** : intégrer `electron-updater` (ou équivalent) pointant vers un canal de releases (GitHub Releases par ex.), avec vérification au démarrage et installation différée pour ne pas interrompre un meeting en cours.
 
-Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `CLAUDE.md` → Plan de construction, Phase 9).
+Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `CLAUDE.md` → Plan de construction, Phase 10).
 
 ## Organisation des dossiers
 

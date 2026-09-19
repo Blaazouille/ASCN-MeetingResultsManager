@@ -6,7 +6,6 @@
 import type Database from 'better-sqlite3';
 import type { RawSwimmerRow } from './csv-parser';
 import type { TeamResult } from './ranking-engine';
-import { initDatabase } from './db-schema';
 
 export type MeetingStatus = 'provisional' | 'final';
 
@@ -269,5 +268,3 @@ export function saveTeamRanking(
   });
   saveAll(results);
 }
-
-export { initDatabase };

@@ -173,6 +173,26 @@ export function validateBackup(data: unknown): BackupData {
       throw new Error('Format de backup invalide : meeting.swimmers doit être un tableau');
     }
 
+    // These fields are bound directly into SQL by restoreDatabase (including
+    // a `status` CHECK constraint), so a missing/malformed one would
+    // otherwise surface as a raw, untranslated better-sqlite3/SQLite error in
+    // the UI instead of this French validation message.
+    if (m.status !== 'provisional' && m.status !== 'final') {
+      throw new Error('Format de backup invalide : meeting.status doit être "provisional" ou "final"');
+    }
+    if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
+      throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
+    }
+    if (typeof m.defaultTopN !== 'number' || typeof m.minSwimmers !== 'number') {
+      throw new Error('Format de backup invalide : meeting.defaultTopN et meeting.minSwimmers doivent être des nombres');
+    }
+    if (
+      m.activeCategories !== null &&
+      (!Array.isArray(m.activeCategories) || m.activeCategories.some((c) => typeof c !== 'string'))
+    ) {
+      throw new Error('Format de backup invalide : meeting.activeCategories doit être null ou un tableau de strings');
+    }
+
     // Validate each swimmer entry
     for (const swimmer of m.swimmers) {
       if (typeof swimmer !== 'object' || swimmer === null) {

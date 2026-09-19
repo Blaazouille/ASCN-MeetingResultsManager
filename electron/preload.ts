@@ -57,6 +57,7 @@ const electronAPI = {
   }> => ipcRenderer.invoke(IpcChannels.backupImport),
   confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.backupConfirmImport),
+  cancelImport: (): Promise<{ success: boolean }> => ipcRenderer.invoke(IpcChannels.backupCancelImport),
 
   // Backup config (folder + rotation limit)
   getBackupConfig: (): Promise<{ success: boolean; config?: BackupConfig; error?: string }> =>
