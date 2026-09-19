@@ -30,6 +30,43 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Les canaux IPC de calcul/sauvegarde de classement existent et sont testés, mais ne sont pas encore appelés — réservés à un usage futur (historique de classements).
 
+## Sauvegarde et restauration (Phase 9)
+
+### Flux de sauvegarde et restauration
+
+```
+SQLite (meeting, swimmer_result, team_ranking)
+    ↓
+exportDatabase() [src/lib/backup.ts]
+    ↓
+BackupData (JSON : version, appName, exportedAt, meetings[])
+    ↓
+Fichier .json sur disque
+    ↓
+validateBackup() [src/lib/backup.ts]
+    ↓
+restoreDatabase() [src/lib/backup.ts]
+    ↓
+SQLite (reconstruction complète, skipping des meetings existants)
+```
+
+### Sauvegardes automatiques
+
+Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après chaque import CSV réussi (trigger point : fin de `insertSwimmerResults` dans `import:csv` handler). Elles ne bloquent jamais l'import — tout défaut de sauvegarde est journalisé et ignoré (`performAutoBackup` enveloppe le code dans un try/catch qui swallow les erreurs).
+
+La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans un fichier JSON distinct (`backup-config.json`) sous `app.getPath('userData')`, en dehors de SQLite. Cela garantit que la config survit à une restauration complète de la base (la restauration ne touche que les tables SQLite, pas le système de fichiers Electron).
+
+### Canaux IPC pour backup/restore
+
+Nouveaux canaux IPC enregistrés dans `electron/ipc-channels.ts` :
+
+- `backup:export` — exporte la base entière en JSON
+- `backup:import` — valide un fichier JSON importé
+- `backup:confirm-import` — enregistre l'import après confirmation de l'utilisateur
+- `backup:get-config` — charge la config de sauvegarde automatique
+- `backup:set-config` — enregistre la config de sauvegarde automatique
+- `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde
+
 ## Configuration Electron
 
 La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: true` — la barre de menus native est cachée par défaut et accessible via la touche Alt. Le layout utilise une sidebar en position `fixed` et un header `sticky` : seul le contenu principal (`<main>`) défile, la sidebar et le header restent visibles en permanence.
@@ -51,7 +88,8 @@ Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `C
 │   ├── main.ts               # Process principal Electron
 │   ├── preload.ts            # Context bridge IPC
 │   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
-│   └── ipc-channels.ts       # Noms de canaux IPC partagés
+│   ├── ipc-channels.ts       # Noms de canaux IPC partagés
+│   └── auto-backup.ts        # Sauvegarde automatique après import CSV
 ├── src/
 │   ├── main.tsx               # Point d'entrée React
 │   ├── App.tsx                # Routeur principal
@@ -60,6 +98,7 @@ Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `C
 │   │   ├── ranking-engine.ts  # Algorithme de classement
 │   │   ├── db-schema.ts       # Schéma SQLite et migrations
 │   │   ├── db.ts              # Opérations CRUD SQLite
+│   │   ├── backup.ts          # Export/import complet de la base en JSON
 │   │   ├── export-data.ts     # Métadonnées et helpers pour les exports
 │   │   ├── pdf-export.tsx     # Génération PDF
 │   │   ├── excel-export.ts    # Génération Excel

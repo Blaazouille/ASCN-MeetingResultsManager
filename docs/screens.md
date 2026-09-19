@@ -37,4 +37,16 @@
 - Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut.
 - Règles de calcul : top N par défaut, catégories actives, seuil minimum de nageurs par club.
 
+### Sauvegarde et restauration
+
+- Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, de la date, des nageurs et des classements.
+- Import depuis un fichier JSON avec aperçu préalable : affiche le nombre de meetings et de nageurs à importer, ainsi que le nombre de meetings existants dans la base (pour éviter les doublons par name/date).
+- Confirmation explicite avant d'écrire la base — l'utilisateur voit les impacts potentiels avant validation.
+
+### Sauvegardes automatiques
+
+- Dossier de sauvegarde configurable (bouton parcourir) : stocké dans `backup-config.json` sous `app.getPath('userData')`.
+- Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
+- Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur — tout défaut de sauvegarde est journalisé mais l'import continue.
+
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.

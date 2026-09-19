@@ -122,6 +122,72 @@ interface RankingParams {
 }
 ```
 
+## Schéma de sauvegarde (BackupData JSON)
+
+Format d'export/import complet de la base de données (`src/lib/backup.ts`) :
+
+```typescript
+interface BackupData {
+  version: 1;
+  appName: string;              // "MDLM Ranking"
+  exportedAt: string;           // ISO timestamp
+  meetings: MeetingBackup[];
+}
+
+interface MeetingBackup {
+  name: string;
+  date: string;
+  location: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  defaultTopN: number;          // Règle de calcul : top N par défaut
+  minSwimmers: number;          // Règle de calcul : seuil minimum
+  activeCategories: string[] | null;  // Règle de calcul : catégories actives
+  swimmers: SwimmerBackup[];
+  teamRankings: TeamRankingBackup[];
+}
+
+interface SwimmerBackup {
+  category: string;
+  rank: number | null;
+  lastname: string;
+  firstname: string;
+  birthyear: number | null;
+  nation: string | null;
+  club: string;
+  points: number;
+  rawLine: string | null;
+}
+
+interface TeamRankingBackup {
+  category: string;
+  club: string;
+  rank: number;
+  totalPoints: number;
+  topN: number;
+  swimmers: string;             // Sérialisation des nageurs retenus
+  computedAt: string;           // ISO timestamp
+}
+```
+
+La sauvegarde inclut les règles de calcul (`defaultTopN`, `minSwimmers`, `activeCategories`) ainsi que les classements pré-calculés (`team_ranking`), de sorte qu'une restauration reconstitue l'état complet du meeting sans recalcul.
+
+## Configuration des sauvegardes automatiques
+
+La configuration est stockée dans un fichier JSON distinct, en dehors de SQLite :
+
+```typescript
+interface BackupConfig {
+  backupDir: string;            // Chemin absolu du dossier de sauvegarde
+  maxBackups: number;           // Nombre maximal de fichiers conservés (par défaut 5)
+}
+```
+
+Fichier : `{app.getPath('userData')}/backup-config.json` (par exemple `C:\Users\<user>\AppData\Roaming\MDLM Ranking\backup-config.json` sur Windows).
+
+Raison de la séparation : la config survit à une restauration complète de la base (les sauvegardes ne réinitialisent pas les fichiers du système de fichiers Electron, seulement les tables SQLite). Cela permet à l'utilisateur de restaurer un backup sans perdre ses paramètres de sauvegarde (dossier et rotation).
+
 ## Relations
 
 - `swimmer_result.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
