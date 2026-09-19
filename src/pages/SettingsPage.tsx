@@ -6,6 +6,7 @@
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { SettingsForm } from '@/components/settings/SettingsForm';
+import { BackupSection } from '@/components/settings/BackupSection';
 
 export default function SettingsPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -27,6 +28,7 @@ export default function SettingsPage(): JSX.Element {
           await meetingState.updateMeeting(meeting.id, input);
         }}
       />
+      <BackupSection />
     </div>
   );
 }
