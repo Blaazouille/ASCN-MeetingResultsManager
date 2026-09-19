@@ -15,13 +15,6 @@ export function Header({ currentMeeting }: HeaderProps): JSX.Element {
       {currentMeeting && (
         <>
           <p className="text-sm font-semibold text-neutral-900">{currentMeeting.name}</p>
-          {currentMeeting.date && (
-            <p className="ml-3 text-xs text-neutral-500">
-              {new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-                new Date(currentMeeting.date)
-              )}
-            </p>
-          )}
           <span
             className={`ml-4 rounded-sm px-2 py-0.5 text-xs font-medium ${
               currentMeeting.status === 'final'

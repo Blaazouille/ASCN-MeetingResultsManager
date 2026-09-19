@@ -13,8 +13,6 @@ export interface BackupData {
 
 export interface MeetingBackup {
   name: string;
-  date: string;
-  location: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -75,8 +73,8 @@ export function validateBackup(data: unknown): BackupData {
       throw new Error('Format de backup invalide : meeting doit être un objet');
     }
     const m = meeting as Record<string, unknown>;
-    if (typeof m.name !== 'string' || typeof m.date !== 'string') {
-      throw new Error('Format de backup invalide : meeting.name et meeting.date requis');
+    if (typeof m.name !== 'string') {
+      throw new Error('Format de backup invalide : meeting.name requis');
     }
     if (!Array.isArray(m.swimmers)) {
       throw new Error('Format de backup invalide : meeting.swimmers doit être un tableau');

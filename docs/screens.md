@@ -5,7 +5,7 @@
 ## Accueil (`/`)
 
 - Liste des meetings existants (`MeetingList` / `MeetingCard`).
-- Bouton pour créer un nouveau meeting (`MeetingForm`) : seul le nom est obligatoire, la date est pré-remplie avec la date du jour (modifiable mais non obligatoire).
+- Bouton pour créer un nouveau meeting (`MeetingForm`) : seul le nom est demandé, la base ne retient ni date de meeting ni lieu (ces champs ont été retirés du modèle de données — la carte affiche la date de création à la place, à titre indicatif).
 - Clic sur une carte pour ouvrir un meeting (le charge en contexte partagé et navigue vers Import ou Classement selon l'état).
 
 ## Import (`/import`)
@@ -36,12 +36,12 @@
 
 Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le seul moyen de restaurer une sauvegarde sur une installation neuve, avant qu'aucun meeting n'existe.
 
-- Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut. N'apparaît que si un meeting est ouvert.
+- Formulaire de configuration du meeting (`SettingsForm`) : nom, statut. N'apparaît que si un meeting est ouvert.
 - Règles de calcul : top N par défaut, catégories actives, seuil minimum de nageurs par club.
 
 ### Sauvegarde et restauration
 
-- Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, de la date, des nageurs et des classements.
+- Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, des nageurs et des classements.
 - Import = restauration à l'identique : la base est remplacée entièrement par le contenu du fichier, exactement comme elle était au moment de l'export. Tous les meetings actuellement présents sont supprimés au profit de ceux du fichier, y compris un meeting créé après la sauvegarde et absent du fichier — ce n'est pas une fusion.
 - Aperçu préalable avant d'écrire la base : nombre de meetings et de lignes de résultats dans le fichier (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), et nombre de meetings actuellement dans la base qui seront supprimés. Confirmation explicite requise.
 

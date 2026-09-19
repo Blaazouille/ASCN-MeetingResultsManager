@@ -16,8 +16,6 @@ function freshDb(): Database.Database {
 function seedDb(db: Database.Database): void {
   const meeting = createMeeting(db, {
     name: 'Test Meeting',
-    date: '2026-09-01',
-    location: 'Pool',
     defaultTopN: 5,
     minSwimmers: 3,
     activeCategories: ['Classement Mixte'],
@@ -184,7 +182,7 @@ describe('restoreDatabase', () => {
   it('wipes every meeting currently in the database, even ones the backup never mentions', () => {
     // A meeting with no relation to anything in the backup — a point-in-time
     // restore must still remove it, since it didn't exist at backup time.
-    const unrelated = createMeeting(targetDb, { name: 'Unrelated Meeting', date: '2020-01-01' });
+    const unrelated = createMeeting(targetDb, { name: 'Unrelated Meeting' });
     targetDb
       .prepare(
         `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)

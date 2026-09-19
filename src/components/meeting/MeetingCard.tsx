@@ -1,18 +1,16 @@
 /**
- * Responsabilité : carte résumant un meeting (nom, date, statut) sur l'écran d'accueil.
+ * Responsabilité : carte résumant un meeting (nom, date de création, statut) sur l'écran d'accueil.
  * Appelé par : MeetingList.tsx.
  * Suppression casserait : l'affichage de la liste des meetings.
  */
 import type { Meeting } from '@/lib/db';
-import { meetingStatusLabel, parseMeetingDate } from '@/lib/export-data';
+import { formatMeetingCreatedAt, meetingStatusLabel } from '@/lib/export-data';
 import { cn } from '@/lib/utils';
 
 export interface MeetingCardProps {
   meeting: Meeting;
   onOpen: (meeting: Meeting) => void;
 }
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 
 export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element {
   return (
@@ -23,10 +21,7 @@ export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element 
     >
       <div>
         <p className="font-display text-base font-semibold text-primary-800">{meeting.name}</p>
-        <p className="text-sm text-neutral-600">
-          {DATE_FORMATTER.format(parseMeetingDate(meeting.date))}
-          {meeting.location ? `, ${meeting.location}` : ''}
-        </p>
+        <p className="text-sm text-neutral-600">Créé le {formatMeetingCreatedAt(meeting)}</p>
       </div>
       <span
         className={cn(

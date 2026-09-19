@@ -43,12 +43,8 @@ export function useMeeting(): UseMeetingResult {
   const createMeeting = useCallback(async (input: MeetingInput): Promise<Meeting> => {
     try {
       const meeting = await window.electronAPI.createMeeting(input);
-      // Keep the same order getAllMeetings/refresh() produce (date DESC, id
-      // DESC) instead of always pinning the new meeting to the top, which
-      // would misorder a backfilled past meeting ahead of a more recent one.
-      setMeetings((current) =>
-        [meeting, ...current].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
-      );
+      // Keep the same order getAllMeetings/refresh() produce (id DESC).
+      setMeetings((current) => [meeting, ...current].sort((a, b) => b.id - a.id));
       setError(null);
       return meeting;
     } catch (err) {

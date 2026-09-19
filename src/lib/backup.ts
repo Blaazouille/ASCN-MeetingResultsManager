@@ -27,8 +27,6 @@ export function formatBackupTimestamp(): string {
 interface MeetingRow {
   id: number;
   name: string;
-  date: string;
-  location: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -77,8 +75,6 @@ export function exportDatabase(db: Database.Database): BackupData {
 
     return {
       name: m.name,
-      date: m.date,
-      location: m.location,
       status: m.status,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
@@ -136,13 +132,11 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
       result.meetingsImported++;
 
       const insertMeeting = db.prepare(
-        `INSERT INTO meeting (name, date, location, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO meeting (name, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       );
       const row = insertMeeting.run(
         meeting.name,
-        meeting.date,
-        meeting.location,
         meeting.status,
         meeting.createdAt,
         meeting.updatedAt,
