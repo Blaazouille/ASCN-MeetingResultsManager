@@ -49,13 +49,18 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 `;
 
-/** Opens (creating if needed) the SQLite database at `filePath` and ensures the schema exists. Pass ':memory:' in tests. */
-export function createDatabase(filePath: string): Database.Database {
-  const db = new Database(filePath);
+/** Initializes the schema on an existing Database instance (used for :memory: test databases). */
+export function initDatabase(db: Database.Database): void {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA_SQL);
   migrateSchema(db);
+}
+
+/** Opens (creating if needed) the SQLite database at `filePath` and ensures the schema exists. Pass ':memory:' in tests. */
+export function createDatabase(filePath: string): Database.Database {
+  const db = new Database(filePath);
+  initDatabase(db);
   return db;
 }
 
