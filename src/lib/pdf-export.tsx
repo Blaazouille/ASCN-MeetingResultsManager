@@ -13,8 +13,7 @@ import { ASCN_CLUB_NAME, formatPoints } from './utils';
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11 },
   title: { fontSize: 20, fontWeight: 700, marginBottom: 4 },
-  subtitle: { fontSize: 12, marginBottom: 2, color: '#5B6B7D' },
-  date: { fontSize: 10, marginBottom: 16, color: '#5B6B7D' },
+  subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 6 },
   rowAscn: { backgroundColor: '#F0FAFF' },
@@ -39,7 +38,6 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
-        <Text style={styles.date}>{meta.date}</Text>
 
         {results.length === 0 ? (
           <Text style={styles.empty}>Aucun club classé pour cette catégorie.</Text>

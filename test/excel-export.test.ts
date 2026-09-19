@@ -12,8 +12,6 @@ const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 const TEST_MEETING = {
   id: 1,
   name: 'Meeting de la Mer 2026',
-  date: '2026-11-16',
-  location: 'Cherbourg',
   status: 'provisional' as const,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

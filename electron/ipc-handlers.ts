@@ -5,6 +5,8 @@
  */
 import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
+import { readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { IpcChannels } from './ipc-channels';
 import {
   createMeeting,
@@ -18,6 +20,8 @@ import {
 } from '../src/lib/db';
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
+import { exportDatabase, validateBackup, restoreDatabase, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
+import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -35,6 +39,10 @@ export function registerIpcHandlers(db: Database.Database): void {
 
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
     insertSwimmerResults(db, meetingId, rows);
+    // Deferred to the next tick: performAutoBackup does a full DB export,
+    // JSON write, and rotation pass, which must not add latency to the
+    // import response the poolside volunteer is waiting on.
+    setImmediate(() => performAutoBackup(db));
   });
 
   ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>
@@ -79,5 +87,115 @@ export function registerIpcHandlers(db: Database.Database): void {
       filters,
     });
     return result.canceled ? null : (result.filePath ?? null);
+  });
+
+  // Holds the validated backup between the import preview step (backupImport)
+  // and the confirm step (backupConfirmImport), so the renderer can show a
+  // preview and let the user cancel before anything is written to the DB.
+  let pendingImport: BackupData | null = null;
+
+  ipcMain.handle(IpcChannels.backupExport, async () => {
+    try {
+      const data = exportDatabase(db);
+      const timestamp = formatBackupTimestamp();
+      // Opens on the same folder auto-backups already land in, so a manual
+      // export and a restore both start from the place the volunteer
+      // already knows to look.
+      const result = await dialog.showSaveDialog({
+        defaultPath: path.join(loadBackupConfig().backupDir, `mdlm-backup-${timestamp}.json`),
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (result.canceled || !result.filePath) {
+        return { success: false };
+      }
+      writeFileSync(result.filePath, JSON.stringify(data, null, 2), 'utf-8');
+      return { success: true, path: result.filePath };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupImport, async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        defaultPath: loadBackupConfig().backupDir,
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (result.canceled || !result.filePaths[0]) {
+        return { success: false };
+      }
+      const raw = readFileSync(result.filePaths[0], 'utf-8');
+      const parsed: unknown = JSON.parse(raw);
+      const validated = validateBackup(parsed);
+
+      const swimmerCount = validated.meetings.reduce((sum, m) => sum + m.swimmers.length, 0);
+      // A restore always replaces the whole database, so the preview warns
+      // about everything currently there, not just meetings that happen to
+      // share a name/date with the backup.
+      const currentMeetingCount = getAllMeetings(db).length;
+
+      pendingImport = validated;
+      return {
+        success: true,
+        preview: { meetingCount: validated.meetings.length, swimmerCount, currentMeetingCount },
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupConfirmImport, async () => {
+    try {
+      if (!pendingImport) {
+        return { success: false, error: 'Aucune sauvegarde en attente de confirmation' };
+      }
+      const result = restoreDatabase(db, pendingImport);
+      pendingImport = null;
+      return { success: true, result };
+    } catch (error) {
+      pendingImport = null;
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupGetConfig, async () => {
+    try {
+      // loadBackupConfig reads and JSON.parse's a hand-editable file, which
+      // can throw (corrupted/malformed backup-config.json) — same try/catch
+      // convention as the other backup handlers above.
+      return { success: true, config: loadBackupConfig() };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupSetConfig, async (_event, config: BackupConfig) => {
+    try {
+      saveBackupConfig(config);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupChooseDir, async () => {
+    try {
+      const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+      return result.canceled ? null : (result.filePaths[0] ?? null);
+    } catch {
+      // Contract matches openFileDialog: string | null, no {success, error}
+      // shape, so a failure just resolves to null like a cancel.
+      return null;
+    }
+  });
+
+  ipcMain.handle(IpcChannels.backupCancelImport, async () => {
+    // Not a correctness fix (every path into the preview UI step re-runs
+    // backupImport first, which overwrites pendingImport) — just releases a
+    // full backup's worth of JSON from main-process memory when the user
+    // clicks "Annuler" instead of confirming.
+    pendingImport = null;
+    return { success: true };
   });
 }

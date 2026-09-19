@@ -8,6 +8,8 @@ import { IpcChannels } from './ipc-channels';
 import type { Meeting, MeetingInput } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import type { RankingParams, TeamResult } from '../src/lib/ranking-engine';
+import type { RestoreResult } from '../src/lib/backup';
+import type { BackupConfig } from './auto-backup';
 
 interface FileFilter {
   name: string;
@@ -44,6 +46,25 @@ const electronAPI = {
   openFileDialog: (filters?: FileFilter[]): Promise<string | null> => ipcRenderer.invoke(IpcChannels.openFileDialog, filters),
   saveFileDialog: (defaultName: string, filters?: FileFilter[]): Promise<string | null> =>
     ipcRenderer.invoke(IpcChannels.saveFileDialog, defaultName, filters),
+
+  // Backup
+  exportBackup: (): Promise<{ success: boolean; path?: string; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupExport),
+  importBackup: (): Promise<{
+    success: boolean;
+    preview?: { meetingCount: number; swimmerCount: number; currentMeetingCount: number };
+    error?: string;
+  }> => ipcRenderer.invoke(IpcChannels.backupImport),
+  confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupConfirmImport),
+  cancelImport: (): Promise<{ success: boolean }> => ipcRenderer.invoke(IpcChannels.backupCancelImport),
+
+  // Backup config (folder + rotation limit)
+  getBackupConfig: (): Promise<{ success: boolean; config?: BackupConfig; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupGetConfig),
+  setBackupConfig: (config: BackupConfig): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupSetConfig, config),
+  chooseBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IpcChannels.backupChooseDir),
 };
 
 export type ElectronAPI = typeof electronAPI;

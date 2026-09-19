@@ -28,21 +28,19 @@ describe('meeting CRUD', () => {
 
   it('creates a meeting with defaults', () => {
     const db = freshDb();
-    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026', date: '2026-11-16' });
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026' });
 
     expect(meeting.id).toBeGreaterThan(0);
     expect(meeting.name).toBe('Meeting de la Mer 2026');
-    expect(meeting.date).toBe('2026-11-16');
-    expect(meeting.location).toBeNull();
     expect(meeting.status).toBe('provisional');
     expect(meeting.createdAt).toBeTruthy();
     expect(meeting.updatedAt).toBeTruthy();
   });
 
-  it('lists meetings most recent date first', () => {
+  it('lists meetings most recently created first', () => {
     const db = freshDb();
-    createMeeting(db, { name: 'Ancien', date: '2025-01-01' });
-    createMeeting(db, { name: 'Récent', date: '2026-11-16' });
+    createMeeting(db, { name: 'Ancien' });
+    createMeeting(db, { name: 'Récent' });
 
     const meetings = getAllMeetings(db);
     expect(meetings.map((m) => m.name)).toEqual(['Récent', 'Ancien']);
@@ -50,13 +48,12 @@ describe('meeting CRUD', () => {
 
   it('updates only the given fields', () => {
     const db = freshDb();
-    const meeting = createMeeting(db, { name: 'Meeting de la Mer', date: '2026-11-16', location: 'Cherbourg' });
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer' });
 
     const updated = updateMeeting(db, meeting.id, { status: 'final' });
 
     expect(updated.status).toBe('final');
     expect(updated.name).toBe('Meeting de la Mer');
-    expect(updated.location).toBe('Cherbourg');
   });
 
   it('throws when updating a missing meeting', () => {
@@ -66,7 +63,7 @@ describe('meeting CRUD', () => {
 
   it('deletes a meeting', () => {
     const db = freshDb();
-    const meeting = createMeeting(db, { name: 'À supprimer', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'À supprimer' });
 
     deleteMeeting(db, meeting.id);
 
@@ -75,7 +72,7 @@ describe('meeting CRUD', () => {
 
   it('creates a meeting with ranking-rule defaults', () => {
     const db = freshDb();
-    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026', date: '2026-11-16' });
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026' });
 
     expect(meeting.defaultTopN).toBe(5);
     expect(meeting.minSwimmers).toBe(0);
@@ -86,7 +83,6 @@ describe('meeting CRUD', () => {
     const db = freshDb();
     const meeting = createMeeting(db, {
       name: 'Test',
-      date: '2026-01-01',
       defaultTopN: 7,
       minSwimmers: 3,
       activeCategories: ['Classement Mixte', 'Classement Dames'],
@@ -99,7 +95,7 @@ describe('meeting CRUD', () => {
 
   it('updates ranking rules independently of meeting info', () => {
     const db = freshDb();
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
 
     const updated = updateMeeting(db, meeting.id, {
       defaultTopN: 10,
@@ -117,7 +113,6 @@ describe('meeting CRUD', () => {
     const db = freshDb();
     const meeting = createMeeting(db, {
       name: 'Test',
-      date: '2026-01-01',
       activeCategories: ['Classement Mixte'],
     });
 
@@ -128,21 +123,8 @@ describe('meeting CRUD', () => {
 
   it('runs the schema migration idempotently on repeated opens', () => {
     const db = freshDb();
-    createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    createMeeting(db, { name: 'Test' });
     expect(() => createDatabase(':memory:')).not.toThrow();
-  });
-
-  it('creates a meeting with today as default date when date is omitted', () => {
-    const meeting = createMeeting(freshDb(), { name: 'Test sans date' });
-    const today = new Date().toISOString().slice(0, 10);
-    expect(meeting.date).toBe(today);
-    expect(meeting.name).toBe('Test sans date');
-  });
-
-  it('creates a meeting with today as default date when date is empty string', () => {
-    const meeting = createMeeting(freshDb(), { name: 'Test vide', date: '' });
-    const today = new Date().toISOString().slice(0, 10);
-    expect(meeting.date).toBe(today);
   });
 });
 
@@ -157,7 +139,7 @@ function sampleRows(): RawSwimmerRow[] {
 describe('swimmer results persistence', () => {
   it('round-trips inserted rows for a meeting', () => {
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
 
     insertSwimmerResults(db, meeting.id, sampleRows());
 
@@ -171,7 +153,7 @@ describe('swimmer results persistence', () => {
 
   it('re-importing the same swimmer updates rather than duplicates', () => {
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
 
     insertSwimmerResults(db, meeting.id, sampleRows());
     const updatedRows = sampleRows();
@@ -185,7 +167,7 @@ describe('swimmer results persistence', () => {
 
   it('removes swimmers absent from a corrected re-import, scoped to the re-imported categories', () => {
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
 
     insertSwimmerResults(db, meeting.id, sampleRows());
     // Corrected export: MARTIN withdrew from Classement Mixte.
@@ -203,7 +185,7 @@ describe('swimmer results persistence', () => {
 
   it('distinguishes two same-named, same-birthyear swimmers from different clubs', () => {
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
 
     insertSwimmerResults(db, meeting.id, [
       { name: 'Classement Mixte', place: 1, lastname: 'MARTIN', firstname: 'Paul', birthyear: 2001, nation: 'FRA', club: 'AC CHERBOURG EN COTENTIN', points: 900, comment: '' },
@@ -217,8 +199,8 @@ describe('swimmer results persistence', () => {
 
   it('scopes rows to their own meeting', () => {
     const db = createDatabase(':memory:');
-    const meetingA = createMeeting(db, { name: 'A', date: '2026-01-01' });
-    const meetingB = createMeeting(db, { name: 'B', date: '2026-01-02' });
+    const meetingA = createMeeting(db, { name: 'A' });
+    const meetingB = createMeeting(db, { name: 'B' });
 
     insertSwimmerResults(db, meetingA.id, sampleRows());
 
@@ -229,7 +211,7 @@ describe('swimmer results persistence', () => {
 describe('team ranking persistence', () => {
   it('saves a computed ranking and replaces it on recompute', () => {
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test', date: '2026-01-01' });
+    const meeting = createMeeting(db, { name: 'Test' });
     insertSwimmerResults(db, meeting.id, sampleRows());
 
     const rows = getSwimmerResults(db, meeting.id, 'Classement Mixte');
@@ -261,7 +243,7 @@ describe('DB round-trip preserves the reference ranking (historique path)', () =
     const expected = JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'expected-ranking.json'), 'utf-8'));
 
     const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026', date: '2026-11-16' });
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026' });
 
     insertSwimmerResults(db, meeting.id, parsed.rows);
     const reloadedRows = getSwimmerResults(db, meeting.id, 'Classement Mixte');

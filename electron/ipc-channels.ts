@@ -36,6 +36,19 @@ export const IpcChannels = {
 
   openFileDialog: 'dialog:openFile',
   saveFileDialog: 'dialog:saveFile',
+
+  backupExport: 'backup:export',
+  backupImport: 'backup:import',
+  backupConfirmImport: 'backup:confirm-import',
+  // Clears the pending import held in main-process memory when the user
+  // cancels the preview step without confirming (memory hygiene only — see
+  // ipc-handlers.ts for why this isn't a correctness fix).
+  backupCancelImport: 'backup:cancel-import',
+
+  // Configuration des sauvegardes automatiques (dossier, nombre conservé) — voir electron/auto-backup.ts.
+  backupGetConfig: 'backup:get-config',
+  backupSetConfig: 'backup:set-config',
+  backupChooseDir: 'backup:choose-dir',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
