@@ -143,12 +143,12 @@ export function registerIpcHandlers(db: Database.Database): void {
     }
   });
 
-  ipcMain.handle(IpcChannels.backupConfirmImport, async () => {
+  ipcMain.handle(IpcChannels.backupConfirmImport, async (_event, overwrite?: boolean) => {
     try {
       if (!pendingImport) {
         return { success: false, error: 'Aucune sauvegarde en attente de confirmation' };
       }
-      const result = restoreDatabase(db, pendingImport);
+      const result = restoreDatabase(db, pendingImport, { overwrite });
       pendingImport = null;
       return { success: true, result };
     } catch (error) {

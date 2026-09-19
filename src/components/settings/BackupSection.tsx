@@ -11,7 +11,13 @@ type BackupState =
   | { step: 'busy' }
   | { step: 'export-success'; path: string }
   | { step: 'preview'; meetingCount: number; swimmerCount: number; existingCount: number }
-  | { step: 'import-success'; meetingsImported: number; swimmersImported: number; meetingsSkipped: number }
+  | {
+      step: 'import-success';
+      meetingsImported: number;
+      meetingsReplaced: number;
+      swimmersImported: number;
+      meetingsSkipped: number;
+    }
   | { step: 'error'; error: string };
 
 export interface BackupSectionProps {
@@ -32,6 +38,9 @@ function resolveBackupState<T extends { success: boolean; error?: string }>(
 
 export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   const [state, setState] = useState<BackupState>({ step: 'idle' });
+  // Only meaningful while state.step === 'preview' — reset on every new
+  // preview so a leftover check from a previous import can't carry over.
+  const [overwrite, setOverwrite] = useState(false);
 
   async function handleExport(): Promise<void> {
     setState({ step: 'busy' });
@@ -41,13 +50,14 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
 
   async function handleImport(): Promise<void> {
     setState({ step: 'busy' });
+    setOverwrite(false);
     const result = await window.electronAPI.importBackup();
     setState(resolveBackupState(result, (r) => (r.preview ? { step: 'preview', ...r.preview } : null)));
   }
 
   async function handleConfirm(): Promise<void> {
     setState({ step: 'busy' });
-    const result = await window.electronAPI.confirmImport();
+    const result = await window.electronAPI.confirmImport(overwrite);
     if (result.success && result.result) {
       setState({ step: 'import-success', ...result.result });
       // Refresh the renderer's meeting list after the restore actually wrote
@@ -100,9 +110,24 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
         <div className="space-y-3 rounded-md bg-warning-light p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-neutral-900">
             <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />
-            {state.meetingCount} meeting(s), {state.swimmerCount} nageur(s) dans ce fichier.
-            {state.existingCount > 0 && ` ${state.existingCount} meeting(s) déjà présent(s) seront ignorés.`}
+            {state.meetingCount} meeting(s), {state.swimmerCount} ligne(s) de résultats dans ce fichier
+            {/* Un nageur compte une fois par catégorie (Dames/Messieurs + Mixte),
+                donc ce nombre est plus élevé que le nombre réel de nageurs. */}
+            (comptées par catégorie).
+            {state.existingCount > 0 &&
+              ` ${state.existingCount} meeting(s) déjà présent(s) — ${overwrite ? 'seront remplacés' : 'seront ignorés'}.`}
           </p>
+          {state.existingCount > 0 && (
+            <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <input
+                type="checkbox"
+                checked={overwrite}
+                onChange={(event) => setOverwrite(event.target.checked)}
+                className="h-4 w-4 rounded border-neutral-300 text-secondary-600 focus:ring-secondary-400"
+              />
+              Remplacer les meetings déjà présents au lieu de les ignorer
+            </label>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
@@ -132,7 +157,9 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       {state.step === 'import-success' && (
         <p className="flex items-center gap-2 text-sm text-success">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          {state.meetingsImported} meeting(s) importé(s), {state.swimmersImported} nageur(s), {state.meetingsSkipped} déjà présent(s) ignoré(s).
+          {state.meetingsImported} meeting(s) importé(s)
+          {state.meetingsReplaced > 0 && `, ${state.meetingsReplaced} remplacé(s)`}, {state.swimmersImported} nageur(s)
+          {state.meetingsSkipped > 0 && `, ${state.meetingsSkipped} déjà présent(s) ignoré(s)`}.
         </p>
       )}
 

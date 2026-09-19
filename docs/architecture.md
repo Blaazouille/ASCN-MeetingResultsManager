@@ -47,7 +47,7 @@ validateBackup() [src/lib/backup.ts]
     ↓
 restoreDatabase() [src/lib/backup.ts]
     ↓
-SQLite (reconstruction complète, skipping des meetings existants)
+SQLite (skip des meetings existants par défaut, ou remplacement si l'option overwrite est cochée)
 ```
 
 ### Sauvegardes automatiques

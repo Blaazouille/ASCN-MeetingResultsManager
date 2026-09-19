@@ -34,13 +34,16 @@
 
 ## Paramètres (`/parametres`)
 
-- Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut.
+Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le seul moyen de restaurer une sauvegarde sur une installation neuve, avant qu'aucun meeting n'existe.
+
+- Formulaire de configuration du meeting (`SettingsForm`) : nom, date, lieu, statut. N'apparaît que si un meeting est ouvert.
 - Règles de calcul : top N par défaut, catégories actives, seuil minimum de nageurs par club.
 
 ### Sauvegarde et restauration
 
 - Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, de la date, des nageurs et des classements.
-- Import depuis un fichier JSON avec aperçu préalable : affiche le nombre de meetings et de nageurs à importer, ainsi que le nombre de meetings existants dans la base (pour éviter les doublons par name/date).
+- Import depuis un fichier JSON avec aperçu préalable : affiche le nombre de meetings et de lignes de résultats à importer (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), ainsi que le nombre de meetings déjà présents dans la base (mêmes name/date).
+- Si des meetings existants sont détectés, une case à cocher permet de choisir leur sort avant de confirmer : laissés tels quels (par défaut) ou remplacés par la version du fichier importé (l'ancien meeting et ses nageurs/classements sont supprimés puis réinsérés).
 - Confirmation explicite avant d'écrire la base — l'utilisateur voit les impacts potentiels avant validation.
 
 ### Sauvegardes automatiques

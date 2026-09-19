@@ -117,14 +117,32 @@ export function exportDatabase(db: Database.Database): BackupData {
   };
 }
 
-export function restoreDatabase(db: Database.Database, data: BackupData): RestoreResult {
-  const result: RestoreResult = { meetingsImported: 0, meetingsSkipped: 0, swimmersImported: 0 };
+export interface RestoreOptions {
+  /** When a meeting in the backup already exists (same name + date), delete
+   * it (cascading to its swimmers/rankings) and re-insert the backup's
+   * version instead of skipping it. Off by default — the safer, additive
+   * behavior — so callers must opt in explicitly. */
+  overwrite?: boolean;
+}
+
+export function restoreDatabase(db: Database.Database, data: BackupData, options: RestoreOptions = {}): RestoreResult {
+  const overwrite = options.overwrite ?? false;
+  const result: RestoreResult = { meetingsImported: 0, meetingsReplaced: 0, meetingsSkipped: 0, swimmersImported: 0 };
 
   const transaction = db.transaction(() => {
     for (const meeting of data.meetings) {
-      if (meetingExistsByNameAndDate(db, meeting.name, meeting.date)) {
+      const exists = meetingExistsByNameAndDate(db, meeting.name, meeting.date);
+      if (exists && !overwrite) {
         result.meetingsSkipped++;
         continue;
+      }
+      if (exists) {
+        // Cascades to swimmer_result/team_ranking via their ON DELETE CASCADE
+        // foreign keys (db-schema.ts) — no separate cleanup needed here.
+        db.prepare('DELETE FROM meeting WHERE name = ? AND date = ?').run(meeting.name, meeting.date);
+        result.meetingsReplaced++;
+      } else {
+        result.meetingsImported++;
       }
 
       const insertMeeting = db.prepare(
@@ -143,7 +161,6 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
         meeting.activeCategories ? JSON.stringify(meeting.activeCategories) : null
       );
       const meetingId = row.lastInsertRowid;
-      result.meetingsImported++;
 
       const insertSwimmer = db.prepare(
         `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)

@@ -49,6 +49,7 @@ export interface TeamRankingBackup {
 
 export interface RestoreResult {
   meetingsImported: number;
+  meetingsReplaced: number;
   meetingsSkipped: number;
   swimmersImported: number;
 }
