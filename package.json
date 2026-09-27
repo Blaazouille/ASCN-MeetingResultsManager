@@ -1,7 +1,7 @@
 {
   "name": "mdlm-ranking",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Application desktop de gestion des classements par équipes pour le Meeting de la Mer (AS Cherbourg Natation).",
   "main": "dist-electron/main.js",
   "type": "module",

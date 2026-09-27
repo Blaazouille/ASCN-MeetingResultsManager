@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.0.0...v1.0.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* install to Program Files instead of AppData ([#7](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/7)) ([1e506ab](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/1e506abd17b3e267867c1f71dfef45646cdcc8eb))
+
 ## 1.0.0 (2026-09-27)
 
 
