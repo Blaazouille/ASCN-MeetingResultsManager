@@ -1,0 +1,23 @@
+# Vérifie que le titre de la PR respecte Conventional Commits : en squash merge, il devient le commit sur main que release-please lit pour calculer la version.
+name: Vérification du titre de la PR (Conventional Commits)
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - name: Vérifier le titre de la PR
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$TITLE" | npx --no-install commitlint

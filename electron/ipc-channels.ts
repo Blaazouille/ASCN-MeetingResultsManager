@@ -1,6 +1,6 @@
 /**
  * Responsabilité : noms de canaux IPC partagés entre main et renderer.
- * Appelé par : ipc-handlers.ts et preload.ts.
+ * Appelé par : ipc-handlers.ts, preload.ts, auto-updater.ts et main.ts.
  * Suppression casserait : la correspondance des canaux entre les deux côtés du bridge.
  */
 export const IpcChannels = {
@@ -36,6 +36,9 @@ export const IpcChannels = {
 
   openFileDialog: 'dialog:openFile',
   saveFileDialog: 'dialog:saveFile',
+
+  updateDownloaded: 'update:downloaded',
+  quitAndInstallUpdate: 'update:quitAndInstall',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
