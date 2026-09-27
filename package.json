@@ -29,8 +29,19 @@
       "dist-electron/**/*",
       "resources/icon.png"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "Blaazouille",
+      "repo": "ASCN-MeetingResultsManager"
+    },
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "perMachine": false
     },
     "mac": {
       "target": "dmg"
@@ -42,6 +53,7 @@
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "electron-updater": "^6.8.9",
     "exceljs": "^3.4.0",
     "lucide-react": "^0.300.0",
     "papaparse": "^5.4.0",
