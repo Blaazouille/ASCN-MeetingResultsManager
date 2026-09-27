@@ -36,10 +36,11 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 
 ## Versioning, installeur et auto-update (Phase 10)
 
-- **Versioning automatique** : `release-please` (`.github/workflows/release-please.yml`) lit les commits Conventional Commits sur `main` et maintient une PR de release qui bump `package.json` et `CHANGELOG.md`. Fusionner cette PR crée le tag, la GitHub Release et le changelog automatiquement — plus de bump manuel. `commitlint` (hook Husky `commit-msg`) bloque localement tout commit qui ne respecte pas Conventional Commits, condition dont dépend le calcul de version.
-- **Build & publication** : `.github/workflows/build-release.yml` se déclenche à la publication d'une release, construit l'installeur Windows (`npm run build:win`) et attache `.exe`, `latest.yml` et `.blockmap` à la release existante.
-- **Installeur** : NSIS personnalisé (`build.nsis` dans `package.json`) — choix du dossier d'installation, raccourci bureau, pas de mode one-click. Pas de signature de code (déploiement à un seul poste non technique) ; l'avertissement SmartScreen est accepté.
-- **Auto-updater in-app** : `electron/auto-updater.ts` (`electron-updater`) vérifie les mises à jour une fois au démarrage, télécharge silencieusement, et notifie le renderer via le canal IPC `update:downloaded`. Le composant `UpdateToast` (`src/components/layout/UpdateToast.tsx`, monté dans `AppShell`) propose "Redémarrer maintenant" (`quitAndInstall()` via IPC) ou "Plus tard" — dans ce dernier cas, `autoInstallOnAppQuit` installe la mise à jour à la prochaine fermeture naturelle de l'app.
+- **Versioning automatique** : `release-please` lit les commits Conventional Commits sur `main` et maintient une PR de release qui bump `package.json` et `CHANGELOG.md`. Fusionner cette PR crée le tag, la GitHub Release et le changelog automatiquement — plus de bump manuel.
+- **Garde-fous Conventional Commits** (condition dont dépend le calcul de version) : `commitlint` (hook Husky `commit-msg`, config `commitlint.config.js`) bloque localement tout commit non conforme ; `.github/workflows/commitlint-pr.yml` vérifie en CI le **titre de chaque PR**, car les PR sont fusionnées en squash et c'est ce titre qui devient le commit lu par `release-please` sur `main`.
+- **Build & publication** : un seul workflow, `.github/workflows/release-please.yml`, à deux jobs. Le job `release-please` crée ou met à jour la PR de release ; quand une release vient d'être créée (sortie `release_created`), le job `build-windows` (Node 24) se place sur le tag, construit l'installeur (`npm run build:win -- --publish never`) et attache `.exe`, `latest.yml` et `.blockmap` à cette release. Les deux étapes sont dans le même workflow parce qu'une release publiée avec le `GITHUB_TOKEN` par défaut ne déclenche aucun autre workflow : un workflow séparé `on: release` ne se lancerait jamais.
+- **Installeur** : NSIS personnalisé (`build.nsis` dans `package.json`) — choix du dossier d'installation, raccourci bureau, pas de mode one-click. Le fichier s'appelle `MDLM-Ranking-Setup-<version>.exe` (`artifactName`), sans espace : `electron-builder` écrit dans `latest.yml` un nom où les espaces deviennent des tirets, alors que GitHub remplace les espaces par des points dans le nom des fichiers attachés à une release. Avec des espaces, le fichier désigné par `latest.yml` n'existerait donc jamais sur la release et chaque téléchargement de mise à jour échouerait. Pas de signature de code (déploiement à un seul poste non technique) ; l'avertissement SmartScreen est accepté.
+- **Auto-updater in-app** : `electron/auto-updater.ts` (`electron-updater`) vérifie les mises à jour une fois au démarrage, télécharge silencieusement, et notifie le renderer via le canal IPC `update:downloaded` (main → renderer). Le composant `UpdateToast` (`src/components/layout/UpdateToast.tsx`, monté dans `AppShell`) propose "Redémarrer maintenant" — le renderer invoque alors le canal `update:quitAndInstall` (renderer → main), qui appelle `autoUpdater.quitAndInstall()` — ou "Plus tard" : dans ce cas, `autoInstallOnAppQuit` installe la mise à jour à la prochaine fermeture naturelle de l'app. Les échecs de vérification (hors ligne, etc.) sont absorbés silencieusement.
 
 ## Organisation des dossiers
 
@@ -71,7 +72,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-print-export.ts
 │   │   └── use-auto-update.ts
 │   ├── components/
-│   │   ├── layout/            # AppShell, Sidebar, Header
+│   │   ├── layout/            # AppShell, Sidebar, Header, UpdateToast
 │   │   ├── meeting/            # MeetingCard, MeetingList, MeetingForm
 │   │   ├── import/             # DropZone
 │   │   ├── ranking/            # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
