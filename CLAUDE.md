@@ -23,7 +23,8 @@ Remplacement d'une base Microsoft Access par une app Electron moderne. L'app imp
 ## Architecture
 
 ```
-Application locale, zéro serveur, zéro réseau.
+Application locale, zéro serveur. Seul accès réseau : la vérification
+des mises à jour (GitHub Releases) au démarrage.
 CSV (Latin-1) → Parseur → Moteur de calcul → UI React
                                             → SQLite (historique)
                                             → PDF / XLSX (export)
@@ -114,7 +115,8 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/desi
 │   ├── main.ts               # Process principal Electron
 │   ├── preload.ts            # Context bridge IPC
 │   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
-│   └── ipc-channels.ts       # Noms de canaux IPC partagés
+│   ├── ipc-channels.ts       # Noms de canaux IPC partagés
+│   └── auto-updater.ts       # Vérification et téléchargement des mises à jour
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx
@@ -133,9 +135,10 @@ Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/desi
 │   │   ├── use-import.ts
 │   │   ├── use-ranking.ts
 │   │   ├── use-meeting-rows.ts
-│   │   └── use-print-export.ts
+│   │   ├── use-print-export.ts
+│   │   └── use-auto-update.ts
 │   ├── components/
-│   │   ├── layout/           # AppShell, Sidebar, Header
+│   │   ├── layout/           # AppShell, Sidebar, Header, UpdateToast
 │   │   ├── meeting/          # MeetingCard, MeetingList, MeetingForm
 │   │   ├── import/           # DropZone
 │   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
@@ -239,7 +242,7 @@ npm run build:mac    # Build macOS (.dmg)
 | 7 | UX polish — création de meeting simplifiée, sidebar/header fixes, masquage de la barre de menus Electron, lignes de tableau cliquables, renommage de l'app | Confort d'usage amélioré |
 | 8 | Classement individuel + palmarès des rigolos (récompenses humoristiques auto-générées) | Classement individuel affiché |
 | 9 | Sauvegarde & restauration — export/import JSON de la base depuis Paramètres, backup auto après chaque import CSV avec rotation | Données protégées contre la perte/corruption |
-| 10 | Versioning automatique (SemVer + release notes), installeur soigné (NSIS custom / DMG signé), auto-updater in-app | App distribuable et auto-maintenue |
+| 10 | Versioning automatique (SemVer + release notes), installeur Windows soigné (NSIS custom, sans signature de code), auto-updater in-app | App distribuable et auto-maintenue |
 
 > Détail des phases 6-9 : `docs/archive/2026-09-16-phase-6-cleanup.md`, `docs/superpowers/plans/2026-09-16-phase-7-ux-polish.md`, `docs/superpowers/plans/2026-09-16-phase-8-individual-ranking.md`, `docs/superpowers/plans/2026-09-16-phase-9-backup-restore.md`.
 >

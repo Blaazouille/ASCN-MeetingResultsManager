@@ -65,6 +65,13 @@ const electronAPI = {
   setBackupConfig: (config: BackupConfig): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.backupSetConfig, config),
   chooseBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IpcChannels.backupChooseDir),
+  // Auto-update
+  onUpdateDownloaded: (callback: () => void): (() => void) => {
+    const listener = (): void => callback();
+    ipcRenderer.on(IpcChannels.updateDownloaded, listener);
+    return () => ipcRenderer.removeListener(IpcChannels.updateDownloaded, listener);
+  },
+  quitAndInstallUpdate: (): Promise<void> => ipcRenderer.invoke(IpcChannels.quitAndInstallUpdate),
 };
 
 export type ElectronAPI = typeof electronAPI;
