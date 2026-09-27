@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { UpdateToast } from './UpdateToast';
 import { useImport, type UseImportResult } from '@/hooks/use-import';
 import { useMeeting, type UseMeetingResult } from '@/hooks/use-meeting';
 
@@ -44,6 +45,7 @@ export function AppShell(): JSX.Element {
           <Outlet context={context} />
         </main>
       </div>
+      <UpdateToast />
     </div>
   );
 }
