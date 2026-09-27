@@ -1,2 +1,3 @@
 #!/bin/sh
+# Rejects non-Conventional-Commits messages: release-please derives the next version from them.
 npx --no-install commitlint --edit "$1"
