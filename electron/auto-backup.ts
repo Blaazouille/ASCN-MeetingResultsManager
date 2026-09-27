@@ -45,7 +45,15 @@ export function loadBackupConfig(): BackupConfig {
   return { backupDir: defaultBackupDir(), maxBackups: DEFAULT_MAX_BACKUPS };
 }
 
+// Rejects an empty backupDir rather than persisting it: loadBackupConfig's
+// `typeof parsed.backupDir === 'string'` check accepts '' unchanged, so a
+// blank value here would silently make every future performAutoBackup call
+// `mkdirSync('')`, throw, and get swallowed by its own try/catch — auto-backup
+// would stop forever with no visible error.
 export function saveBackupConfig(config: BackupConfig): void {
+  if (config.backupDir.trim() === '') {
+    throw new Error('Le dossier de sauvegarde ne peut pas être vide');
+  }
   writeFileSync(configPath(), JSON.stringify(config, null, 2), 'utf-8');
 }
 

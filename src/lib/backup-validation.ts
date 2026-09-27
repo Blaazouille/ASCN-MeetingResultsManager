@@ -133,27 +133,29 @@ export function validateBackup(data: unknown): BackupData {
       if (s.nation !== null && typeof s.nation !== 'string') {
         throw new Error('Format de backup invalide : swimmer.nation doit être une string ou null');
       }
+      if (s.rawLine !== null && typeof s.rawLine !== 'string') {
+        throw new Error('Format de backup invalide : swimmer.rawLine doit être une string ou null');
+      }
     }
 
-    // Validate teamRankings if present — every field is bound directly into
-    // SQL by restoreDatabase against NOT NULL columns (see db-schema.ts), so
-    // (like swimmers above) each one needs its own check, not just "is it an
-    // array".
-    if (m.teamRankings !== undefined) {
-      if (!Array.isArray(m.teamRankings)) {
-        throw new Error('Format de backup invalide : meeting.teamRankings doit être un tableau');
+    // teamRankings is a required field on MeetingBackup (not optional), so a
+    // backup that omits it entirely must be rejected here — otherwise
+    // restoreDatabase's `if (meeting.teamRankings)` guard silently treats the
+    // missing field as "no rankings to restore" and drops them without any
+    // error surfaced to the user.
+    if (!Array.isArray(m.teamRankings)) {
+      throw new Error('Format de backup invalide : meeting.teamRankings doit être un tableau');
+    }
+    for (const ranking of m.teamRankings) {
+      if (typeof ranking !== 'object' || ranking === null) {
+        throw new Error('Format de backup invalide : teamRanking doit être un objet');
       }
-      for (const ranking of m.teamRankings) {
-        if (typeof ranking !== 'object' || ranking === null) {
-          throw new Error('Format de backup invalide : teamRanking doit être un objet');
-        }
-        const r = ranking as Record<string, unknown>;
-        if (typeof r.category !== 'string' || typeof r.club !== 'string' || typeof r.swimmers !== 'string' || typeof r.computedAt !== 'string') {
-          throw new Error('Format de backup invalide : teamRanking.category, club, swimmers et computedAt doivent être des strings');
-        }
-        if (typeof r.rank !== 'number' || typeof r.totalPoints !== 'number' || typeof r.topN !== 'number') {
-          throw new Error('Format de backup invalide : teamRanking.rank, totalPoints et topN doivent être des nombres');
-        }
+      const r = ranking as Record<string, unknown>;
+      if (typeof r.category !== 'string' || typeof r.club !== 'string' || typeof r.swimmers !== 'string' || typeof r.computedAt !== 'string') {
+        throw new Error('Format de backup invalide : teamRanking.category, club, swimmers et computedAt doivent être des strings');
+      }
+      if (typeof r.rank !== 'number' || typeof r.totalPoints !== 'number' || typeof r.topN !== 'number') {
+        throw new Error('Format de backup invalide : teamRanking.rank, totalPoints et topN doivent être des nombres');
       }
     }
   }

@@ -60,18 +60,19 @@ interface TeamRankingRow {
 export function exportDatabase(db: Database.Database): BackupData {
   const meetings = db.prepare('SELECT * FROM meeting ORDER BY id').all() as MeetingRow[];
 
-  const meetingBackups: MeetingBackup[] = meetings.map((m) => {
-    const swimmers = db
-      .prepare(
-        'SELECT category, rank, lastname, firstname, birthyear, nation, club, points, raw_line FROM swimmer_result WHERE meeting_id = ? ORDER BY id'
-      )
-      .all(m.id) as SwimmerRow[];
+  // Prepared once and reused per meeting (via .all(m.id)) instead of inside
+  // the .map() below — a backup with many meetings would otherwise recompile
+  // the identical statement text once per meeting for no benefit.
+  const selectSwimmers = db.prepare(
+    'SELECT category, rank, lastname, firstname, birthyear, nation, club, points, raw_line FROM swimmer_result WHERE meeting_id = ? ORDER BY id'
+  );
+  const selectRankings = db.prepare(
+    'SELECT category, club, rank, total_pts, top_n, swimmers, computed_at FROM team_ranking WHERE meeting_id = ? ORDER BY id'
+  );
 
-    const rankings = db
-      .prepare(
-        'SELECT category, club, rank, total_pts, top_n, swimmers, computed_at FROM team_ranking WHERE meeting_id = ? ORDER BY id'
-      )
-      .all(m.id) as TeamRankingRow[];
+  const meetingBackups: MeetingBackup[] = meetings.map((m) => {
+    const swimmers = selectSwimmers.all(m.id) as SwimmerRow[];
+    const rankings = selectRankings.all(m.id) as TeamRankingRow[];
 
     return {
       name: m.name,
@@ -124,6 +125,32 @@ export function exportDatabase(db: Database.Database): BackupData {
 export function restoreDatabase(db: Database.Database, data: BackupData): RestoreResult {
   const result: RestoreResult = { meetingsRemoved: 0, meetingsImported: 0, swimmersImported: 0 };
 
+  // Prepared once outside the per-meeting loop below and reused via .run(),
+  // instead of being recompiled on every iteration for identical SQL text.
+  const insertMeeting = db.prepare(
+    `INSERT INTO meeting (name, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  // ON CONFLICT mirrors insertSwimmerResults in db.ts: a freshly-restored
+  // meeting never has real duplicates, but a hand-edited/corrupted backup
+  // file could repeat a (category, lastname, firstname, birthyear, club)
+  // key, and without this clause that would throw a raw, untranslated
+  // SQLite UNIQUE-constraint error instead of the last entry simply winning.
+  const insertSwimmer = db.prepare(
+    `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(meeting_id, category, lastname, firstname, birthyear, club)
+     DO UPDATE SET rank = excluded.rank, nation = excluded.nation,
+       points = excluded.points, raw_line = excluded.raw_line`
+  );
+  const insertRanking = db.prepare(
+    `INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers, computed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(meeting_id, category, club)
+     DO UPDATE SET rank = excluded.rank, total_pts = excluded.total_pts,
+       top_n = excluded.top_n, swimmers = excluded.swimmers, computed_at = excluded.computed_at`
+  );
+
   const transaction = db.transaction(() => {
     result.meetingsRemoved = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
     db.exec('DELETE FROM meeting');
@@ -131,10 +158,6 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
     for (const meeting of data.meetings) {
       result.meetingsImported++;
 
-      const insertMeeting = db.prepare(
-        `INSERT INTO meeting (name, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
-      );
       const row = insertMeeting.run(
         meeting.name,
         meeting.status,
@@ -146,24 +169,13 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
       );
       const meetingId = row.lastInsertRowid;
 
-      const insertSwimmer = db.prepare(
-        `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      );
-
       for (const s of meeting.swimmers) {
         insertSwimmer.run(meetingId, s.category, s.rank, s.lastname, s.firstname, s.birthyear, s.nation, s.club, s.points, s.rawLine);
         result.swimmersImported++;
       }
 
-      if (meeting.teamRankings) {
-        const insertRanking = db.prepare(
-          `INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers, computed_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        );
-        for (const r of meeting.teamRankings) {
-          insertRanking.run(meetingId, r.category, r.club, r.rank, r.totalPoints, r.topN, r.swimmers, r.computedAt);
-        }
+      for (const r of meeting.teamRankings) {
+        insertRanking.run(meetingId, r.category, r.club, r.rank, r.totalPoints, r.topN, r.swimmers, r.computedAt);
       }
     }
   });

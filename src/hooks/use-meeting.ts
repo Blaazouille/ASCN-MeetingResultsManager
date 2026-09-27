@@ -28,7 +28,13 @@ export function useMeeting(): UseMeetingResult {
     setIsLoading(true);
     setError(null);
     try {
-      setMeetings(await window.electronAPI.getMeetings());
+      const fetched = await window.electronAPI.getMeetings();
+      setMeetings(fetched);
+      // A restore replaces every meeting with fresh autoincrement ids, so the
+      // previously-open meeting's id may no longer exist; without this, pages
+      // reading currentMeeting would silently fall back to null with no
+      // indication why the meeting they had open "disappeared".
+      setCurrentMeetingId((current) => (current !== null && !fetched.some((m) => m.id === current) ? null : current));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
