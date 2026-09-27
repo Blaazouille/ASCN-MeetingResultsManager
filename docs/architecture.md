@@ -34,15 +34,12 @@ Le classement par équipes est calculé côté renderer (`useRanking` → `compu
 
 La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: true` — la barre de menus native est cachée par défaut et accessible via la touche Alt. Le layout utilise une sidebar en position `fixed` et un header `sticky` : seul le contenu principal (`<main>`) défile, la sidebar et le header restent visibles en permanence.
 
-## Versioning, installeur et auto-update (Phase 9 — non démarré)
+## Versioning, installeur et auto-update (Phase 10)
 
-Non implémenté pour l'instant : l'app est buildée et installée manuellement sur un seul poste. À prévoir quand la diffusion sort de ce cadre (plusieurs postes/bénévoles).
-
-- **Versioning automatique** : dériver la version de `package.json` des commits (Conventional Commits + `semantic-release` ou équivalent), au lieu du bump manuel actuel documenté dans `.ai/pull-request.md`. Générer les release notes depuis les messages de commit.
-- **Installeur** : remplacer l'installeur NSIS par défaut d'`electron-builder` par une configuration NSIS personnalisée (branding ASCN, choix du dossier, raccourcis) côté Windows ; signer le `.dmg` côté macOS pour éviter l'avertissement Gatekeeper.
-- **Auto-updater in-app** : intégrer `electron-updater` (ou équivalent) pointant vers un canal de releases (GitHub Releases par ex.), avec vérification au démarrage et installation différée pour ne pas interrompre un meeting en cours.
-
-Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `CLAUDE.md` → Plan de construction, Phase 9).
+- **Versioning automatique** : `release-please` (`.github/workflows/release-please.yml`) lit les commits Conventional Commits sur `main` et maintient une PR de release qui bump `package.json` et `CHANGELOG.md`. Fusionner cette PR crée le tag, la GitHub Release et le changelog automatiquement — plus de bump manuel. `commitlint` (hook Husky `commit-msg`) bloque localement tout commit qui ne respecte pas Conventional Commits, condition dont dépend le calcul de version.
+- **Build & publication** : `.github/workflows/build-release.yml` se déclenche à la publication d'une release, construit l'installeur Windows (`npm run build:win`) et attache `.exe`, `latest.yml` et `.blockmap` à la release existante.
+- **Installeur** : NSIS personnalisé (`build.nsis` dans `package.json`) — choix du dossier d'installation, raccourci bureau, pas de mode one-click. Pas de signature de code (déploiement à un seul poste non technique) ; l'avertissement SmartScreen est accepté.
+- **Auto-updater in-app** : `electron/auto-updater.ts` (`electron-updater`) vérifie les mises à jour une fois au démarrage, télécharge silencieusement, et notifie le renderer via le canal IPC `update:downloaded`. Le composant `UpdateToast` (`src/components/layout/UpdateToast.tsx`, monté dans `AppShell`) propose "Redémarrer maintenant" (`quitAndInstall()` via IPC) ou "Plus tard" — dans ce dernier cas, `autoInstallOnAppQuit` installe la mise à jour à la prochaine fermeture naturelle de l'app.
 
 ## Organisation des dossiers
 
@@ -51,7 +48,8 @@ Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `C
 │   ├── main.ts               # Process principal Electron
 │   ├── preload.ts            # Context bridge IPC
 │   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
-│   └── ipc-channels.ts       # Noms de canaux IPC partagés
+│   ├── ipc-channels.ts       # Noms de canaux IPC partagés
+│   └── auto-updater.ts       # Vérification et téléchargement des mises à jour
 ├── src/
 │   ├── main.tsx               # Point d'entrée React
 │   ├── App.tsx                # Routeur principal
@@ -70,7 +68,8 @@ Cette phase ne doit être lancée que lorsque le besoin réel apparaît (voir `C
 │   │   ├── use-import.ts
 │   │   ├── use-ranking.ts
 │   │   ├── use-meeting-rows.ts
-│   │   └── use-print-export.ts
+│   │   ├── use-print-export.ts
+│   │   └── use-auto-update.ts
 │   ├── components/
 │   │   ├── layout/            # AppShell, Sidebar, Header
 │   │   ├── meeting/            # MeetingCard, MeetingList, MeetingForm

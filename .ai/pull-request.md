@@ -31,7 +31,7 @@ Règles obligatoires pour toute PR sur ce projet. Aucun merge sans validation co
 ### 📐 Architecture, Limites & Versionnement
 - [ ] **Taille** — Aucun fichier ne dépasse les 300 lignes de code.
 - [ ] **Responsabilité (SRP)** — Aucun fichier n'a acquis une seconde responsabilité ou une raison supplémentaire de changer.
-- [ ] **SemVer (package.json)** — La version a été incrémentée selon la règle : `Major` (changement cassant / rupture de compatibilité des données locales), `Minor` (nouvelle fonctionnalité), `Patch` (correctif) [https://electronjs.org].
+- [ ] **Commits Conventional Commits** — Les commits suivent Conventional Commits (`feat:`, `fix:`, `chore:`, etc.), vérifiés localement par le hook `commit-msg` (`commitlint`). La version est calculée automatiquement par `release-please` à partir de ces commits — plus de bump manuel de `package.json`.
 - [ ] **Compatibilité des données locales** — Si le format de stockage local change (SQLite, IndexedDB, localStorage, fichiers de config), un script de migration/retro-compatibilité est inclus pour ne pas corrompre les données des utilisateurs existants lors de la mise à jour.
 - [ ] **Dépendances** — Aucun package externe (`npm install`) n'a été ajouté sans approbation explicite (attention au poids final de l'exécutable !).
 
