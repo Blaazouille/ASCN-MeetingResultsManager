@@ -1,3 +1,4 @@
+# Versionne l'app à partir des commits de main (release-please), puis construit et attache l'installeur Windows à chaque nouvelle release.
 name: Gestion des releases (release-please)
 
 on:
@@ -11,7 +12,48 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
+        id: release
         with:
           release-type: node
+
+  build-windows:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Build de l'installeur Windows
+        # --publish never : la release existe déjà (créée par release-please
+        # dans le job précédent) ; ce job ne fait qu'y attacher les artefacts
+        # via action-gh-release plus bas. Sans ce flag, electron-builder
+        # tenterait de publier lui-même sur la release taguée (build.publish
+        # est configuré) et entrerait en conflit avec l'upload explicite
+        # ci-dessous.
+        run: npm run build:win -- --publish never
+
+      - name: Attacher les artefacts à la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          fail_on_unmatched_files: true
+          files: |
+            release/*.exe
+            release/latest.yml
+            release/*.blockmap
