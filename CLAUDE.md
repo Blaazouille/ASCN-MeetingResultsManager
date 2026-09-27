@@ -74,14 +74,14 @@ Les 38 clubs doivent correspondre au fichier `test/fixtures/expected-ranking.jso
 | Token | Hex | Usage |
 |-------|-----|-------|
 | `primary` | `#0A3663` | Navbar, sidebar, headers structurels |
-| `secondary` | `#00A4E4` | États actifs, tabs, liens, boutons secondaires |
+| `secondary` | `#00A4E4` | États actifs, tabs, liens. Fond d'un bouton à texte blanc : `secondary-800` (5,7:1), jamais `secondary-600` (2,8:1) |
 | `accent` | `#FF6B35` | CTA, badges podium (1er/2e/3e), alertes |
 | `neutral-0` | `#FFFFFF` | Fond des cartes |
 | `neutral-50` | `#F4F7F6` | Fond de page |
 | `neutral-900` | `#1A2332` | Texte principal |
 | `neutral-600` | `#5B6B7D` | Texte secondaire |
-| `success` | `#15803D` | Validation, import OK (texte, 4,7:1 sur `success-light`) |
-| `warning` | `#92400E` | Statut provisoire (texte, 7:1 sur `warning-light`) |
+| `success` | `#15803D` | Validation, import OK (texte, 4,6:1 sur `success-light`) |
+| `warning` | `#92400E` | Statut provisoire (texte, 6,6:1 sur `warning-light`) |
 | `error` | `#B91C1C` | Erreurs (6,5:1 sur blanc) |
 
 Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/design-system.md`).

@@ -32,9 +32,9 @@ const columnHelper = createColumnHelper<TeamResult>();
 
 const COLUMN_WIDTHS: Record<string, string> = {
   rank: 'w-[8%]',
-  club: 'w-[58%]',
+  club: 'w-[55%]',
   totalPoints: 'w-[14%]',
-  swimmerBadge: 'w-[13%]',
+  swimmerBadge: 'w-[16%]',
   expand: 'w-[7%]',
 };
 
@@ -89,7 +89,7 @@ function buildBaseColumns(): ColumnDef<TeamResult, any>[] {
       // "5 retenus sur 18": swimmers counted in the total out of those entered.
       // The old "18/5" badge read as entered/topN and looked like an error.
       cell: (info) => (
-        <span className="text-sm text-neutral-600" data-numeric>
+        <span className="whitespace-nowrap text-sm text-neutral-600" data-numeric>
           {formatRetainedSwimmers(info.row.original.swimmers.length, info.getValue())}
         </span>
       ),
