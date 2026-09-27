@@ -12,8 +12,6 @@ export type MeetingStatus = 'provisional' | 'final';
 export interface Meeting {
   id: number;
   name: string;
-  date: string;
-  location: string | null;
   status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
@@ -24,8 +22,6 @@ export interface Meeting {
 
 export interface MeetingInput {
   name: string;
-  date?: string;
-  location?: string | null;
   status?: MeetingStatus;
   defaultTopN?: number;
   minSwimmers?: number;
@@ -35,8 +31,6 @@ export interface MeetingInput {
 interface MeetingRow {
   id: number;
   name: string;
-  date: string;
-  location: string | null;
   status: MeetingStatus;
   created_at: string;
   updated_at: string;
@@ -49,8 +43,6 @@ function rowToMeeting(row: MeetingRow): Meeting {
   return {
     id: row.id,
     name: row.name,
-    date: row.date,
-    location: row.location,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -61,21 +53,18 @@ function rowToMeeting(row: MeetingRow): Meeting {
 }
 
 export function getAllMeetings(db: Database.Database): Meeting[] {
-  const rows = db.prepare('SELECT * FROM meeting ORDER BY date DESC, id DESC').all() as MeetingRow[];
+  const rows = db.prepare('SELECT * FROM meeting ORDER BY id DESC').all() as MeetingRow[];
   return rows.map(rowToMeeting);
 }
 
 export function createMeeting(db: Database.Database, input: MeetingInput): Meeting {
-  const date = input.date && input.date.trim() !== '' ? input.date : new Date().toISOString().slice(0, 10);
   const result = db
     .prepare(
-      `INSERT INTO meeting (name, date, location, status, default_top_n, min_swimmers, active_categories)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO meeting (name, status, default_top_n, min_swimmers, active_categories)
+       VALUES (?, ?, ?, ?, ?)`
     )
     .run(
       input.name,
-      date,
-      input.location ?? null,
       input.status ?? 'provisional',
       input.defaultTopN ?? 5,
       input.minSwimmers ?? 0,
@@ -92,8 +81,6 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
   }
   const merged = {
     name: input.name ?? current.name,
-    date: input.date ?? current.date,
-    location: input.location !== undefined ? input.location : current.location,
     status: input.status ?? current.status,
     defaultTopN: input.defaultTopN ?? current.default_top_n,
     minSwimmers: input.minSwimmers ?? current.min_swimmers,
@@ -106,18 +93,9 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
   };
   db.prepare(
     `UPDATE meeting
-     SET name = ?, date = ?, location = ?, status = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
+     SET name = ?, status = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
      WHERE id = ?`
-  ).run(
-    merged.name,
-    merged.date,
-    merged.location,
-    merged.status,
-    merged.defaultTopN,
-    merged.minSwimmers,
-    merged.activeCategories,
-    id
-  );
+  ).run(merged.name, merged.status, merged.defaultTopN, merged.minSwimmers, merged.activeCategories, id);
   const row = db.prepare('SELECT * FROM meeting WHERE id = ?').get(id) as MeetingRow;
   return rowToMeeting(row);
 }

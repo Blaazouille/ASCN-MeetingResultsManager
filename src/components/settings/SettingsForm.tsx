@@ -22,8 +22,6 @@ function categoryLabel(category: string): string {
 
 export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Element {
   const [name, setName] = useState(meeting.name);
-  const [date, setDate] = useState(meeting.date);
-  const [location, setLocation] = useState(meeting.location ?? '');
   const [status, setStatus] = useState<MeetingStatus>(meeting.status);
   const [defaultTopN, setDefaultTopN] = useState<TopN>(
     (TOP_N_OPTIONS as readonly number[]).includes(meeting.defaultTopN) ? (meeting.defaultTopN as TopN) : DEFAULT_TOP_N
@@ -66,8 +64,6 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
     try {
       await onSave({
         name,
-        date,
-        location: location || null,
         status,
         defaultTopN,
         minSwimmers: minSwimmers === '' ? 0 : Number(minSwimmers),
@@ -99,37 +95,6 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               value={name}
               onChange={(event) => {
                 setName(event.target.value);
-                setSavedAt(null);
-              }}
-              className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label htmlFor="settings-date" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
-              Date
-            </label>
-            <input
-              id="settings-date"
-              type="date"
-              required
-              value={date}
-              onChange={(event) => {
-                setDate(event.target.value);
-                setSavedAt(null);
-              }}
-              className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label htmlFor="settings-location" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
-              Lieu (optionnel)
-            </label>
-            <input
-              id="settings-location"
-              type="text"
-              value={location}
-              onChange={(event) => {
-                setLocation(event.target.value);
                 setSavedAt(null);
               }}
               className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"

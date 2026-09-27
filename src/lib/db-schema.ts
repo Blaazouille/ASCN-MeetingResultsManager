@@ -9,8 +9,6 @@ const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS meeting (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   name        TEXT NOT NULL,
-  date        TEXT NOT NULL,
-  location    TEXT,
   status      TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -49,13 +47,18 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 `;
 
-/** Opens (creating if needed) the SQLite database at `filePath` and ensures the schema exists. Pass ':memory:' in tests. */
-export function createDatabase(filePath: string): Database.Database {
-  const db = new Database(filePath);
+/** Initializes the schema on an existing Database instance (used for :memory: test databases). */
+function initDatabase(db: Database.Database): void {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA_SQL);
   migrateSchema(db);
+}
+
+/** Opens (creating if needed) the SQLite database at `filePath` and ensures the schema exists. Pass ':memory:' in tests. */
+export function createDatabase(filePath: string): Database.Database {
+  const db = new Database(filePath);
+  initDatabase(db);
   return db;
 }
 
@@ -73,5 +76,21 @@ function migrateSchema(db: Database.Database): void {
       ALTER TABLE meeting ADD COLUMN active_categories TEXT;
     `);
     db.pragma('user_version = 2');
+  }
+  if (version < 3) {
+    // date/location never fed the ranking algorithm or anything else
+    // functional — they were purely descriptive fields nobody used. Dropping
+    // them here (rather than just no longer writing to them) so the schema
+    // stops implying they matter. A fresh database created from SCHEMA_SQL
+    // above never had these columns, so check before dropping — DROP COLUMN
+    // on a column that doesn't exist errors.
+    const columns = db.prepare('PRAGMA table_info(meeting)').all() as Array<{ name: string }>;
+    if (columns.some((c) => c.name === 'date')) {
+      db.exec('ALTER TABLE meeting DROP COLUMN date');
+    }
+    if (columns.some((c) => c.name === 'location')) {
+      db.exec('ALTER TABLE meeting DROP COLUMN location');
+    }
+    db.pragma('user_version = 3');
   }
 }

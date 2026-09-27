@@ -8,8 +8,6 @@
 CREATE TABLE IF NOT EXISTS meeting (
   id                 INTEGER PRIMARY KEY AUTOINCREMENT,
   name               TEXT NOT NULL,
-  date               TEXT NOT NULL,
-  location           TEXT,
   status             TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
   created_at         TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at         TEXT NOT NULL DEFAULT (datetime('now')),
@@ -51,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 ```
 
-`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `2` (ajout de `default_top_n`, `min_swimmers`, `active_categories`). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `3` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel — la migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
@@ -61,8 +59,6 @@ type MeetingStatus = 'provisional' | 'final';
 interface Meeting {
   id: number;
   name: string;
-  date: string;
-  location: string | null;
   status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
@@ -73,8 +69,6 @@ interface Meeting {
 
 interface MeetingInput {
   name: string;
-  date: string;
-  location?: string | null;
   status?: MeetingStatus;
   defaultTopN?: number;
   minSwimmers?: number;
@@ -121,6 +115,70 @@ interface RankingParams {
   minSwimmers?: number; // clubs avec moins de nageurs que ce seuil exclus (0/omis = pas de seuil)
 }
 ```
+
+## Schéma de sauvegarde (BackupData JSON)
+
+Format d'export/import complet de la base de données (`src/lib/backup.ts`) :
+
+```typescript
+interface BackupData {
+  version: 1;
+  appName: string;              // "MDLM Ranking"
+  exportedAt: string;           // ISO timestamp
+  meetings: MeetingBackup[];
+}
+
+interface MeetingBackup {
+  name: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  defaultTopN: number;          // Règle de calcul : top N par défaut
+  minSwimmers: number;          // Règle de calcul : seuil minimum
+  activeCategories: string[] | null;  // Règle de calcul : catégories actives
+  swimmers: SwimmerBackup[];
+  teamRankings: TeamRankingBackup[];
+}
+
+interface SwimmerBackup {
+  category: string;
+  rank: number | null;
+  lastname: string;
+  firstname: string;
+  birthyear: number | null;
+  nation: string | null;
+  club: string;
+  points: number;
+  rawLine: string | null;
+}
+
+interface TeamRankingBackup {
+  category: string;
+  club: string;
+  rank: number;
+  totalPoints: number;
+  topN: number;
+  swimmers: string;             // Sérialisation des nageurs retenus
+  computedAt: string;           // ISO timestamp
+}
+```
+
+La sauvegarde inclut les règles de calcul (`defaultTopN`, `minSwimmers`, `activeCategories`) ainsi que les classements pré-calculés (`team_ranking`), de sorte qu'une restauration reconstitue l'état complet du meeting sans recalcul.
+
+## Configuration des sauvegardes automatiques
+
+La configuration est stockée dans un fichier JSON distinct, en dehors de SQLite :
+
+```typescript
+interface BackupConfig {
+  backupDir: string;            // Chemin absolu du dossier de sauvegarde
+  maxBackups: number;           // Nombre maximal de fichiers conservés (par défaut 5)
+}
+```
+
+Fichier : `{app.getPath('userData')}/backup-config.json` (par exemple `C:\Users\<user>\AppData\Roaming\MDLM Ranking\backup-config.json` sur Windows).
+
+Raison de la séparation : la config survit à une restauration complète de la base (les sauvegardes ne réinitialisent pas les fichiers du système de fichiers Electron, seulement les tables SQLite). Cela permet à l'utilisateur de restaurer un backup sans perdre ses paramètres de sauvegarde (dossier et rotation).
 
 ## Relations
 

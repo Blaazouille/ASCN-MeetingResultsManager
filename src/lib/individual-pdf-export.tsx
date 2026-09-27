@@ -12,8 +12,7 @@ import { ASCN_CLUB_NAME, formatPoints } from './utils';
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10 },
   title: { fontSize: 20, fontWeight: 700, marginBottom: 4 },
-  subtitle: { fontSize: 12, marginBottom: 2, color: '#5B6B7D' },
-  date: { fontSize: 10, marginBottom: 16, color: '#5B6B7D' },
+  subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 5 },
   rowAscn: { backgroundColor: '#F0FAFF' },
@@ -42,7 +41,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Classement individuel — {subtitle}</Text>
-        <Text style={styles.date}>{meta.date}</Text>
 
         {results.length === 0 ? (
           <Text style={{ fontSize: 11, color: '#5B6B7D', marginTop: 16 }}>Aucun résultat.</Text>

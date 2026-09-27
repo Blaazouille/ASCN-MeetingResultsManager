@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, parseMeetingDate, slugifyCategory } from '../src/lib/export-data';
+import { buildPrintMeta, formatMeetingCreatedAt, slugifyCategory } from '../src/lib/export-data';
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {
@@ -20,15 +20,13 @@ describe('slugifyCategory', () => {
 });
 
 describe('buildPrintMeta', () => {
-  it('maps the meeting name, date, and provisional status', () => {
+  it('maps the meeting name and provisional status', () => {
     const meta = buildPrintMeta({
       id: 1,
       name: 'Meeting de la Mer 2026',
-      date: '2026-11-16',
-      location: 'Cherbourg',
       status: 'provisional',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01 00:00:00',
+      updatedAt: '2026-01-01 00:00:00',
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
@@ -36,7 +34,6 @@ describe('buildPrintMeta', () => {
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
     expect(meta.status).toBe('Provisoire');
-    expect(meta.date).toBe('16 nov. 2026');
     expect(meta.computedAt.length).toBeGreaterThan(0);
   });
 
@@ -44,11 +41,9 @@ describe('buildPrintMeta', () => {
     const meta = buildPrintMeta({
       id: 2,
       name: 'Meeting de la Mer 2026',
-      date: '2026-11-16',
-      location: null,
       status: 'final',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01 00:00:00',
+      updatedAt: '2026-01-01 00:00:00',
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
@@ -56,31 +51,21 @@ describe('buildPrintMeta', () => {
 
     expect(meta.status).toBe('Définitif');
   });
+});
 
-  it('formats a single-digit-day date in the expected shape (day, abbreviated month with period, year)', () => {
-    const meta = buildPrintMeta({
-      id: 3,
+describe('formatMeetingCreatedAt', () => {
+  it('formats a SQLite UTC timestamp as a fr-FR long date', () => {
+    const formatted = formatMeetingCreatedAt({
+      id: 1,
       name: 'Meeting de la Mer 2026',
-      date: '2026-03-05',
-      location: null,
       status: 'provisional',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-11-16 12:00:00',
+      updatedAt: '2026-11-16 12:00:00',
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
     });
 
-    expect(meta.date).toMatch(/^\d{1,2}\s+\w+\.?\s+\d{4}$/);
-  });
-});
-
-describe('parseMeetingDate', () => {
-  it('parses "YYYY-MM-DD" as local midnight, not UTC midnight', () => {
-    const date = parseMeetingDate('2026-11-16');
-    expect(date.getFullYear()).toBe(2026);
-    expect(date.getMonth()).toBe(10); // 0-indexed: November
-    expect(date.getDate()).toBe(16);
-    expect(date.getHours()).toBe(0);
+    expect(formatted).toMatch(/16 novembre 2026/);
   });
 });

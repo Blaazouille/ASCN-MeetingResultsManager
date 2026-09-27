@@ -28,7 +28,13 @@ export function useMeeting(): UseMeetingResult {
     setIsLoading(true);
     setError(null);
     try {
-      setMeetings(await window.electronAPI.getMeetings());
+      const fetched = await window.electronAPI.getMeetings();
+      setMeetings(fetched);
+      // A restore replaces every meeting with fresh autoincrement ids, so the
+      // previously-open meeting's id may no longer exist; without this, pages
+      // reading currentMeeting would silently fall back to null with no
+      // indication why the meeting they had open "disappeared".
+      setCurrentMeetingId((current) => (current !== null && !fetched.some((m) => m.id === current) ? null : current));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -43,12 +49,8 @@ export function useMeeting(): UseMeetingResult {
   const createMeeting = useCallback(async (input: MeetingInput): Promise<Meeting> => {
     try {
       const meeting = await window.electronAPI.createMeeting(input);
-      // Keep the same order getAllMeetings/refresh() produce (date DESC, id
-      // DESC) instead of always pinning the new meeting to the top, which
-      // would misorder a backfilled past meeting ahead of a more recent one.
-      setMeetings((current) =>
-        [meeting, ...current].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
-      );
+      // Keep the same order getAllMeetings/refresh() produce (id DESC).
+      setMeetings((current) => [meeting, ...current].sort((a, b) => b.id - a.id));
       setError(null);
       return meeting;
     } catch (err) {
