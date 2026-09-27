@@ -12,20 +12,18 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table';
 import { ChevronRight, Search } from 'lucide-react';
-import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
+import { ASCN_CLUB_NAME, cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
-import type { TopN } from '@/hooks/use-ranking';
 import { TeamRow } from './TeamRow';
 
 const PODIUM_STYLES: Record<number, string> = {
-  1: 'bg-medal-gold text-neutral-0',
-  2: 'bg-medal-silver text-neutral-0',
-  3: 'bg-medal-bronze text-neutral-0',
+  1: 'bg-medal-gold text-neutral-900',
+  2: 'bg-medal-silver text-neutral-900',
+  3: 'bg-medal-bronze text-neutral-900',
 };
 
 export interface TeamRankingTableProps {
   results: TeamResult[];
-  topN: TopN;
   search: string;
   onSearchChange: (value: string) => void;
 }
@@ -41,13 +39,13 @@ const COLUMN_WIDTHS: Record<string, string> = {
 };
 
 /**
- * Rank/club/points/swimmer-count columns — independent of expand state, so
- * they're memoized separately from the expand column to avoid rebuilding
- * every column on every row toggle.
+ * Rank/club/points/swimmer-count columns — independent of any state, so they
+ * are built once at module load, apart from the expand column that is rebuilt
+ * on every row toggle.
  */
 // TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
 // columns; `any` here is the library's own documented pattern for a mixed column array.
-function buildBaseColumns(topN: TopN): ColumnDef<TeamResult, any>[] {
+function buildBaseColumns(): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
@@ -88,14 +86,18 @@ function buildBaseColumns(topN: TopN): ColumnDef<TeamResult, any>[] {
     columnHelper.accessor('swimmerCount', {
       id: 'swimmerBadge',
       header: 'Nageurs',
+      // "5 retenus sur 18": swimmers counted in the total out of those entered.
+      // The old "18/5" badge read as entered/topN and looked like an error.
       cell: (info) => (
-        <span className="rounded-sm bg-neutral-100 px-2 py-0.5 font-mono text-xs" data-numeric>
-          {info.getValue()}/{topN}
+        <span className="text-sm text-neutral-600" data-numeric>
+          {formatRetainedSwimmers(info.row.original.swimmers.length, info.getValue())}
         </span>
       ),
     }),
   ];
 }
+
+const BASE_COLUMNS = buildBaseColumns();
 
 function buildExpandColumn(expanded: Set<string>): ColumnDef<TeamResult, any> {
   return columnHelper.display({
@@ -113,7 +115,7 @@ function buildExpandColumn(expanded: Set<string>): ColumnDef<TeamResult, any> {
   });
 }
 
-export function TeamRankingTable({ results, topN, search, onSearchChange }: TeamRankingTableProps): JSX.Element {
+export function TeamRankingTable({ results, search, onSearchChange }: TeamRankingTableProps): JSX.Element {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => filterTeamResultsByClub(results, search), [results, search]);
@@ -130,9 +132,8 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
     });
   }
 
-  const baseColumns = useMemo(() => buildBaseColumns(topN), [topN]);
   const expandColumn = useMemo(() => buildExpandColumn(expanded), [expanded]);
-  const columns = useMemo(() => [...baseColumns, expandColumn], [baseColumns, expandColumn]);
+  const columns = useMemo(() => [...BASE_COLUMNS, expandColumn], [expandColumn]);
 
   const table = useReactTable({
     data: filtered,
@@ -164,7 +165,7 @@ export function TeamRankingTable({ results, topN, search, onSearchChange }: Team
         <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="text-left text-xs uppercase tracking-wide text-neutral-500">
+              <tr key={headerGroup.id} className="text-left text-xs uppercase tracking-wide text-neutral-600">
                 {headerGroup.headers.map((header) => (
                   <th key={header.id} className={cn('px-3 py-2', COLUMN_WIDTHS[header.id])}>
                     {flexRender(header.column.columnDef.header, header.getContext())}

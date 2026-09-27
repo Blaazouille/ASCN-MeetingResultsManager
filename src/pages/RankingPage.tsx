@@ -63,7 +63,6 @@ export default function RankingPage(): JSX.Element {
       {error && <p className="text-sm text-error">{error}</p>}
       <TeamRankingTable
         results={ranking.teamResults}
-        topN={ranking.topN}
         search={search}
         onSearchChange={setSearch}
       />
