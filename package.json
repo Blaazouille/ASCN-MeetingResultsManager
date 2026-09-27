@@ -38,6 +38,7 @@
       "target": "nsis"
     },
     "nsis": {
+      "artifactName": "MDLM-Ranking-Setup-${version}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
