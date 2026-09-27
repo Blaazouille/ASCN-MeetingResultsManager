@@ -26,6 +26,8 @@ export function initAutoUpdater(onUpdateDownloaded: () => void): void {
   });
 
   setTimeout(() => {
-    void autoUpdater.checkForUpdates();
+    // Hors ligne, checkForUpdates() rejette en plus d'émettre 'error' : on
+    // absorbe explicitement ce rejet pour ne pas laisser une promesse non gérée.
+    autoUpdater.checkForUpdates().catch(() => {});
   }, UPDATE_CHECK_DELAY_MS);
 }

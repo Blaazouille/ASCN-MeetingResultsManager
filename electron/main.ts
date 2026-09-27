@@ -70,12 +70,12 @@ app.on('activate', () => {
 });
 
 app.whenReady().then(() => {
+  let appWindow: BrowserWindow;
   try {
     const dbPath = path.join(app.getPath('userData'), 'ascn-meeting-results.sqlite3');
     const db = createDatabase(dbPath);
     registerIpcHandlers(db);
-    const window = createWindow();
-    initAutoUpdater(() => window.webContents.send(IpcChannels.updateDownloaded));
+    appWindow = createWindow();
   } catch (err) {
     // A volunteer at poolside under stress must never see "nothing happened" —
     // if the DB can't be opened (corrupt file, locked, native module failure),
@@ -86,5 +86,12 @@ app.whenReady().then(() => {
       `La base de données locale n'a pas pu être ouverte. Fermez toute autre instance de l'application et réessayez.\n\nDétail technique : ${message}`
     );
     app.quit();
+    return;
   }
+
+  // Outside the DB try/catch on purpose: the updater is a non-critical
+  // background feature, so a failure here must never surface as the
+  // "database could not be opened" dialog above. The early return in the
+  // catch keeps it from starting at all when the app is already quitting.
+  initAutoUpdater(() => appWindow.webContents.send(IpcChannels.updateDownloaded));
 });
