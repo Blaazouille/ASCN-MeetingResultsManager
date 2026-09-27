@@ -28,7 +28,7 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
       <div>
-        <label htmlFor="meeting-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+        <label htmlFor="meeting-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
           Nom du meeting
         </label>
         <input
@@ -53,7 +53,7 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
+          className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
         >
           Créer le meeting
         </button>

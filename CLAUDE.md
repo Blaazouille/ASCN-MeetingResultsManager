@@ -80,9 +80,9 @@ Les 38 clubs doivent correspondre au fichier `test/fixtures/expected-ranking.jso
 | `neutral-50` | `#F4F7F6` | Fond de page |
 | `neutral-900` | `#1A2332` | Texte principal |
 | `neutral-600` | `#5B6B7D` | Texte secondaire |
-| `success` | `#22C55E` | Validation, import OK |
-| `warning` | `#F59E0B` | Statut provisoire |
-| `error` | `#EF4444` | Erreurs |
+| `success` | `#15803D` | Validation, import OK (texte, 4,7:1 sur `success-light`) |
+| `warning` | `#92400E` | Statut provisoire (texte, 7:1 sur `warning-light`) |
+| `error` | `#B91C1C` | Erreurs (6,5:1 sur blanc) |
 
 Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/design-system.md`).
 

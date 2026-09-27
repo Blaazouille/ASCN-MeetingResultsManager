@@ -85,7 +85,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             Informations meeting
           </h2>
           <div>
-            <label htmlFor="settings-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <label htmlFor="settings-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
               Nom du meeting
             </label>
             <input
@@ -101,7 +101,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             />
           </div>
           <div>
-            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500">Statut</span>
+            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-600">Statut</span>
             <div className="mt-2 flex gap-2">
               {(['provisional', 'final'] as const).map((option) => (
                 <button
@@ -114,7 +114,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                   className={cn(
                     'rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
                     status === option
-                      ? 'bg-secondary-600 text-neutral-0'
+                      ? 'bg-secondary-800 text-neutral-0'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   )}
                 >
@@ -130,7 +130,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             Règles de calcul
           </h2>
           <div>
-            <label htmlFor="settings-top-n" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <label htmlFor="settings-top-n" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
               Top N nageurs par club
             </label>
             <select
@@ -150,7 +150,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             </select>
           </div>
           <div>
-            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500">Catégories actives</span>
+            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-600">Catégories actives</span>
             <div className="mt-2 space-y-2">
               {ALL_CATEGORIES.map((category) => {
                 const isChecked = activeCategories.includes(category);
@@ -177,7 +177,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             </div>
           </div>
           <div>
-            <label htmlFor="settings-min-swimmers" className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <label htmlFor="settings-min-swimmers" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
               Seuil minimum de nageurs par club (optionnel)
             </label>
             <input
@@ -206,7 +206,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
         <button
           type="submit"
           disabled={isSaving}
-          className="rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
+          className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
         >
           Enregistrer
         </button>

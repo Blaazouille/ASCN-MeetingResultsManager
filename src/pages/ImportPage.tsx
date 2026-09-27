@@ -19,15 +19,15 @@ function StatBlock({ swimmerCount, clubCount, categoryCount }: StatBlockProps): 
   return (
     <dl className="grid grid-cols-3 gap-4 text-center">
       <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-500">Nageurs</dt>
+        <dt className="text-xs uppercase tracking-wide text-neutral-600">Nageurs</dt>
         <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(swimmerCount)}</dd>
       </div>
       <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-500">Clubs</dt>
+        <dt className="text-xs uppercase tracking-wide text-neutral-600">Clubs</dt>
         <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(clubCount)}</dd>
       </div>
       <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-500">Catégories</dt>
+        <dt className="text-xs uppercase tracking-wide text-neutral-600">Catégories</dt>
         <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(categoryCount)}</dd>
       </div>
     </dl>
@@ -82,10 +82,10 @@ export default function ImportPage(): JSX.Element {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-neutral-800">{fileName}</p>
             <div className="flex gap-1.5">
-              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-500">
+              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-600">
                 {result.encoding}
               </span>
-              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-500">
+              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-600">
                 &quot;{result.delimiter}&quot;
               </span>
             </div>
@@ -112,7 +112,7 @@ export default function ImportPage(): JSX.Element {
             type="button"
             onClick={() => navigate('/classement')}
             disabled={isPersisting}
-            className="mt-4 w-full rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
+            className="mt-4 w-full rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
           >
             {isPersisting ? 'Enregistrement…' : 'Voir le classement'}
           </button>

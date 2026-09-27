@@ -55,7 +55,7 @@ export function IndividualRankingTable({ results, prizeCount, showCategory }: In
       ) : (
         <table className="w-full table-fixed border-collapse text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-neutral-500">
+            <tr className="text-left text-xs uppercase tracking-wide text-neutral-600">
               <th className="w-[14%] px-3 py-2">Rang</th>
               <th className="w-[25%] px-3 py-2">Nom</th>
               <th className="w-[9%] px-3 py-2">Année</th>
@@ -76,7 +76,7 @@ export function IndividualRankingTable({ results, prizeCount, showCategory }: In
                     <span
                       className={cn(
                         'inline-flex h-7 w-7 items-center justify-center rounded-sm font-mono text-sm font-bold',
-                        r.rank <= prizeCount ? 'bg-accent-600 text-neutral-0' : 'text-neutral-700'
+                        r.rank <= prizeCount ? 'bg-accent-800 text-neutral-0' : 'text-neutral-700'
                       )}
                     >
                       {r.rank}
