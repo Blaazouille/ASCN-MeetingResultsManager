@@ -72,6 +72,8 @@ const electronAPI = {
     return () => ipcRenderer.removeListener(IpcChannels.updateDownloaded, listener);
   },
   quitAndInstallUpdate: (): Promise<void> => ipcRenderer.invoke(IpcChannels.quitAndInstallUpdate),
+
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke(IpcChannels.getAppVersion),
 };
 
 export type ElectronAPI = typeof electronAPI;

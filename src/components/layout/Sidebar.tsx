@@ -6,6 +6,7 @@
 import { NavLink } from 'react-router-dom';
 import { Award, BarChart2, Home, Settings, Upload, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAppVersion } from '@/hooks/use-app-version';
 
 const RANKING_SUB_ITEMS = [
   { to: '/classement', label: 'Par équipes', icon: Users },
@@ -25,11 +26,14 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ hasMeeting }: SidebarProps): JSX.Element {
+  const version = useAppVersion();
+
   return (
     <nav className="fixed inset-y-0 left-0 z-20 flex w-[220px] flex-col bg-primary-800 text-neutral-0">
       <div className="px-4 py-6">
         <p className="font-display text-sm font-bold uppercase tracking-wide text-neutral-0">
           MDLM Ranking
+          {version && <span className="ml-1.5 font-mono text-xs font-normal normal-case text-primary-300">v{version}</span>}
         </p>
         <p className="text-xs text-primary-200">Meeting de la Mer</p>
       </div>

@@ -51,6 +51,8 @@ export const IpcChannels = {
   backupChooseDir: 'backup:choose-dir',
   updateDownloaded: 'update:downloaded',
   quitAndInstallUpdate: 'update:quitAndInstall',
+
+  getAppVersion: 'app:getVersion',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
