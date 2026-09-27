@@ -44,6 +44,14 @@ const electronAPI = {
   openFileDialog: (filters?: FileFilter[]): Promise<string | null> => ipcRenderer.invoke(IpcChannels.openFileDialog, filters),
   saveFileDialog: (defaultName: string, filters?: FileFilter[]): Promise<string | null> =>
     ipcRenderer.invoke(IpcChannels.saveFileDialog, defaultName, filters),
+
+  // Auto-update
+  onUpdateDownloaded: (callback: () => void): (() => void) => {
+    const listener = (): void => callback();
+    ipcRenderer.on(IpcChannels.updateDownloaded, listener);
+    return () => ipcRenderer.removeListener(IpcChannels.updateDownloaded, listener);
+  },
+  quitAndInstallUpdate: (): Promise<void> => ipcRenderer.invoke(IpcChannels.quitAndInstallUpdate),
 };
 
 export type ElectronAPI = typeof electronAPI;

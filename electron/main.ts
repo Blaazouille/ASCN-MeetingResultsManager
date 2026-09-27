@@ -8,6 +8,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { registerIpcHandlers } from './ipc-handlers';
 import { createDatabase } from '../src/lib/db-schema';
+import { initAutoUpdater } from './auto-updater';
+import { IpcChannels } from './ipc-channels';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,7 +31,7 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
 
 let mainWindow: BrowserWindow | null = null;
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -50,6 +52,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'));
   }
+
+  return mainWindow;
 }
 
 app.on('window-all-closed', () => {
@@ -70,7 +74,8 @@ app.whenReady().then(() => {
     const dbPath = path.join(app.getPath('userData'), 'ascn-meeting-results.sqlite3');
     const db = createDatabase(dbPath);
     registerIpcHandlers(db);
-    createWindow();
+    const window = createWindow();
+    initAutoUpdater(() => window.webContents.send(IpcChannels.updateDownloaded));
   } catch (err) {
     // A volunteer at poolside under stress must never see "nothing happened" —
     // if the DB can't be opened (corrupt file, locked, native module failure),

@@ -36,6 +36,9 @@ export const IpcChannels = {
 
   openFileDialog: 'dialog:openFile',
   saveFileDialog: 'dialog:saveFile',
+
+  updateDownloaded: 'update:downloaded',
+  quitAndInstallUpdate: 'update:quitAndInstall',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
