@@ -65,9 +65,11 @@ Dans `package.json` → `build.nsis` :
   "oneClick": false,
   "allowToChangeInstallationDirectory": true,
   "createDesktopShortcut": true,
-  "perMachine": false
+  "perMachine": true
 }
 ```
+`perMachine: true` installe dans `Program Files` (partagé, nécessite une élévation UAC) plutôt que dans `AppData\Local\Programs` (par utilisateur, silencieux) — préférable pour un poste unique où l'utilisateur est administrateur de sa machine.
+
 Pas de signature de code (coût non justifié pour un déploiement à un seul poste non technique) — l'avertissement SmartScreen est accepté.
 
 ## 4. Build + publication automatique (CI)

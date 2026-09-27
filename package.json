@@ -42,7 +42,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "perMachine": false
+      "perMachine": true
     },
     "mac": {
       "target": "dmg"
