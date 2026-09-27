@@ -15,9 +15,12 @@ export default function HomePage(): JSX.Element {
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
+  // An existing meeting opens on its ranking: RankingPage itself redirects to
+  // /import when the meeting has no results yet. Always landing on Import made
+  // volunteers think their imported data was lost.
   const openMeeting = (meeting: Meeting): void => {
     meetingState.selectMeeting(meeting.id);
-    navigate('/import');
+    navigate('/classement');
   };
 
   return (
@@ -31,7 +34,7 @@ export default function HomePage(): JSX.Element {
           <button
             type="button"
             onClick={() => setIsCreating(true)}
-            className="rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700"
+            className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900"
           >
             Nouveau meeting
           </button>
@@ -46,7 +49,9 @@ export default function HomePage(): JSX.Element {
           onSubmit={async (input) => {
             const meeting = await meetingState.createMeeting(input);
             setIsCreating(false);
-            openMeeting(meeting);
+            // A new meeting has no results yet: go straight to Import.
+            meetingState.selectMeeting(meeting.id);
+            navigate('/import');
           }}
         />
       )}
