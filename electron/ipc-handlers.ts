@@ -3,7 +3,7 @@
  * Appelé par : electron/main.ts au démarrage.
  * Suppression casserait : toutes les opérations de persistance (meetings, imports, exports).
  */
-import { ipcMain, dialog, type OpenDialogOptions } from 'electron';
+import { app, ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -198,4 +198,6 @@ export function registerIpcHandlers(db: Database.Database): void {
     pendingImport = null;
     return { success: true };
   });
+
+  ipcMain.handle(IpcChannels.getAppVersion, async () => app.getVersion());
 }

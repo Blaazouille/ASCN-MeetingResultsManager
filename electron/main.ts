@@ -38,7 +38,7 @@ function createWindow(): BrowserWindow {
     minWidth: 1280,
     minHeight: 800,
     autoHideMenuBar: true,
-    title: 'MDLM Ranking',
+    title: `MDLM Ranking v${app.getVersion()}`,
     icon: path.join(process.env.APP_ROOT ?? '', 'resources', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
