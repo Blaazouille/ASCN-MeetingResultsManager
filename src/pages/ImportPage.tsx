@@ -40,6 +40,7 @@ export default function ImportPage(): JSX.Element {
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
   const navigate = useNavigate();
+  const { refresh } = meetingState;
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
 
@@ -51,6 +52,8 @@ export default function ImportPage(): JSX.Element {
         setIsPersisting(true);
         try {
           await window.electronAPI.importCsv(meetingId, parsed.rows);
+          // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
+          await refresh();
         } catch (err) {
           setPersistError(err instanceof Error ? err.message : String(err));
         } finally {
@@ -58,7 +61,7 @@ export default function ImportPage(): JSX.Element {
         }
       }
     },
-    [handleFileAccepted, meetingId]
+    [handleFileAccepted, meetingId, refresh]
   );
 
   if (!meetingState.currentMeeting) {

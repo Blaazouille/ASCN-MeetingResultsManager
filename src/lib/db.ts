@@ -18,6 +18,8 @@ export interface Meeting {
   defaultTopN: number;
   minSwimmers: number;
   activeCategories: string[] | null;
+  /** Number of swimmer_result rows (one per swimmer per category); 0 = nothing imported yet. */
+  resultCount: number;
 }
 
 export interface MeetingInput {
@@ -37,6 +39,7 @@ interface MeetingRow {
   default_top_n: number;
   min_swimmers: number;
   active_categories: string | null;
+  result_count: number;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -49,11 +52,17 @@ function rowToMeeting(row: MeetingRow): Meeting {
     defaultTopN: row.default_top_n,
     minSwimmers: row.min_swimmers,
     activeCategories: row.active_categories ? (JSON.parse(row.active_categories) as string[]) : null,
+    resultCount: row.result_count,
   };
 }
 
+// Every read of a meeting carries its result count, so Accueil and the sidebar
+// can tell "à importer" from "importé" without loading the rows themselves.
+const SELECT_MEETING =
+  'SELECT m.*, (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count FROM meeting m';
+
 export function getAllMeetings(db: Database.Database): Meeting[] {
-  const rows = db.prepare('SELECT * FROM meeting ORDER BY id DESC').all() as MeetingRow[];
+  const rows = db.prepare(`${SELECT_MEETING} ORDER BY m.id DESC`).all() as MeetingRow[];
   return rows.map(rowToMeeting);
 }
 
@@ -70,12 +79,12 @@ export function createMeeting(db: Database.Database, input: MeetingInput): Meeti
       input.minSwimmers ?? 0,
       input.activeCategories ? JSON.stringify(input.activeCategories) : null
     );
-  const row = db.prepare('SELECT * FROM meeting WHERE id = ?').get(result.lastInsertRowid) as MeetingRow;
+  const row = db.prepare(`${SELECT_MEETING} WHERE m.id = ?`).get(result.lastInsertRowid) as MeetingRow;
   return rowToMeeting(row);
 }
 
 export function updateMeeting(db: Database.Database, id: number, input: Partial<MeetingInput>): Meeting {
-  const current = db.prepare('SELECT * FROM meeting WHERE id = ?').get(id) as MeetingRow | undefined;
+  const current = db.prepare(`${SELECT_MEETING} WHERE m.id = ?`).get(id) as MeetingRow | undefined;
   if (!current) {
     throw new Error(`Meeting ${id} not found`);
   }
@@ -96,7 +105,7 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
      SET name = ?, status = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
      WHERE id = ?`
   ).run(merged.name, merged.status, merged.defaultTopN, merged.minSwimmers, merged.activeCategories, id);
-  const row = db.prepare('SELECT * FROM meeting WHERE id = ?').get(id) as MeetingRow;
+  const row = db.prepare(`${SELECT_MEETING} WHERE m.id = ?`).get(id) as MeetingRow;
   return rowToMeeting(row);
 }
 
