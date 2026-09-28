@@ -120,7 +120,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
           <h2 className="font-display text-2xl font-bold text-marine">Règles de calcul</h2>
           <div>
             <label htmlFor="settings-top-n" className="block text-sm font-semibold text-ink">
-              Top N nageurs par club
+              Nageurs comptés par club
             </label>
             <select
               id="settings-top-n"
