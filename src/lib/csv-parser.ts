@@ -73,6 +73,15 @@ export function summarizeSwimmerRows(rows: RawSwimmerRow[]): SwimmerRowsSummary 
   return { categories, clubCount: clubs.size, swimmerCount: uniqueSwimmers.size };
 }
 
+/** Rows per category, in first-appearance order — shown as chips on the import summary. */
+export function countRowsByCategory(rows: RawSwimmerRow[]): Array<{ category: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    counts.set(row.name, (counts.get(row.name) ?? 0) + 1);
+  }
+  return Array.from(counts, ([category, count]) => ({ category, count }));
+}
+
 const REQUIRED_COLUMNS = [
   'name',
   'place',
