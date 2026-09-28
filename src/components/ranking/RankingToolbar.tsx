@@ -1,80 +1,42 @@
 /**
- * Responsabilité : barre d'outils du classement (top N, statut, exports PDF/Excel).
+ * Responsabilité : filtres du classement par équipes (catégorie, nageurs comptés par club, recherche).
  * Appelé par : RankingPage.tsx.
- * Suppression casserait : le contrôle du top N et le déclenchement des exports.
+ * Suppression casserait : le filtrage du classement.
  */
-import { Download, FileSpreadsheet } from 'lucide-react';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
-import type { MeetingStatus } from '@/lib/db';
-import { meetingStatusLabel } from '@/lib/export-data';
-import { cn } from '@/lib/utils';
+import { FilterBar } from '@/components/layout/FilterBar';
+import { Segmented } from '@/components/ui/Segmented';
+import { SearchField } from '@/components/ui/SearchField';
+import { CategoryTabs } from './CategoryTabs';
+
+const TOP_N_SEGMENTS = TOP_N_OPTIONS.map((value) => ({ value, label: String(value) }));
 
 export interface RankingToolbarProps {
+  categories: string[];
+  category: string;
+  onCategoryChange: (category: string) => void;
   topN: TopN;
   onTopNChange: (topN: TopN) => void;
-  status: MeetingStatus;
-  onExportPdf: () => void;
-  onExportExcel: () => void;
-  isExporting: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
 }
 
-/** Top N selector, meeting status badge, and export actions. */
 export function RankingToolbar({
+  categories,
+  category,
+  onCategoryChange,
   topN,
   onTopNChange,
-  status,
-  onExportPdf,
-  onExportExcel,
-  isExporting,
+  search,
+  onSearchChange,
 }: RankingToolbarProps): JSX.Element {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          Top N nageurs
-          <select
-            value={topN}
-            onChange={(event) => onTopNChange(Number(event.target.value) as TopN)}
-            className="rounded-md border border-neutral-200 px-2 py-1 font-mono text-sm outline-none focus:border-secondary-400 focus:ring-1 focus:ring-secondary-400"
-          >
-            {TOP_N_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <span
-          className={cn(
-            'rounded-sm px-2 py-1 text-xs font-medium uppercase tracking-wide',
-            status === 'final' ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
-          )}
-        >
-          {meetingStatusLabel(status)}
-        </span>
+    <FilterBar>
+      <CategoryTabs categories={categories} active={category} onChange={onCategoryChange} />
+      <Segmented label="Nageurs comptés par club" options={TOP_N_SEGMENTS} value={topN} onChange={onTopNChange} />
+      <div className="ml-auto">
+        <SearchField value={search} onChange={onSearchChange} placeholder="Rechercher un club" />
       </div>
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onExportPdf}
-          disabled={isExporting}
-          className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100 disabled:opacity-60"
-        >
-          <Download className="h-4 w-4" aria-hidden />
-          Export PDF
-        </button>
-        <button
-          type="button"
-          onClick={onExportExcel}
-          disabled={isExporting}
-          className="flex items-center gap-2 rounded-md bg-secondary-800 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-        >
-          <FileSpreadsheet className="h-4 w-4" aria-hidden />
-          Export Excel
-        </button>
-      </div>
-    </div>
+    </FilterBar>
   );
 }

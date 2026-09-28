@@ -8,6 +8,9 @@ import type { Meeting, MeetingInput, MeetingStatus } from '@/lib/db';
 import { ALL_CATEGORIES } from '@/lib/ranking-engine';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
 import { cn } from '@/lib/utils';
+import { Segmented, type SegmentedOption } from '@/components/ui/Segmented';
+import { Button } from '@/components/ui/Button';
+import { categoryShortLabel } from '@/lib/ui-labels';
 
 export interface SettingsFormProps {
   meeting: Meeting;
@@ -16,9 +19,10 @@ export interface SettingsFormProps {
 
 const DEFAULT_TOP_N: TopN = 5;
 
-function categoryLabel(category: string): string {
-  return category.replace(/^Classement\s+/i, '');
-}
+const STATUS_OPTIONS: ReadonlyArray<SegmentedOption<MeetingStatus>> = [
+  { value: 'provisional', label: 'Provisoire' },
+  { value: 'final', label: 'Définitif' },
+] as const;
 
 export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Element {
   const [name, setName] = useState(meeting.name);
@@ -80,12 +84,10 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
-          <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary-800">
-            Informations meeting
-          </h2>
+        <div className="space-y-4 rounded-lg bg-surface-raised p-6 shadow-card">
+          <h2 className="font-display text-2xl font-bold text-marine">Informations meeting</h2>
           <div>
-            <label htmlFor="settings-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
+            <label htmlFor="settings-name" className="block text-sm font-semibold text-ink">
               Nom du meeting
             </label>
             <input
@@ -97,41 +99,25 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                 setName(event.target.value);
                 setSavedAt(null);
               }}
-              className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
             />
           </div>
-          <div>
-            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-600">Statut</span>
-            <div className="mt-2 flex gap-2">
-              {(['provisional', 'final'] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => {
-                    setStatus(option);
-                    setSavedAt(null);
-                  }}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
-                    status === option
-                      ? 'bg-secondary-800 text-neutral-0'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                  )}
-                >
-                  {option === 'provisional' ? 'Provisoire' : 'Définitif'}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Segmented
+            label="Statut"
+            options={STATUS_OPTIONS}
+            value={status}
+            onChange={(next) => {
+              setStatus(next);
+              setSavedAt(null);
+            }}
+          />
         </div>
 
-        <div className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
-          <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary-800">
-            Règles de calcul
-          </h2>
+        <div className="space-y-4 rounded-lg bg-surface-raised p-6 shadow-card">
+          <h2 className="font-display text-2xl font-bold text-marine">Règles de calcul</h2>
           <div>
-            <label htmlFor="settings-top-n" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
-              Top N nageurs par club
+            <label htmlFor="settings-top-n" className="block text-sm font-semibold text-ink">
+              Nageurs comptés par club
             </label>
             <select
               id="settings-top-n"
@@ -140,7 +126,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                 setDefaultTopN(Number(event.target.value) as TopN);
                 setSavedAt(null);
               }}
-              className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
             >
               {TOP_N_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -150,7 +136,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
             </select>
           </div>
           <div>
-            <span className="block text-xs font-medium uppercase tracking-wide text-neutral-600">Catégories actives</span>
+            <span className="block text-sm font-semibold text-ink">Catégories actives</span>
             <div className="mt-2 space-y-2">
               {ALL_CATEGORIES.map((category) => {
                 const isChecked = activeCategories.includes(category);
@@ -159,8 +145,8 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                   <label
                     key={category}
                     className={cn(
-                      'flex items-center gap-2 text-sm',
-                      isLastActive ? 'text-neutral-400' : 'text-neutral-700'
+                      'flex min-h-11 items-center gap-2 text-sm',
+                      isLastActive ? 'text-ink-muted opacity-60' : 'text-ink'
                     )}
                   >
                     <input
@@ -168,16 +154,16 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                       checked={isChecked}
                       disabled={isLastActive}
                       onChange={() => toggleCategory(category)}
-                      className="h-4 w-4 rounded border-neutral-300 text-secondary-600 focus:ring-secondary-400 disabled:cursor-not-allowed"
+                      className="h-5 w-5 accent-[var(--color-marine)] disabled:cursor-not-allowed"
                     />
-                    {categoryLabel(category)}
+                    {categoryShortLabel(category)}
                   </label>
                 );
               })}
             </div>
           </div>
           <div>
-            <label htmlFor="settings-min-swimmers" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
+            <label htmlFor="settings-min-swimmers" className="block text-sm font-semibold text-ink">
               Seuil minimum de nageurs par club (optionnel)
             </label>
             <input
@@ -190,7 +176,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                 setSavedAt(null);
               }}
               placeholder="Aucun seuil"
-              className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
+              className="mt-1.5 h-11 w-full rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
             />
           </div>
         </div>
@@ -200,16 +186,16 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
       {savedAt && !error && <p className="text-sm text-success">Paramètres enregistrés.</p>}
 
       <div className="flex items-center justify-between">
-        <button type="button" onClick={resetRankingRules} className="text-sm font-medium text-secondary-700 hover:underline">
+        <button
+          type="button"
+          onClick={resetRankingRules}
+          className="inline-flex h-11 items-center text-sm font-semibold text-bassin-strong underline-offset-2 hover:underline"
+        >
           Réinitialiser les valeurs par défaut
         </button>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-        >
+        <Button type="submit" variant="primary" disabled={isSaving}>
           Enregistrer
-        </button>
+        </Button>
       </div>
     </form>
   );

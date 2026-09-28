@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { parseCsv, parsePoints, summarizeSwimmerRows } from '../src/lib/csv-parser';
+import { countRowsByCategory, parseCsv, parsePoints, summarizeSwimmerRows } from '../src/lib/csv-parser';
 
 const FIXTURE_PATH = path.join(__dirname, 'fixtures/sample.csv');
 
@@ -139,5 +139,21 @@ describe('summarizeSwimmerRows', () => {
     expect(summary.categories).toEqual(['Classement Mixte', 'Classement Dames']);
     expect(summary.clubCount).toBe(1);
     expect(summary.swimmerCount).toBe(2);
+  });
+});
+
+describe('countRowsByCategory', () => {
+  it('counts the fixture rows per category', () => {
+    const { rows } = loadFixture();
+    const counts = countRowsByCategory(rows);
+
+    expect(counts).toHaveLength(3);
+    expect(counts).toEqual(
+      expect.arrayContaining([
+        { category: 'Classement Dames', count: 90 },
+        { category: 'Classement Messieurs', count: 121 },
+        { category: 'Classement Mixte', count: 211 },
+      ])
+    );
   });
 });

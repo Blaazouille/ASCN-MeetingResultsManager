@@ -1,17 +1,17 @@
 /**
  * Responsabilité : formulaire de création/édition d'un meeting.
- * Appelé par : HomePage.tsx, SettingsPage.tsx.
+ * Appelé par : HomePage.tsx.
  * Suppression casserait : la création et la modification des meetings.
  */
 import { useState, type FormEvent } from 'react';
 import type { MeetingInput } from '@/lib/db';
+import { Button } from '@/components/ui/Button';
 
 export interface MeetingFormProps {
-  onSubmit: (input: MeetingInput) => void | Promise<void>;
-  onCancel: () => void;
+  onSubmit: (input: MeetingInput) => Promise<void>;
 }
 
-export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Element {
+export function MeetingForm({ onSubmit }: MeetingFormProps): JSX.Element {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,38 +26,22 @@ export function MeetingForm({ onSubmit, onCancel }: MeetingFormProps): JSX.Eleme
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
-      <div>
-        <label htmlFor="meeting-name" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
-          Nom du meeting
-        </label>
-        <input
-          id="meeting-name"
-          type="text"
-          required
-          autoFocus
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
-          placeholder="Meeting de la Mer 2026"
-        />
-      </div>
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-        >
-          Créer le meeting
-        </button>
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 rounded-lg bg-surface-raised p-5 shadow-card">
+      <label htmlFor="meeting-name" className="text-[15px] font-semibold text-ink">
+        Nom du meeting
+      </label>
+      <input
+        id="meeting-name"
+        type="text"
+        required
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder="Meeting de la Mer 2027"
+        className="h-12 rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none placeholder:text-ink-muted focus:border-bassin-strong"
+      />
+      <Button type="submit" variant="primary" size="lg" disabled={isSubmitting}>
+        Créer et importer le CSV
+      </Button>
     </form>
   );
 }

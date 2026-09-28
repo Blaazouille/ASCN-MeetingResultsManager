@@ -10,6 +10,7 @@ import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { computeFunAwards } from '@/lib/fun-awards';
 import { FunAwardsGrid } from '@/components/ranking/FunAwardsGrid';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function PalmaresPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -30,21 +31,20 @@ export default function PalmaresPage(): JSX.Element {
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) return <Navigate to="/" replace />;
-  if (isLoading) return <p className="text-neutral-600">Chargement…</p>;
+  if (isLoading) return <p className="text-[15px] text-ink-muted">Chargement…</p>;
   if (error) return <p className="text-sm text-error">{error}</p>;
   if (rows.length === 0) return <Navigate to="/import" replace />;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-primary-800">Palmarès des rigolos</h1>
-        <p className="text-neutral-600">{meeting.name}</p>
-      </header>
-
-      <CategoryTabs categories={categories} active={currentTab} onChange={setActiveCategory} />
-
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        overline={meeting.name}
+        title="Palmarès des rigolos"
+        subtitle="Prix humoristiques calculés automatiquement à partir des résultats."
+        actions={<CategoryTabs categories={categories} active={currentTab} onChange={setActiveCategory} />}
+      />
       {awards.length === 0 ? (
-        <p className="text-sm text-neutral-600">Aucun prix disponible pour cette catégorie.</p>
+        <p className="text-[15px] text-ink-muted">Aucun prix disponible pour cette catégorie.</p>
       ) : (
         <FunAwardsGrid awards={awards} />
       )}

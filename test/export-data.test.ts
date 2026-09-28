@@ -30,6 +30,7 @@ describe('buildPrintMeta', () => {
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
+      resultCount: 0,
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
@@ -47,6 +48,7 @@ describe('buildPrintMeta', () => {
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
+      resultCount: 0,
     });
 
     expect(meta.status).toBe('Définitif');
@@ -64,6 +66,7 @@ describe('formatMeetingCreatedAt', () => {
       defaultTopN: 5,
       minSwimmers: 0,
       activeCategories: null,
+      resultCount: 0,
     });
 
     expect(formatted).toMatch(/16 novembre 2026/);

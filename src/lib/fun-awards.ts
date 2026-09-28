@@ -1,15 +1,18 @@
 /**
  * Responsabilité : calcul des prix humoristiques à partir des données nageurs.
- * Appelé par : IndividualPage.tsx et les tests.
+ * Appelé par : PalmaresPage.tsx et les tests.
  * Suppression casserait : la section "Palmarès des rigolos".
  */
 import type { RawSwimmerRow } from './csv-parser';
 import { detectGender } from './individual-ranking';
 
+export type FunAwardIcon = 'hourglass' | 'sprout' | 'duo' | 'camera' | 'crown' | 'zap';
+
 export interface FunAward {
   id: string;
   title: string;
-  emoji: string;
+  /** Icon key; FunAwardsGrid maps it to a Lucide icon and a colour. */
+  icon: FunAwardIcon;
   winner: {
     name: string;
     club: string;
@@ -58,7 +61,7 @@ function findDoyen(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'doyen',
     title: isFemale ? 'La Doyenne' : 'Le Doyen',
-    emoji: isFemale ? '👵' : '👴',
+    icon: 'hourglass',
     winner: {
       name: formatName(oldest),
       club: oldest.club,
@@ -76,7 +79,7 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'releve',
     title: 'La Relève',
-    emoji: '🌱',
+    icon: 'sprout',
     winner: {
       name: formatName(youngest),
       club: youngest.club,
@@ -111,7 +114,7 @@ function findDuoMixte(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'duo-mixte',
     title: 'Le Duo Mixte',
-    emoji: '🤝',
+    icon: 'duo',
     winner: {
       name: `${formatName(bestF)} & ${formatName(bestM)}`,
       club: bestClub,
@@ -146,7 +149,7 @@ function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'photo-finish',
     title: 'Le Photo-Finish',
-    emoji: '📸',
+    icon: 'camera',
     winner: {
       name: `${formatName(pairA)} et ${formatName(pairB)}`,
       club: pairA.club === pairB.club ? pairA.club : `${pairA.club} / ${pairB.club}`,
@@ -187,10 +190,15 @@ function findClubAnciens(swimmers: UniqueSwimmer[]): FunAward | null {
     }
   }
   if (!bestClub) return null;
+  // Rows are pre-filtered to a single category before computeFunAwards runs (see
+  // PalmaresPage.tsx), so every member of the winning club shares one category —
+  // reading it off the first member is enough to pick a gender-appropriate title.
+  const bestClubMembers = clubs.get(bestClub) ?? [];
+  const isFemale = detectGender(bestClubMembers[0]?.category ?? '') === 'F';
   return {
     id: 'club-anciens',
-    title: 'Le Club des Anciens',
-    emoji: '🧓',
+    title: isFemale ? 'Le Club des Grandes Dames' : 'Le Club des Sages',
+    icon: 'crown',
     winner: {
       name: bestClub,
       club: bestClub,
@@ -220,7 +228,7 @@ function findJeuneGarde(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'jeune-garde',
     title: 'La Jeune Garde',
-    emoji: '🐣',
+    icon: 'zap',
     winner: {
       name: bestClub,
       club: bestClub,

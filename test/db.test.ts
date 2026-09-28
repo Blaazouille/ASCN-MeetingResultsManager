@@ -126,6 +126,25 @@ describe('meeting CRUD', () => {
     createMeeting(db, { name: 'Test' });
     expect(() => createDatabase(':memory:')).not.toThrow();
   });
+
+  it('reports 0 results for a meeting with nothing imported', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, { name: 'Meeting vide' });
+
+    expect(meeting.resultCount).toBe(0);
+    expect(getAllMeetings(db)[0]!.resultCount).toBe(0);
+  });
+
+  it('counts one result per swimmer per category after an import', () => {
+    const db = freshDb();
+    const meeting = createMeeting(db, { name: 'Meeting de la Mer 2026' });
+    const { rows } = parseCsv(readFileSync(path.join(FIXTURE_DIR, 'sample.csv')));
+    insertSwimmerResults(db, meeting.id, rows);
+
+    // sample.csv: 90 Dames + 121 Messieurs + 211 Mixte rows.
+    expect(getAllMeetings(db)[0]!.resultCount).toBe(422);
+    expect(updateMeeting(db, meeting.id, { name: 'Renommé' }).resultCount).toBe(422);
+  });
 });
 
 function sampleRows(): RawSwimmerRow[] {

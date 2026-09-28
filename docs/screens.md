@@ -1,36 +1,55 @@
 # Écrans
 
-> Décrit chaque écran tel qu'il existe actuellement. Mis à jour à chaque phase.
+> Décrit chaque écran tel qu'il existe actuellement (design « Tableau de bassin », Phase 11). Mis à jour à chaque phase.
+
+## Barre latérale
+
+Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écrans (`Sidebar.tsx` dans `AppShell.tsx` — il n'y a plus de barre d'en-tête séparée, elle a été retirée en Phase 11).
+
+- Logo/nom de l'app en haut.
+- Carte du meeting courant (`SidebarMeetingCard`) : nom + `StatusBadge` sur fond `marine-raised` ; état vide en pointillés quand aucun meeting n'est ouvert.
+- Sections de navigation à plat : Meetings, Données (Import), Résultats (Classement, Individuels, Palmarès), Paramètres.
+- Les entrées Données/Résultats restent visibles mais grisées/désactivées tant qu'aucun meeting n'est ouvert (plutôt que masquées, pour que le bénévole sache qu'elles existent).
+- L'entrée « Import CSV » affiche une coche verte (`bg-success-bright`) dès que des résultats ont été importés (`resultCount > 0`).
+- Numéro de version de l'app en pied de sidebar (`useAppVersion`).
 
 ## Accueil (`/`)
 
-- Liste des meetings existants (`MeetingList` / `MeetingCard`).
-- Bouton pour créer un nouveau meeting (`MeetingForm`) : seul le nom est demandé, la base ne retient ni date de meeting ni lieu (ces champs ont été retirés du modèle de données — la carte affiche la date de création à la place, à titre indicatif).
-- Clic sur une carte pour ouvrir un meeting (le charge en contexte partagé et navigue vers Import ou Classement selon l'état).
+- `PageHeader` en tête.
+- Carte « Reprendre » (`ResumeMeetingCard`, fond `marine`) mettant en avant le dernier meeting ouvert, avec accès direct à l'import ou au classement.
+- Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `StatusBadge` et nombre de résultats — `resultCountLabel`) et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
+- Seul le nom du meeting est demandé à la création (pas de date ni de lieu — retirés du modèle de données ; la carte affiche la date de création à titre indicatif).
+- Clic sur une carte existante ou sur « Reprendre » navigue vers Import ou Classement selon l'état du meeting.
 
 ## Import (`/import`)
 
-- Drag & drop ou sélection d'un fichier CSV FFN extraNat (`DropZone`).
-- Parsing côté renderer, preview des lignes et des catégories détectées.
+- `PageHeader` (surtitre = nom du meeting, titre « Importer les résultats »).
+- Avant import : zone de dépôt (`DropZone`) drag & drop ou sélection, bouton « Parcourir… ». Si le meeting a déjà des résultats (nouvelle session sur un meeting existant), un rappel (`resultCountLabel`) s'affiche au-dessus.
+- Après import réussi : carte de succès (coche verte, nom du fichier), trois tuiles de statistiques (`StatTile`) — nageurs, clubs, catégories (avec puces par catégorie, `categoryShortLabel`) — et un bouton principal « Voir le classement ». La zone de dépôt se réduit alors à une version compacte horizontale (« Nouvelle version du fichier ? »).
+- Avertissements et détails techniques (encodage, délimiteur, nombre de lignes) repliés dans un `<details>`, fermé par défaut.
 - Persistance des lignes parsées en base via IPC (`insertSwimmerResults`).
 
 ## Classement (`/classement`)
 
-- Tableau des clubs classés par équipe (`TeamRankingTable` / `TeamRow`) : cliquer sur une ligne déplie/replie le détail des nageurs (`SwimmerDetail`).
-- Onglets de filtrage par catégorie (`CategoryTabs`), limités aux catégories actives configurées dans Paramètres (`resolveActiveCategories`).
-- Sélecteur du nombre de nageurs retenus par club (top N — `RankingToolbar`), initialisé depuis le top N par défaut du meeting.
-- Badge de statut du meeting (provisoire/définitif).
-- Recherche par nom de club.
-- Export PDF et export Excel du classement affiché.
+- `PageHeader` avec les exports en actions : bouton Excel (secondaire) et bouton PDF (principal).
+- Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`).
+- Podium (`PodiumCards`) : les 3 premiers clubs, ordre gauche-à-droite 1‑2‑3, carte du 1er en `marine` mise en avant, écart par rapport au leader (`formatGap`).
+- Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour AS Cherbourg Natation, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader.
+- Ligne entière cliquable pour déplier/replier le détail des nageurs (`SwimmerDetail`) ; chevron dédié, accessible au clavier (Tab), cible ≥44px.
 
 ## Individuels (`/individuels`)
 
-- Classement global par points, tous nageurs confondus (multi-catégories).
-- Onglets de filtrage par genre (`Tous`, `Dames`, `Messieurs`), détection automatique du genre par le parseur.
-- Tableau (`TeamRankingTable` ou similaire) : Rang, Nom, Année de naissance, Club, Points, Catégorie.
-- Badges pour les 2 premiers nageurs : `1er Prix` et `2e Prix` (par genre dans les vues filtrées, globaux en `Tous`).
-- Recherche par nom ou club (même logique que le classement par équipes).
-- Section "Palmarès des rigolos" en bas (visible uniquement en vue `Tous`) : affiche les 6 fun awards (doyen, relève, loup-solitaire, photo-finish, régulier, armada) avec descriptions humoristiques.
+- `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de nageurs), actions Excel/PDF.
+- `FilterBar` : `CategoryTabs` (catégories actives) + `SearchField` (recherche par nom ou club, alignée à droite).
+- Classement global par points (`IndividualRankingTable`) : Rang (`RankChip`, couleurs médaille pour le top 3), Nom, Année de naissance, Club (+ `ClubTag` pour ASCN), Points (`font-display`, `formatPoints`).
+- Pastille corail « 1er Prix » / « 2e Prix » pour les deux premiers nageurs de la vue affichée.
+- Lignes `h-14` (≥56px), en-tête `h-11`.
+
+## Palmarès (`/palmares`)
+
+- `PageHeader` avec `CategoryTabs` en action (filtrage par catégorie).
+- Grille de 6 cartes (`FunAwardsGrid`), une par récompense humoristique (Le Doyen, La Relève, Duo Mixte, Photo-Finish, Le Club des Sages / Le Club des Grandes Dames selon la catégorie, La Jeune Garde) : icône Lucide colorée dans un badge rond (pas d'emoji), nom du gagnant, description.
+- Calcul entièrement automatique à partir des résultats de la catégorie active (`computeFunAwards`).
 
 ## Paramètres (`/parametres`)
 

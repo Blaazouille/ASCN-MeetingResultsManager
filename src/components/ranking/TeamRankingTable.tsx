@@ -11,114 +11,102 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { ChevronRight, Search } from 'lucide-react';
 import { ASCN_CLUB_NAME, cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
+import { formatGap, leaderRatio } from '@/lib/ui-labels';
+import { RankChip } from '@/components/ui/RankChip';
+import { ClubTag } from '@/components/ui/ClubTag';
 import { TeamRow } from './TeamRow';
 
-const PODIUM_STYLES: Record<number, string> = {
-  1: 'bg-medal-gold text-neutral-900',
-  2: 'bg-medal-silver text-neutral-900',
-  3: 'bg-medal-bronze text-neutral-900',
-};
-
 export interface TeamRankingTableProps {
+  /** The full ranking of the category; the search filter is applied here. */
   results: TeamResult[];
+  category: string;
   search: string;
-  onSearchChange: (value: string) => void;
 }
 
 const columnHelper = createColumnHelper<TeamResult>();
 
 const COLUMN_WIDTHS: Record<string, string> = {
-  rank: 'w-[8%]',
-  club: 'w-[55%]',
-  totalPoints: 'w-[14%]',
-  swimmerBadge: 'w-[16%]',
-  expand: 'w-[7%]',
+  rank: 'w-[72px]',
+  swimmerCount: 'w-[170px]',
+  gap: 'w-[110px]',
+  totalPoints: 'w-[240px]',
 };
+const RIGHT_ALIGNED = new Set(['gap', 'totalPoints']);
 
-/**
- * Rank/club/points/swimmer-count columns — independent of any state, so they
- * are built once at module load, apart from the expand column that is rebuilt
- * on every row toggle.
- */
 // TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
 // columns; `any` here is the library's own documented pattern for a mixed column array.
-function buildBaseColumns(): ColumnDef<TeamResult, any>[] {
+function buildColumns(leaderPoints: number): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
-      cell: (info) => {
-        const rank = info.getValue();
-        return (
-          <span
-            className={cn(
-              'inline-flex h-7 w-7 items-center justify-center rounded-sm font-mono text-sm font-bold',
-              PODIUM_STYLES[rank] ?? 'text-neutral-700'
-            )}
-            data-numeric
-          >
-            {rank}
-          </span>
-        );
-      },
+      cell: (info) => <RankChip rank={info.getValue()} />,
     }),
     columnHelper.accessor('club', {
       header: 'Club',
-      cell: (info) => {
-        const club = info.getValue();
-        return (
-          <span className={cn('font-medium text-neutral-900', club === ASCN_CLUB_NAME && 'text-secondary-800')}>
-            {club}
-          </span>
-        );
-      },
-    }),
-    columnHelper.accessor('totalPoints', {
-      header: 'Points',
       cell: (info) => (
-        <span className="font-mono tabular-nums" data-numeric>
-          {formatPoints(info.getValue())}
+        <span className="flex flex-wrap items-center gap-2.5 text-base font-semibold text-ink">
+          {info.getValue()}
+          {info.getValue() === ASCN_CLUB_NAME && <ClubTag />}
         </span>
       ),
     }),
     columnHelper.accessor('swimmerCount', {
-      id: 'swimmerBadge',
       header: 'Nageurs',
-      // "5 retenus sur 18": swimmers counted in the total out of those entered.
-      // The old "18/5" badge read as entered/topN and looked like an error.
       cell: (info) => (
-        <span className="whitespace-nowrap text-sm text-neutral-600" data-numeric>
+        <span className="text-sm text-ink-muted">
           {formatRetainedSwimmers(info.row.original.swimmers.length, info.getValue())}
         </span>
       ),
     }),
+    columnHelper.display({
+      id: 'gap',
+      header: 'Écart',
+      cell: (info) => (
+        <span className="block text-right text-[15px] tabular-nums text-ink-muted">
+          {formatGap(info.row.original.totalPoints, leaderPoints)}
+        </span>
+      ),
+    }),
+    columnHelper.accessor('totalPoints', {
+      header: 'Points',
+      cell: (info) => {
+        const isOwnClub = info.row.original.club === ASCN_CLUB_NAME;
+        const width = `${Math.round(leaderRatio(info.getValue(), leaderPoints) * 100)}%`;
+        return (
+          <span className="flex items-center justify-end gap-3.5">
+            {/* The bar shows the gap to the 1st at a glance, without reading numbers. */}
+            <span className={cn('block h-1.5 w-[120px] rounded-full', isOwnClub ? 'bg-corail-line' : 'bg-line')}>
+              <span
+                className={cn('block h-1.5 rounded-full', isOwnClub ? 'bg-corail' : 'bg-bassin')}
+                style={{ width }}
+              />
+            </span>
+            <span className="min-w-[64px] text-right font-display text-[23px] font-bold tabular-nums text-ink">
+              {formatPoints(info.getValue())}
+            </span>
+          </span>
+        );
+      },
+    }),
   ];
 }
 
-const BASE_COLUMNS = buildBaseColumns();
-
-function buildExpandColumn(expanded: Set<string>): ColumnDef<TeamResult, any> {
-  return columnHelper.display({
-    id: 'expand',
-    header: '',
-    cell: (info) => {
-      const isExpanded = expanded.has(info.row.original.club);
-      return (
-        <ChevronRight
-          className={cn('h-4 w-4 text-neutral-500 transition-transform duration-150', isExpanded && 'rotate-90')}
-          aria-hidden
-        />
-      );
-    },
-  });
-}
-
-export function TeamRankingTable({ results, search, onSearchChange }: TeamRankingTableProps): JSX.Element {
+export function TeamRankingTable({ results, category, search }: TeamRankingTableProps): JSX.Element {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => filterTeamResultsByClub(results, search), [results, search]);
+  // Gaps and bars compare every club to the 1st of the whole ranking, not of the filtered view.
+  const leaderPoints = results[0]?.totalPoints ?? 0;
+  const columns = useMemo(() => buildColumns(leaderPoints), [leaderPoints]);
+
+  const table = useReactTable({
+    data: filtered,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (team) => team.club,
+  });
 
   function toggle(club: string): void {
     setExpanded((current) => {
@@ -132,61 +120,48 @@ export function TeamRankingTable({ results, search, onSearchChange }: TeamRankin
     });
   }
 
-  const expandColumn = useMemo(() => buildExpandColumn(expanded), [expanded]);
-  const columns = useMemo(() => [...BASE_COLUMNS, expandColumn], [expandColumn]);
-
-  const table = useReactTable({
-    data: filtered,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (team) => team.club,
-  });
+  if (filtered.length === 0) {
+    return (
+      <p className="rounded-lg bg-surface-raised p-8 text-center text-[15px] text-ink-muted shadow-card">
+        {search.trim() !== '' ? 'Aucun club ne correspond à la recherche.' : 'Aucun classement pour cette catégorie.'}
+      </p>
+    );
+  }
 
   return (
-    <div className="rounded-lg bg-neutral-0 shadow-card">
-      <div className="flex items-center gap-2 border-b border-neutral-200 p-4">
-        <Search className="h-4 w-4 text-neutral-400" aria-hidden />
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Filtrer par nom de club…"
-          className="w-full max-w-xs rounded-md border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-secondary-400 focus:ring-1 focus:ring-secondary-400"
-        />
-      </div>
-
-      {filtered.length === 0 ? (
-        <p className="p-8 text-center text-sm text-neutral-600">
-          {search.trim() !== ''
-            ? 'Aucun club ne correspond à la recherche.'
-            : 'Aucun classement pour cette catégorie.'}
-        </p>
-      ) : (
-        <table className="w-full table-fixed border-collapse text-sm">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="text-left text-xs uppercase tracking-wide text-neutral-600">
-                {headerGroup.headers.map((header) => (
-                  <th key={header.id} className={cn('px-3 py-2', COLUMN_WIDTHS[header.id])}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <TeamRow
-                key={row.id}
-                row={row}
-                isAscn={row.original.club === ASCN_CLUB_NAME}
-                isExpanded={expanded.has(row.original.club)}
-                onToggle={() => toggle(row.original.club)}
-              />
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+    <section aria-label="Classement complet" className="overflow-hidden rounded-lg bg-surface-raised shadow-card">
+      <table className="w-full table-fixed border-collapse">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="h-11 bg-surface-header text-left text-[13px] font-bold uppercase tracking-[0.06em] text-ink-muted">
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  scope="col"
+                  className={cn('px-3 first:pl-5', COLUMN_WIDTHS[header.id], RIGHT_ALIGNED.has(header.id) && 'text-right')}
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+              <th scope="col" className="w-14 pr-5">
+                <span className="sr-only">Détail</span>
+              </th>
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <TeamRow
+              key={row.id}
+              row={row}
+              category={category}
+              isOwnClub={row.original.club === ASCN_CLUB_NAME}
+              isExpanded={expanded.has(row.original.club)}
+              onToggle={() => toggle(row.original.club)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }

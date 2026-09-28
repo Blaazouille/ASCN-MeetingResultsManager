@@ -6,12 +6,15 @@
 import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
 import { FileUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 
 export interface DropZoneProps {
   /** Called once a .csv file has been dropped or selected and "processed". */
   onFileAccepted?: (file: File) => void | Promise<void>;
   /** Called when a non-CSV file is dropped or selected. */
   onFileRejected?: (file: File) => void;
+  /** Smaller horizontal version, shown under a successful import. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -21,7 +24,7 @@ function isCsvFile(file: File): boolean {
   return file.name.toLowerCase().endsWith('.csv');
 }
 
-export function DropZone({ onFileAccepted, onFileRejected, className }: DropZoneProps): JSX.Element {
+export function DropZone({ onFileAccepted, onFileRejected, compact = false, className }: DropZoneProps): JSX.Element {
   const [state, setState] = useState<DropZoneState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,11 +98,10 @@ export function DropZone({ onFileAccepted, onFileRejected, className }: DropZone
         }
       }}
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-13 text-center transition-colors duration-150',
-        state === 'idle' && 'border-neutral-300 bg-neutral-0',
-        state === 'dragover' && 'animate-pulse border-secondary-400 bg-secondary-50',
-        state === 'processing' && 'cursor-wait border-neutral-300 bg-neutral-0',
-        state !== 'processing' && 'cursor-pointer',
+        'flex rounded-xl border-2 border-dashed bg-surface-raised transition-colors',
+        compact ? 'items-center gap-5 px-8 py-6' : 'flex-col items-center justify-center gap-4 px-8 py-14 text-center',
+        state === 'dragover' ? 'border-bassin-strong bg-bassin-soft' : 'border-line-strong',
+        state === 'processing' ? 'cursor-wait' : 'cursor-pointer',
         className
       )}
     >
@@ -107,28 +109,32 @@ export function DropZone({ onFileAccepted, onFileRejected, className }: DropZone
 
       {state === 'processing' ? (
         <>
-          <Loader2 className="h-10 w-10 animate-spin text-secondary-600" aria-hidden />
-          <p className="font-body text-sm font-medium text-neutral-700">Analyse du fichier…</p>
+          <Loader2 className="h-10 w-10 animate-spin text-bassin-strong" aria-hidden />
+          <p className="text-base font-semibold text-ink">Analyse du fichier…</p>
         </>
       ) : (
         <>
-          <FileUp
-            className={cn('h-10 w-10', state === 'dragover' ? 'text-secondary-600' : 'text-neutral-400')}
-            aria-hidden
-          />
-          <p className="font-body text-sm font-medium text-neutral-700">
-            Déposez votre fichier CSV extraNat ici
-          </p>
-          <button
-            type="button"
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-bassin-soft">
+            <FileUp className="h-6 w-6 text-bassin-strong" aria-hidden />
+          </span>
+          <span className={cn('flex flex-col gap-0.5', compact && 'flex-1')}>
+            <span className="text-[17px] font-semibold text-ink">
+              {compact ? 'Nouvelle version du fichier ?' : 'Déposez le fichier CSV extraNat ici'}
+            </span>
+            <span className="text-[15px] text-ink-muted">
+              {compact
+                ? 'Glissez-la ici : les résultats de ce meeting seront mis à jour, sans doublons.'
+                : "ou choisissez-le sur l'ordinateur."}
+            </span>
+          </span>
+          <Button
             onClick={(event) => {
               event.stopPropagation();
               handleBrowseClick();
             }}
-            className="rounded-md bg-primary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-primary-700"
           >
-            Parcourir
-          </button>
+            Parcourir…
+          </Button>
         </>
       )}
     </div>

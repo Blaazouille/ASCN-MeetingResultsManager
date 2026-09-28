@@ -65,6 +65,7 @@ interface Meeting {
   defaultTopN: number;
   minSwimmers: number;
   activeCategories: string[] | null; // null = toutes les catégories présentes sont actives
+  resultCount: number; // nombre de lignes swimmer_result du meeting ; 0 = rien importé pour l'instant
 }
 
 interface MeetingInput {

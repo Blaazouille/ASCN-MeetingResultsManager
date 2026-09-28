@@ -1,12 +1,11 @@
 /**
- * Responsabilité : layout applicatif (sidebar + header) et contexte partagé (meeting, import) via Outlet.
+ * Responsabilité : layout applicatif (sidebar) et contexte partagé (meeting, import) via Outlet.
  * Appelé par : App.tsx (route racine).
  * Suppression casserait : la navigation et le partage d'état entre toutes les pages.
  */
 import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { Header } from './Header';
 import { UpdateToast } from './UpdateToast';
 import { useImport, type UseImportResult } from '@/hooks/use-import';
 import { useMeeting, type UseMeetingResult } from '@/hooks/use-meeting';
@@ -37,11 +36,10 @@ export function AppShell(): JSX.Element {
   const context: AppOutletContext = { importState, meetingState };
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
-      <Sidebar hasMeeting={meetingState.currentMeeting !== null} />
-      <div className="ml-[220px] flex h-screen flex-1 flex-col">
-        <Header currentMeeting={meetingState.currentMeeting} />
-        <main className="flex-1 overflow-y-auto p-8">
+    <div className="flex min-h-screen bg-surface">
+      <Sidebar meeting={meetingState.currentMeeting} />
+      <div className="ml-sidebar flex h-screen flex-1 flex-col">
+        <main className="flex-1 overflow-y-auto px-10 py-8">
           <Outlet context={context} />
         </main>
       </div>

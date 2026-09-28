@@ -9,6 +9,16 @@ import path from 'node:path';
 import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
 import { computeFunAwards, type FunAward } from '../src/lib/fun-awards';
 
+// One Lucide icon per prize (no emoji in the interface).
+const EXPECTED_ICONS: Record<string, string> = {
+  doyen: 'hourglass',
+  releve: 'sprout',
+  'duo-mixte': 'duo',
+  'photo-finish': 'camera',
+  'club-anciens': 'crown',
+  'jeune-garde': 'zap',
+};
+
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
 function loadRows(): RawSwimmerRow[] {
@@ -33,7 +43,7 @@ describe('computeFunAwards', () => {
     for (const award of awards) {
       expect(award.id).toBeTruthy();
       expect(award.title).toBeTruthy();
-      expect(award.emoji).toBeTruthy();
+      expect(award.icon).toBe(EXPECTED_ICONS[award.id]);
       expect(award.winner.name).toBeTruthy();
       expect(award.winner.club).toBeTruthy();
       expect(award.winner.detail).toBeTruthy();
@@ -173,5 +183,31 @@ describe('computeFunAwards edge cases', () => {
     expect(anciens!.winner.club).toBe('OLD CLUB');
     expect(jeune).toBeDefined();
     expect(jeune!.winner.club).toBe('YOUNG CLUB');
+  });
+
+  it('club-anciens uses "Le Club des Grandes Dames" when the winning club is in the Dames category', () => {
+    // Production always filters rows to a single category before calling computeFunAwards
+    // (see PalmaresPage.tsx), so a club's members share one category here too.
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Dames', place: 1, lastname: 'A', firstname: 'B', birthyear: 1960, nation: 'FRA', club: 'OLD CLUB', points: 900, comment: '' },
+      { name: 'Classement Dames', place: 2, lastname: 'C', firstname: 'D', birthyear: 1962, nation: 'FRA', club: 'OLD CLUB', points: 800, comment: '' },
+      { name: 'Classement Dames', place: 3, lastname: 'E', firstname: 'F', birthyear: 1965, nation: 'FRA', club: 'OLD CLUB', points: 700, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const anciens = findAward(awards, 'club-anciens');
+    expect(anciens).toBeDefined();
+    expect(anciens!.title).toBe('Le Club des Grandes Dames');
+  });
+
+  it('club-anciens uses "Le Club des Sages" for a Messieurs category', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Messieurs', place: 1, lastname: 'A', firstname: 'B', birthyear: 1960, nation: 'FRA', club: 'OLD CLUB', points: 900, comment: '' },
+      { name: 'Classement Messieurs', place: 2, lastname: 'C', firstname: 'D', birthyear: 1962, nation: 'FRA', club: 'OLD CLUB', points: 800, comment: '' },
+      { name: 'Classement Messieurs', place: 3, lastname: 'E', firstname: 'F', birthyear: 1965, nation: 'FRA', club: 'OLD CLUB', points: 700, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const anciens = findAward(awards, 'club-anciens');
+    expect(anciens).toBeDefined();
+    expect(anciens!.title).toBe('Le Club des Sages');
   });
 });

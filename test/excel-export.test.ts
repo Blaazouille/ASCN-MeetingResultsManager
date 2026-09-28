@@ -18,6 +18,7 @@ const TEST_MEETING = {
   defaultTopN: 5,
   minSwimmers: 0,
   activeCategories: null,
+  resultCount: 0,
 };
 
 function loadRows() {
