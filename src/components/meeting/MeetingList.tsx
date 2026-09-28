@@ -13,11 +13,15 @@ export interface MeetingListProps {
 
 export function MeetingList({ meetings, onOpen }: MeetingListProps): JSX.Element {
   if (meetings.length === 0) {
-    return <p className="text-neutral-600">Aucun meeting pour l'instant. Créez-en un pour commencer.</p>;
+    return (
+      <p className="rounded-lg bg-surface-raised p-5 text-[15px] text-ink-muted shadow-card">
+        Aucun meeting pour l'instant. Créez-en un pour commencer.
+      </p>
+    );
   }
 
   return (
-    <ul className="space-y-3">
+    <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface-raised shadow-card">
       {meetings.map((meeting) => (
         <li key={meeting.id}>
           <MeetingCard meeting={meeting} onOpen={onOpen} />

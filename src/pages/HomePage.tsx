@@ -3,64 +3,78 @@
  * Appelé par : App.tsx (route index).
  * Suppression casserait : l'écran d'accueil de l'application.
  */
-import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import type { Meeting } from '@/lib/db';
 import { MeetingForm } from '@/components/meeting/MeetingForm';
 import { MeetingList } from '@/components/meeting/MeetingList';
+import { ResumeMeetingCard } from '@/components/meeting/ResumeMeetingCard';
+
+const STEPS = ['Créer le meeting', "Importer le CSV exporté d'extraNat", 'Consulter, puis exporter en PDF'] as const;
 
 export default function HomePage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
-  const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
+  // getAllMeetings returns meetings by id DESC: the first one is the most recent.
+  const latest = meetingState.meetings[0];
 
-  // An existing meeting opens on its ranking: RankingPage itself redirects to
-  // /import when the meeting has no results yet. Always landing on Import made
-  // volunteers think their imported data was lost.
-  const openMeeting = (meeting: Meeting): void => {
+  // An existing meeting opens on its ranking (RankingPage redirects to /import
+  // when it has no results); a new one goes straight to Import.
+  const openAt = (meeting: Meeting, path: '/classement' | '/import'): void => {
     meetingState.selectMeeting(meeting.id);
-    navigate('/classement');
+    navigate(path);
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-800">Meetings</h1>
-          <p className="text-neutral-600">Créez un meeting ou reprenez un précédent.</p>
-        </div>
-        {!isCreating && (
-          <button
-            type="button"
-            onClick={() => setIsCreating(true)}
-            className="rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900"
-          >
-            Nouveau meeting
-          </button>
-        )}
-      </header>
+    <div className="flex flex-col gap-7">
+      <PageHeader title="Meetings" subtitle="Reprenez là où vous en étiez, ou créez le meeting du jour." />
 
       {meetingState.error && <p className="text-sm text-error">{meetingState.error}</p>}
 
-      {isCreating && (
-        <MeetingForm
-          onCancel={() => setIsCreating(false)}
-          onSubmit={async (input) => {
-            const meeting = await meetingState.createMeeting(input);
-            setIsCreating(false);
-            // A new meeting has no results yet: go straight to Import.
-            meetingState.selectMeeting(meeting.id);
-            navigate('/import');
-          }}
+      {latest && (
+        <ResumeMeetingCard
+          meeting={latest}
+          onOpenRanking={() => openAt(latest, '/classement')}
+          onImport={() => openAt(latest, '/import')}
         />
       )}
 
-      {meetingState.isLoading ? (
-        <p className="text-neutral-600">Chargement des meetings…</p>
-      ) : (
-        <MeetingList meetings={meetingState.meetings} onOpen={openMeeting} />
-      )}
+      <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-start gap-6">
+        <section aria-labelledby="all-meetings" className="flex flex-col gap-3">
+          <h2 id="all-meetings" className="font-display text-2xl font-bold text-marine">
+            Tous les meetings
+          </h2>
+          {meetingState.isLoading ? (
+            <p className="text-[15px] text-ink-muted">Chargement des meetings…</p>
+          ) : (
+            <MeetingList meetings={meetingState.meetings} onOpen={(meeting) => openAt(meeting, '/classement')} />
+          )}
+        </section>
+
+        <section aria-labelledby="new-meeting" className="flex flex-col gap-3">
+          <h2 id="new-meeting" className="font-display text-2xl font-bold text-marine">
+            Nouveau meeting
+          </h2>
+          <MeetingForm
+            onSubmit={async (input) => {
+              const meeting = await meetingState.createMeeting(input);
+              openAt(meeting, '/import');
+            }}
+          />
+          {/* Numbered because it is a real sequence: the order is the information. */}
+          <ol className="flex flex-col gap-2.5 pt-1">
+            {STEPS.map((step, index) => (
+              <li key={step} className="flex items-center gap-3 text-[15px] text-ink-soft">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bassin-soft font-bold text-bassin-strong">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </div>
   );
 }

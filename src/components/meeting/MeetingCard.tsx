@@ -1,11 +1,13 @@
 /**
- * Responsabilité : carte résumant un meeting (nom, date de création, statut) sur l'écran d'accueil.
+ * Responsabilité : ligne résumant un meeting (nom, date de création, nombre de résultats, statut) sur l'Accueil.
  * Appelé par : MeetingList.tsx.
  * Suppression casserait : l'affichage de la liste des meetings.
  */
+import { ChevronRight } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
-import { formatMeetingCreatedAt, meetingStatusLabel } from '@/lib/export-data';
-import { cn } from '@/lib/utils';
+import { formatMeetingCreatedAt } from '@/lib/export-data';
+import { meetingBadgeStatus, resultCountLabel } from '@/lib/ui-labels';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export interface MeetingCardProps {
   meeting: Meeting;
@@ -17,20 +19,16 @@ export function MeetingCard({ meeting, onOpen }: MeetingCardProps): JSX.Element 
     <button
       type="button"
       onClick={() => onOpen(meeting)}
-      className="flex w-full items-center justify-between rounded-lg bg-neutral-0 p-4 text-left shadow-card transition-shadow duration-150 hover:shadow-card-hover"
+      className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-surface"
     >
-      <div>
-        <p className="font-display text-base font-semibold text-primary-800">{meeting.name}</p>
-        <p className="text-sm text-neutral-600">Créé le {formatMeetingCreatedAt(meeting)}</p>
-      </div>
-      <span
-        className={cn(
-          'rounded-sm px-2 py-1 text-xs font-medium uppercase tracking-wide',
-          meeting.status === 'final' ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
-        )}
-      >
-        {meetingStatusLabel(meeting.status)}
+      <span className="flex flex-1 flex-col gap-0.5">
+        <span className="text-[17px] font-semibold text-ink">{meeting.name}</span>
+        <span className="text-sm text-ink-muted">
+          Créé le {formatMeetingCreatedAt(meeting)} · {resultCountLabel(meeting.resultCount)}
+        </span>
       </span>
+      <StatusBadge status={meetingBadgeStatus(meeting)} />
+      <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
     </button>
   );
 }
