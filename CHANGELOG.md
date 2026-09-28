@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.1.0...v1.1.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* improve meeting routing, swimmer count and contrast ([#11](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/11)) ([5ad2645](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/5ad26459d94a6d3e638695ff8ed5c5af7dc4f01f))
+
 ## [1.1.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.0.1...v1.1.0) (2026-09-27)
 
 
