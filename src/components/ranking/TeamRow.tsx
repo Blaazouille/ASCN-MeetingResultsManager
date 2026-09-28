@@ -48,7 +48,7 @@ function TeamRowComponent({ row, category, isOwnClub, isExpanded, onToggle }: Te
               onToggle();
             }}
             className={cn(
-              'inline-flex h-10 w-10 items-center justify-center rounded-sm transition-colors',
+              'inline-flex h-11 w-11 items-center justify-center rounded-sm transition-colors',
               isOwnClub ? 'text-corail-strong hover:bg-corail-soft' : 'text-ink-muted hover:bg-surface-sunken'
             )}
           >
