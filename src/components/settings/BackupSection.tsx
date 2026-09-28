@@ -74,7 +74,7 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
           type="button"
           onClick={handleExport}
           disabled={isBusy}
-          className="inline-flex items-center gap-2 rounded-md bg-secondary-600 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-700 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
           Exporter la sauvegarde

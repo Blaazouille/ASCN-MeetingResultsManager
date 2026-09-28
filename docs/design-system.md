@@ -7,15 +7,15 @@
 | Token | Hex | Usage |
 |-------|-----|-------|
 | `primary` | `#0A3663` | Navbar, sidebar, headers structurels |
-| `secondary` | `#00A4E4` | États actifs, tabs, liens, boutons secondaires |
+| `secondary` | `#00A4E4` | États actifs, tabs, liens. Fond d'un bouton à texte blanc : `secondary-800` (5,7:1), jamais `secondary-600` (2,8:1) |
 | `accent` | `#FF6B35` | CTA, badges podium (1er/2e/3e), alertes |
 | `neutral-0` | `#FFFFFF` | Fond des cartes |
 | `neutral-50` | `#F4F7F6` | Fond de page |
 | `neutral-900` | `#1A2332` | Texte principal |
 | `neutral-600` | `#5B6B7D` | Texte secondaire |
-| `success` | `#22C55E` | Validation, import OK |
-| `warning` | `#F59E0B` | Statut provisoire |
-| `error` | `#EF4444` | Erreurs |
+| `success` | `#15803D` | Validation, import OK (texte, 4,6:1 sur `success-light`) |
+| `warning` | `#92400E` | Statut provisoire (texte, 6,6:1 sur `warning-light`) |
+| `error` | `#B91C1C` | Erreurs (6,5:1 sur blanc) |
 
 Chaque couleur décline une palette 50→900 (voir `src/styles/globals.css`).
 

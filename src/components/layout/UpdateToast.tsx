@@ -21,7 +21,7 @@ export function UpdateToast(): JSX.Element | null {
         <button
           type="button"
           onClick={restartToUpdate}
-          className="rounded-md bg-secondary-500 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-600"
+          className="rounded-md bg-secondary-800 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-900"
         >
           Redémarrer maintenant
         </button>

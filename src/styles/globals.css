@@ -58,12 +58,13 @@
   --color-medal-silver: #a8a9ad;
   --color-medal-bronze: #cd7f32;
 
-  /* Semantic */
-  --color-success: #22c55e;
+  /* Semantic — used as TEXT on white or on their -light tint, so dark enough
+     for WCAG 4.5:1 (the brighter originals were ~2:1). */
+  --color-success: #15803d;
   --color-success-light: #dcfce7;
-  --color-warning: #f59e0b;
+  --color-warning: #92400e;
   --color-warning-light: #fef9c3;
-  --color-error: #ef4444;
+  --color-error: #b91c1c;
   --color-error-light: #fee2e2;
 
   /* Elevation */
