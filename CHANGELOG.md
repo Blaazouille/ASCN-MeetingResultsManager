@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.0.1...v1.1.0) (2026-09-27)
+
+
+### Features
+
+* display app version in window title and sidebar ([#9](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/9)) ([917593a](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/917593acd1f636fe4baa2c6d50f07f3f0f6e13fc))
+
 ## [1.0.1](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.0.0...v1.0.1) (2026-09-27)
 
 
