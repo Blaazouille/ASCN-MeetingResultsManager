@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Folder, Save } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export function BackupConfigSection(): JSX.Element {
   const [backupDir, setBackupDir] = useState('');
@@ -45,28 +46,21 @@ export function BackupConfigSection(): JSX.Element {
   }
 
   return (
-    <div className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
-      <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary-800">
-        Sauvegardes automatiques
-      </h2>
+    <div className="space-y-4 rounded-lg bg-surface-raised p-6 shadow-card">
+      <h2 className="font-display text-2xl font-bold text-marine">Sauvegardes automatiques</h2>
       <div>
-        <span className="block text-xs font-medium uppercase tracking-wide text-neutral-600">Dossier de sauvegarde</span>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="flex-1 truncate rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-700">
+        <span className="block text-sm font-semibold text-ink">Dossier de sauvegarde</span>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className="h-11 flex-1 truncate rounded-sm border-[1.5px] border-line-strong px-3.5 text-base leading-[44px] text-ink">
             {backupDir || 'Dossier par défaut'}
           </span>
-          <button
-            type="button"
-            onClick={handleChooseDir}
-            className="inline-flex items-center gap-2 rounded-md bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
-          >
-            <Folder className="h-4 w-4" aria-hidden="true" />
+          <Button type="button" icon={Folder} onClick={handleChooseDir}>
             Choisir
-          </button>
+          </Button>
         </div>
       </div>
       <div>
-        <label htmlFor="max-backups" className="block text-xs font-medium uppercase tracking-wide text-neutral-600">
+        <label htmlFor="max-backups" className="block text-sm font-semibold text-ink">
           Nombre de sauvegardes automatiques conservées
         </label>
         <input
@@ -85,18 +79,13 @@ export function BackupConfigSection(): JSX.Element {
             setMaxBackups(Number.isFinite(parsed) ? Math.max(1, parsed) : 1);
             setSavedAt(null);
           }}
-          className="mt-1 w-32 rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 focus:border-secondary-400 focus:outline-none"
+          className="mt-1.5 h-11 w-32 rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
         />
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 hover:bg-secondary-900"
-        >
-          <Save className="h-4 w-4" aria-hidden="true" />
+        <Button type="button" variant="primary" icon={Save} onClick={handleSave}>
           Enregistrer
-        </button>
+        </Button>
         {savedAt && <span className="text-sm text-success">Configuration enregistrée.</span>}
       </div>
       {error && <p className="text-sm text-error">Erreur : {error}</p>}

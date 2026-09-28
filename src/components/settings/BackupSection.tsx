@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import { Download, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 type BackupState =
   | { step: 'idle' }
@@ -61,33 +62,19 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   const isBusy = state.step === 'busy';
 
   return (
-    <div className="space-y-4 rounded-lg bg-neutral-0 p-6 shadow-card">
-      <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary-800">
-        Sauvegarde et restauration
-      </h2>
-      <p className="text-sm text-neutral-600">
+    <div className="space-y-4 rounded-lg bg-surface-raised p-6 shadow-card">
+      <h2 className="font-display text-2xl font-bold text-marine">Sauvegarde et restauration</h2>
+      <p className="text-sm text-ink-muted">
         Exportez l'ensemble des meetings dans un fichier JSON, ou restaurez la base exactement telle qu'elle
         était au moment d'une sauvegarde.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={isBusy}
-          className="inline-flex items-center gap-2 rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-        >
-          <Download className="h-4 w-4" aria-hidden="true" />
+        <Button type="button" variant="primary" icon={Download} onClick={handleExport} disabled={isBusy}>
           Exporter la sauvegarde
-        </button>
-        <button
-          type="button"
-          onClick={handleImport}
-          disabled={isBusy}
-          className="inline-flex items-center gap-2 rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-200 disabled:opacity-60"
-        >
-          <Upload className="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button type="button" icon={Upload} onClick={handleImport} disabled={isBusy}>
           Importer une sauvegarde
-        </button>
+        </Button>
       </div>
 
       {state.step === 'export-success' && (
@@ -99,7 +86,7 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
 
       {state.step === 'preview' && (
         <div className="space-y-3 rounded-md bg-error-light p-4">
-          <p className="flex items-center gap-2 text-sm font-medium text-neutral-900">
+          <p className="flex items-center gap-2 text-sm font-medium text-ink">
             <AlertTriangle className="h-4 w-4 text-error" aria-hidden="true" />
             Ce fichier contient {state.meetingCount} meeting(s) et {state.swimmerCount} ligne(s) de résultats
             {/* Un nageur compte une fois par catégorie (Dames/Messieurs + Mixte),
@@ -118,23 +105,18 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
               type="button"
               onClick={handleConfirm}
               disabled={isBusy}
-              className="rounded-md bg-error px-3 py-1.5 text-sm font-medium text-neutral-0 hover:opacity-90 disabled:opacity-60"
+              className="h-11 rounded-sm bg-error px-5 font-semibold text-on-marine hover:opacity-90 disabled:opacity-60"
             >
               Confirmer la restauration
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                // Fire-and-forget: releases the pending import held in the
-                // main process; the renderer resets to idle immediately.
-                void window.electronAPI.cancelImport();
-                setState({ step: 'idle' });
-              }}
-              disabled={isBusy}
-              className="rounded-md bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-200 disabled:opacity-60"
-            >
+            <Button type="button" onClick={() => {
+              // Fire-and-forget: releases the pending import held in the
+              // main process; the renderer resets to idle immediately.
+              void window.electronAPI.cancelImport();
+              setState({ step: 'idle' });
+            }} disabled={isBusy}>
               Annuler
-            </button>
+            </Button>
           </div>
         </div>
       )}
