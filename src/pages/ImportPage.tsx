@@ -3,46 +3,30 @@
  * Appelé par : App.tsx (route "import").
  * Suppression casserait : l'import de nouveaux fichiers CSV.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
+import { ArrowRight, Check } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
-import { formatPoints } from '@/lib/utils';
+import { StatTile } from '@/components/import/StatTile';
+import { Button } from '@/components/ui/Button';
+import { countRowsByCategory } from '@/lib/csv-parser';
+import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 
-interface StatBlockProps {
-  swimmerCount: number;
-  clubCount: number;
-  categoryCount: number;
-}
-
-function StatBlock({ swimmerCount, clubCount, categoryCount }: StatBlockProps): JSX.Element {
-  return (
-    <dl className="grid grid-cols-3 gap-4 text-center">
-      <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-600">Nageurs</dt>
-        <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(swimmerCount)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-600">Clubs</dt>
-        <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(clubCount)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs uppercase tracking-wide text-neutral-600">Catégories</dt>
-        <dd className="font-mono text-lg font-medium text-neutral-900">{formatPoints(categoryCount)}</dd>
-      </div>
-    </dl>
-  );
-}
+// The parser's encoding ids, as a volunteer would read them.
+const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
   const { result, fileName, error, handleFileAccepted, handleFileRejected } = importState;
+  const { refresh } = meetingState;
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
   const navigate = useNavigate();
-  const { refresh } = meetingState;
 
-  const meetingId = meetingState.currentMeeting?.id ?? null;
+  const meeting = meetingState.currentMeeting;
+  const meetingId = meeting?.id ?? null;
 
   const handleAccepted = useCallback(
     async (file: File) => {
@@ -64,46 +48,60 @@ export default function ImportPage(): JSX.Element {
     [handleFileAccepted, meetingId, refresh]
   );
 
-  if (!meetingState.currentMeeting) {
+  const categoryCounts = useMemo(() => (result ? countRowsByCategory(result.rows) : []), [result]);
+
+  if (!meeting) {
     return <Navigate to="/" replace />;
   }
 
-  return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold text-primary-800">Import du fichier de cotations</h1>
-        <p className="text-neutral-600">{meetingState.currentMeeting.name}, CSV extraNat (FFN)</p>
-      </header>
+  const imported = result !== null && persistError === null;
 
-      <DropZone onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        overline={meeting.name}
+        title="Importer les résultats"
+        subtitle="Fichier CSV de cotations exporté depuis extraNat (FFN)."
+      />
 
       {error && <p className="text-sm text-error">{error}</p>}
       {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
-      {result && (
-        <div className="rounded-lg bg-neutral-0 p-6 shadow-card">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-neutral-800">{fileName}</p>
-            <div className="flex gap-1.5">
-              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-600">
-                {result.encoding}
-              </span>
-              <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs text-neutral-600">
-                &quot;{result.delimiter}&quot;
-              </span>
+      {result !== null && persistError === null && (
+        <section aria-label="Résultat de l'import" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-8 py-7 shadow-card">
+          <div className="flex flex-wrap items-center gap-5">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-success-light">
+              <Check className="h-7 w-7 text-success" strokeWidth={2.6} aria-hidden />
+            </span>
+            <div className="flex flex-1 flex-col gap-1">
+              <p className="font-display text-3xl font-bold leading-none text-success">
+                {isPersisting ? 'Enregistrement du fichier…' : 'Fichier importé et enregistré'}
+              </p>
+              <p className="text-[15px] text-ink-muted">{fileName}</p>
             </div>
+            <Button variant="primary" size="lg" iconAfter={ArrowRight} disabled={isPersisting} onClick={() => navigate('/classement')}>
+              Voir le classement
+            </Button>
           </div>
-          <StatBlock
-            swimmerCount={result.swimmerCount}
-            clubCount={result.clubCount}
-            categoryCount={result.categories.length}
-          />
+
+          <div className="grid grid-cols-3 gap-4">
+            <StatTile value={result.swimmerCount} label="nageurs" />
+            <StatTile value={result.clubCount} label="clubs" />
+            <StatTile value={result.categories.length} label="catégories">
+              {categoryCounts.map(({ category, count }) => (
+                <span key={category} className="rounded-full border border-line-strong bg-surface-raised px-2.5 py-0.5 text-sm text-ink">
+                  {categoryShortLabel(category)} · {count}
+                </span>
+              ))}
+            </StatTile>
+          </div>
+
           {result.warnings.length > 0 && (
-            <details className="mt-3 text-sm text-warning">
-              <summary className="cursor-pointer font-medium">
+            <details className="text-sm text-warning">
+              <summary className="cursor-pointer font-semibold">
                 {result.warnings.length} avertissement{result.warnings.length > 1 ? 's' : ''}
               </summary>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-neutral-700">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
                 {result.warnings.map((warning, index) => (
                   <li key={index}>{warning}</li>
                 ))}
@@ -111,16 +109,23 @@ export default function ImportPage(): JSX.Element {
             </details>
           )}
 
-          <button
-            type="button"
-            onClick={() => navigate('/classement')}
-            disabled={isPersisting}
-            className="mt-4 w-full rounded-md bg-secondary-800 px-4 py-2 text-sm font-medium text-neutral-0 shadow-card transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-          >
-            {isPersisting ? 'Enregistrement…' : 'Voir le classement'}
-          </button>
-        </div>
+          <details className="text-sm text-ink-muted">
+            <summary className="cursor-pointer font-semibold text-ink-soft">Détails techniques</summary>
+            <p className="pt-2">
+              Encodage détecté : {ENCODING_LABELS[result.encoding]} · séparateur : « {result.delimiter} » ·{' '}
+              {result.rows.length} lignes lues
+            </p>
+          </details>
+        </section>
       )}
+
+      {!imported && meeting.resultCount > 0 && (
+        <p className="rounded-lg bg-bassin-soft px-5 py-4 text-[15px] text-ink">
+          {resultCountLabel(meeting.resultCount)} pour ce meeting. Un nouveau fichier les met à jour, sans doublons.
+        </p>
+      )}
+
+      <DropZone compact={imported} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
     </div>
   );
 }
