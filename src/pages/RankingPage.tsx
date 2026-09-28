@@ -5,13 +5,17 @@
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
+import { Download, FileSpreadsheet } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
 import { resolveActiveCategories } from '@/lib/ranking-engine';
-import { CategoryTabs } from '@/components/ranking/CategoryTabs';
+import { categoryShortLabel } from '@/lib/ui-labels';
+import { Button } from '@/components/ui/Button';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
+import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 
 export default function RankingPage(): JSX.Element {
@@ -35,7 +39,7 @@ export default function RankingPage(): JSX.Element {
     return <Navigate to="/" replace />;
   }
   if (isLoading) {
-    return <p className="text-neutral-600">Chargement du classement…</p>;
+    return <p className="text-[15px] text-ink-muted">Chargement du classement…</p>;
   }
   if (rowsError) {
     return <p className="text-sm text-error">{rowsError}</p>;
@@ -44,28 +48,47 @@ export default function RankingPage(): JSX.Element {
     return <Navigate to="/import" replace />;
   }
 
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-primary-800">Classement par équipes</h1>
-        <p className="text-neutral-600">{meeting.name}</p>
-      </header>
+  const clubCount = ranking.teamResults.length;
 
-      <CategoryTabs categories={categories} active={ranking.category} onChange={ranking.setCategory} />
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        overline={meeting.name}
+        title="Classement par équipes"
+        subtitle={`${categoryShortLabel(ranking.category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
+        actions={
+          <>
+            <Button
+              icon={FileSpreadsheet}
+              disabled={isExporting}
+              onClick={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
+            >
+              Excel
+            </Button>
+            {/* PDF is the primary action: it is what gets printed and posted by the pool. */}
+            <Button
+              variant="primary"
+              icon={Download}
+              disabled={isExporting}
+              onClick={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
+            >
+              Exporter en PDF
+            </Button>
+          </>
+        }
+      />
       <RankingToolbar
+        categories={categories}
+        category={ranking.category}
+        onCategoryChange={ranking.setCategory}
         topN={ranking.topN}
         onTopNChange={ranking.setTopN}
-        status={meeting.status}
-        onExportPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
-        onExportExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
-        isExporting={isExporting}
-      />
-      {error && <p className="text-sm text-error">{error}</p>}
-      <TeamRankingTable
-        results={ranking.teamResults}
         search={search}
         onSearchChange={setSearch}
       />
+      {error && <p className="text-sm text-error">{error}</p>}
+      <PodiumCards results={ranking.teamResults} />
+      <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} />
     </div>
   );
 }

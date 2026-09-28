@@ -1,49 +1,49 @@
 /**
- * Responsabilité : liste détaillée des nageurs d'un club (drill-down).
+ * Responsabilité : détail déplié d'un club : phrase de synthèse et cartes des nageurs comptés.
  * Appelé par : TeamRow.tsx.
- * Suppression casserait : le détail nageurs affiché au clic sur une ligne club.
  */
-import { formatPoints } from '@/lib/utils';
 import type { SwimmerEntry } from '@/lib/ranking-engine';
+import { detectGender } from '@/lib/individual-ranking';
+import { birthLabel, countedSummary } from '@/lib/ui-labels';
+import { cn, formatPoints } from '@/lib/utils';
 
 export interface SwimmerDetailProps {
+  /** The swimmers counted in the total (top N slice). */
   swimmers: SwimmerEntry[];
+  /** Swimmers the club entered in this category. */
+  entered: number;
+  /** Category name, e.g. "Classement Dames": tells "Né" from "Née". */
+  category: string;
+  isOwnClub: boolean;
 }
 
-/** Sub-table shown when a club row is expanded: the topN retained swimmers. */
-export function SwimmerDetail({ swimmers }: SwimmerDetailProps): JSX.Element {
+export function SwimmerDetail({ swimmers, entered, category, isOwnClub }: SwimmerDetailProps): JSX.Element {
+  const gender = detectGender(category);
+
   return (
-    <table className="w-full max-w-xl text-xs">
-      <thead>
-        <tr className="text-left uppercase tracking-wide text-neutral-600">
-          <th className="w-10 py-1 text-center">Rang</th>
-          <th className="py-1">Nom</th>
-          <th className="w-20 py-1 text-center">Année</th>
-          <th className="w-20 py-1 text-right">Points</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-ink-muted">{countedSummary(swimmers.length, entered)}</p>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2.5">
         {/* Keyed on array index: swimmers is a fresh, stable slice built by computeTeamRanking
-            for this render and is never sorted/filtered afterwards, so index is a safe, simple
-            key. swimmer.rank is the shared FFN `place` column (ex-aequo swimmers can share it)
-            and lastname/firstname can repeat too, so none of them are a safer choice than index. */}
+            for this render and is never sorted/filtered afterwards; rank and names can repeat. */}
         {swimmers.map((swimmer, index) => (
-          <tr key={index}>
-            <td className="py-1 text-center font-mono" data-numeric>
-              {swimmer.rank}
-            </td>
-            <td className="py-1">
+          <div
+            key={index}
+            className={cn(
+              'flex flex-col gap-0.5 rounded-md border bg-surface-raised px-4 py-3',
+              isOwnClub ? 'border-corail-line' : 'border-line'
+            )}
+          >
+            <span className="text-[15px] font-semibold text-ink">
               {swimmer.lastname.toUpperCase()} {swimmer.firstname}
-            </td>
-            <td className="py-1 text-center font-mono" data-numeric>
-              {swimmer.birthyear}
-            </td>
-            <td className="py-1 text-right font-mono" data-numeric>
-              {formatPoints(swimmer.points)}
-            </td>
-          </tr>
+            </span>
+            <span className="text-[13px] text-ink-muted">{birthLabel(swimmer.birthyear, gender)}</span>
+            <span className="font-display text-[22px] font-bold tabular-nums text-marine">
+              {formatPoints(swimmer.points)} pts
+            </span>
+          </div>
         ))}
-      </tbody>
-    </table>
+      </div>
+    </div>
   );
 }
