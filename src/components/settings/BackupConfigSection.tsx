@@ -88,7 +88,7 @@ export function BackupConfigSection(): JSX.Element {
         </Button>
         {savedAt && <span className="text-sm text-success">Configuration enregistrée.</span>}
       </div>
-      {error && <p className="text-sm text-error">Erreur : {error}</p>}
+      {error && <p className="text-sm text-error">Erreur : {error}</p>}
     </div>
   );
 }

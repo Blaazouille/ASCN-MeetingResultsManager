@@ -5,7 +5,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
@@ -13,6 +13,7 @@ import { StatTile } from '@/components/import/StatTile';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory } from '@/lib/csv-parser';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
+import { cn } from '@/lib/utils';
 
 // The parser's encoding ids, as a volunteer would read them.
 const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
@@ -54,7 +55,12 @@ export default function ImportPage(): JSX.Element {
     return <Navigate to="/" replace />;
   }
 
-  const imported = result !== null && persistError === null;
+  // hasResult drives the card's visibility and the "résultats déjà importés" banner;
+  // it stays true across the whole save window so the two don't appear together.
+  const hasResult = result !== null && persistError === null;
+  // isDone only turns true once the save has genuinely finished — used to gate the
+  // success (green/check) treatment so a volunteer can't mistake "still saving" for "done".
+  const isDone = hasResult && !isPersisting;
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,17 +71,26 @@ export default function ImportPage(): JSX.Element {
       />
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
+      {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
-      {result !== null && persistError === null && (
+      {hasResult && (
         <section aria-label="Résultat de l'import" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-8 py-7 shadow-card">
           <div className="flex flex-wrap items-center gap-5">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-success-light">
-              <Check className="h-7 w-7 text-success" strokeWidth={2.6} aria-hidden />
+            <span
+              className={cn(
+                'flex h-14 w-14 shrink-0 items-center justify-center rounded-full',
+                isDone ? 'bg-success-light' : 'bg-surface-sunken'
+              )}
+            >
+              {isDone ? (
+                <Check className="h-7 w-7 text-success" strokeWidth={2.6} aria-hidden />
+              ) : (
+                <Loader2 className="h-7 w-7 animate-spin text-ink-muted" strokeWidth={2.6} aria-hidden />
+              )}
             </span>
             <div className="flex flex-1 flex-col gap-1">
-              <p className="font-display text-3xl font-bold leading-none text-success">
-                {isPersisting ? 'Enregistrement du fichier…' : 'Fichier importé et enregistré'}
+              <p className={cn('font-display text-3xl font-bold leading-none', isDone ? 'text-success' : 'text-ink')}>
+                {isDone ? 'Fichier importé et enregistré' : 'Enregistrement du fichier…'}
               </p>
               <p className="text-[15px] text-ink-muted">{fileName}</p>
             </div>
@@ -112,20 +127,20 @@ export default function ImportPage(): JSX.Element {
           <details className="text-sm text-ink-muted">
             <summary className="cursor-pointer font-semibold text-ink-soft">Détails techniques</summary>
             <p className="pt-2">
-              Encodage détecté : {ENCODING_LABELS[result.encoding]} · séparateur : « {result.delimiter} » ·{' '}
+              Encodage détecté : {ENCODING_LABELS[result.encoding]} · séparateur : « {result.delimiter} » ·{' '}
               {result.rows.length} lignes lues
             </p>
           </details>
         </section>
       )}
 
-      {!imported && meeting.resultCount > 0 && (
+      {!hasResult && meeting.resultCount > 0 && (
         <p className="rounded-lg bg-bassin-soft px-5 py-4 text-[15px] text-ink">
           {resultCountLabel(meeting.resultCount)} pour ce meeting. Un nouveau fichier les met à jour, sans doublons.
         </p>
       )}
 
-      <DropZone compact={imported} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
+      <DropZone compact={hasResult} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
     </div>
   );
 }
