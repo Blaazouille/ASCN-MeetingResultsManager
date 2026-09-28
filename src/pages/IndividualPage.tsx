@@ -7,9 +7,14 @@ import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
 import { computeIndividualRanking, filterByCategory } from '@/lib/individual-ranking';
+import { categoryShortLabel } from '@/lib/ui-labels';
+import { Button } from '@/components/ui/Button';
+import { SearchField } from '@/components/ui/SearchField';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTable';
 
@@ -19,6 +24,7 @@ const PRIZE_COUNT = 2;
 export default function IndividualPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
   const [activeCategory, setActiveCategory] = useState('');
+  const [search, setSearch] = useState('');
   const { isExporting, error: exportError, exportPdf, exportExcel } = useIndividualExport();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
@@ -35,47 +41,44 @@ export default function IndividualPage(): JSX.Element {
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) return <Navigate to="/" replace />;
-  if (isLoading) return <p className="text-neutral-600">Chargement…</p>;
+  if (isLoading) return <p className="text-[15px] text-ink-muted">Chargement…</p>;
   if (error) return <p className="text-sm text-error">{error}</p>;
   if (rows.length === 0) return <Navigate to="/import" replace />;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-primary-800">Classement individuel</h1>
-        <p className="text-neutral-600">{meeting.name}</p>
-      </header>
-
-      <CategoryTabs categories={categories} active={currentCategory} onChange={setActiveCategory} />
-
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => void exportPdf(meeting, currentCategory, displayedResults)}
-          disabled={isExporting || displayedResults.length === 0}
-          className="flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100 disabled:opacity-60"
-        >
-          <Download className="h-4 w-4" aria-hidden />
-          Export PDF
-        </button>
-        <button
-          type="button"
-          onClick={() => void exportExcel(meeting, currentCategory, displayedResults)}
-          disabled={isExporting || displayedResults.length === 0}
-          className="flex items-center gap-2 rounded-md bg-secondary-800 px-3 py-1.5 text-sm font-medium text-neutral-0 transition-colors duration-150 hover:bg-secondary-900 disabled:opacity-60"
-        >
-          <FileSpreadsheet className="h-4 w-4" aria-hidden />
-          Export Excel
-        </button>
-      </div>
-
-      {exportError && <p className="text-sm text-error">{exportError}</p>}
-
-      <IndividualRankingTable
-        results={displayedResults}
-        prizeCount={PRIZE_COUNT}
-        showCategory={false}
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        overline={meeting.name}
+        title="Classement individuel"
+        subtitle={`${categoryShortLabel(currentCategory)} · ${displayedResults.length} nageurs`}
+        actions={
+          <>
+            <Button
+              icon={FileSpreadsheet}
+              disabled={isExporting || displayedResults.length === 0}
+              onClick={() => void exportExcel(meeting, currentCategory, displayedResults)}
+            >
+              Excel
+            </Button>
+            <Button
+              variant="primary"
+              icon={Download}
+              disabled={isExporting || displayedResults.length === 0}
+              onClick={() => void exportPdf(meeting, currentCategory, displayedResults)}
+            >
+              Exporter en PDF
+            </Button>
+          </>
+        }
       />
+      <FilterBar>
+        <CategoryTabs categories={categories} active={currentCategory} onChange={setActiveCategory} />
+        <div className="ml-auto">
+          <SearchField value={search} onChange={setSearch} placeholder="Rechercher un nageur ou un club" />
+        </div>
+      </FilterBar>
+      {exportError && <p className="text-sm text-error">{exportError}</p>}
+      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} search={search} />
     </div>
   );
 }

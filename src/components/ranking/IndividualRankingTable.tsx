@@ -1,127 +1,89 @@
 /**
- * Responsabilité : tableau du classement individuel avec recherche par nom/club.
+ * Responsabilité : tableau du classement individuel filtré par la recherche (nom/club).
  * Appelé par : IndividualPage.tsx.
  * Suppression casserait : l'affichage du classement individuel.
  */
-import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { useMemo } from 'react';
 import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
 import type { IndividualResult } from '@/lib/individual-ranking';
+import { RankChip } from '@/components/ui/RankChip';
+import { ClubTag } from '@/components/ui/ClubTag';
 
 export interface IndividualRankingTableProps {
   results: IndividualResult[];
+  /** The first N swimmers get a prize tag (« 1er Prix », « 2e Prix »). */
   prizeCount: number;
-  /** Hide the category column when already filtered to a single gender. */
-  showCategory: boolean;
+  search: string;
 }
 
-/** Strips the "Classement " prefix for the badge, e.g. "Classement Mixte" → "Mixte". */
-function categoryBadgeLabel(category: string): string {
-  return category.replace(/^Classement\s+/i, '');
-}
-
-export function IndividualRankingTable({ results, prizeCount, showCategory }: IndividualRankingTableProps): JSX.Element {
-  const [search, setSearch] = useState('');
-
+export function IndividualRankingTable({ results, prizeCount, search }: IndividualRankingTableProps): JSX.Element {
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return results;
+    const query = search.trim().toLowerCase();
+    if (!query) return results;
     return results.filter(
       (r) =>
-        r.lastname.toLowerCase().includes(q) ||
-        r.firstname.toLowerCase().includes(q) ||
-        r.club.toLowerCase().includes(q)
+        r.lastname.toLowerCase().includes(query) ||
+        r.firstname.toLowerCase().includes(query) ||
+        r.club.toLowerCase().includes(query)
     );
   }, [results, search]);
 
-  return (
-    <div className="rounded-lg bg-neutral-0 shadow-card">
-      {/* Search bar */}
-      <div className="flex items-center gap-2 border-b border-neutral-200 p-4">
-        <Search className="h-4 w-4 text-neutral-400" aria-hidden />
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filtrer par nom ou club…"
-          className="w-full max-w-xs rounded-md border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-secondary-400 focus:ring-1 focus:ring-secondary-400"
-        />
-      </div>
+  if (filtered.length === 0) {
+    return (
+      <p className="rounded-lg bg-surface-raised p-8 text-center text-[15px] text-ink-muted shadow-card">
+        {search.trim() ? 'Aucun nageur ne correspond à la recherche.' : 'Aucun résultat individuel.'}
+      </p>
+    );
+  }
 
-      {filtered.length === 0 ? (
-        <p className="p-8 text-center text-sm text-neutral-600">
-          {search.trim() ? 'Aucun nageur ne correspond à la recherche.' : 'Aucun résultat individuel.'}
-        </p>
-      ) : (
-        <table className="w-full table-fixed border-collapse text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-neutral-600">
-              <th className="w-[14%] px-3 py-2">Rang</th>
-              <th className="w-[25%] px-3 py-2">Nom</th>
-              <th className="w-[9%] px-3 py-2">Année</th>
-              <th className="w-[38%] px-3 py-2">Club</th>
-              <th className="w-[14%] px-3 py-2">Points</th>
-              {showCategory && <th className="w-[16%] px-3 py-2">Catégorie</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((r) => (
+  return (
+    <section aria-label="Classement individuel" className="overflow-hidden rounded-lg bg-surface-raised shadow-card">
+      <table className="w-full table-fixed border-collapse">
+        <thead>
+          <tr className="h-11 bg-surface-header text-left text-[13px] font-bold uppercase tracking-[0.06em] text-ink-muted">
+            <th scope="col" className="w-[190px] pl-5 pr-3">Rang</th>
+            <th scope="col" className="px-3">Nom</th>
+            <th scope="col" className="w-[90px] px-3">Année</th>
+            <th scope="col" className="px-3">Club</th>
+            <th scope="col" className="w-[130px] pl-3 pr-5 text-right">Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map((r) => {
+            const isOwnClub = r.club === ASCN_CLUB_NAME;
+            return (
               <tr
                 key={`${r.lastname}-${r.firstname}-${r.birthyear}-${r.club}`}
-                className="border-t border-neutral-100"
+                className={cn('h-14 border-t', isOwnClub ? 'border-corail-line bg-corail-wash' : 'border-line')}
               >
-                {/* Rank cell with optional prize badge */}
-                <td className="px-3 py-2">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        'inline-flex h-7 w-7 items-center justify-center rounded-sm font-mono text-sm font-bold',
-                        r.rank <= prizeCount ? 'bg-accent-800 text-neutral-0' : 'text-neutral-700'
-                      )}
-                    >
-                      {r.rank}
-                    </span>
+                <td className="py-2 pl-5 pr-3">
+                  <span className="flex items-center gap-2">
+                    <RankChip rank={r.rank} />
                     {r.rank <= prizeCount && (
-                      <span className="rounded-sm bg-accent-100 px-1.5 py-0.5 text-xs font-medium text-accent-800">
+                      <span className="whitespace-nowrap rounded-full bg-corail-soft px-2.5 py-0.5 text-xs font-bold text-corail-strong">
                         {r.rank === 1 ? '1er Prix' : `${r.rank}e Prix`}
                       </span>
                     )}
                   </span>
                 </td>
-
-                {/* Swimmer name */}
-                <td className="px-3 py-2 font-medium text-neutral-900">
+                <td className="px-3 py-2 text-base font-semibold text-ink">
                   {r.lastname} {r.firstname}
                 </td>
-
-                {/* Birth year */}
-                <td className="px-3 py-2 font-mono tabular-nums text-neutral-700">
-                  {r.birthyear}
+                <td className="px-3 py-2 text-[15px] tabular-nums text-ink-muted">{r.birthyear}</td>
+                <td className="px-3 py-2">
+                  <span className="flex flex-wrap items-center gap-2.5 text-[15px] text-ink">
+                    {r.club}
+                    {isOwnClub && <ClubTag />}
+                  </span>
                 </td>
-
-                {/* Club — highlighted if ASCN */}
-                <td className={cn('px-3 py-2', r.club === ASCN_CLUB_NAME && 'font-medium text-secondary-800')}>
-                  {r.club}
-                </td>
-
-                {/* Points */}
-                <td className="px-3 py-2 font-mono tabular-nums text-neutral-900">
+                <td className="py-2 pl-3 pr-5 text-right font-display text-[23px] font-bold tabular-nums text-ink">
                   {formatPoints(r.points)}
                 </td>
-
-                {/* Category badge — hidden when already filtered to one gender */}
-                {showCategory && (
-                  <td className="px-3 py-2">
-                    <span className="rounded-sm bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                      {categoryBadgeLabel(r.category)}
-                    </span>
-                  </td>
-                )}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
   );
 }
