@@ -43,7 +43,7 @@ export function Segmented<T extends string | number>({
               aria-pressed={selected}
               onClick={() => onChange(option.value)}
               className={cn(
-                'h-10 min-w-[48px] rounded-sm px-4 text-[15px] transition-colors',
+                'h-11 min-w-[48px] rounded-sm px-4 text-[15px] transition-colors',
                 selected
                   ? 'bg-surface-raised font-bold text-marine shadow-segment'
                   : 'font-semibold text-ink-soft hover:text-ink'
