@@ -67,38 +67,11 @@ Le parseur CSV et le moteur de calcul sont dans `src/lib/`, indépendants de Rea
 
 Les 38 clubs doivent correspondre au fichier `test/fixtures/expected-ranking.json`.
 
-## Design System
+## Design System — « Tableau de bassin »
 
-### Couleurs
+Tokens : `marine` (structurel, sidebar, bouton principal) / `bassin` (décoratif, `bassin-strong` pour le texte et le focus) / `corail` (décoratif, `corail-strong` pour le texte — « Notre club », alertes) / `ink` (texte) / `surface` (fonds) / `line` (bordures). Médailles (`medal-gold/silver/bronze`) toujours avec des chiffres `ink`, jamais blancs. Polices Barlow Condensed (titres, chiffres) + Barlow (texte), embarquées dans `src/assets/fonts/`, aucun appel réseau. Rayons 8/10/12/16px, cibles tactiles ≥44px. Contraste WCAG AA vérifié par `test/design-tokens.test.ts`.
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `primary` | `#0A3663` | Navbar, sidebar, headers structurels |
-| `secondary` | `#00A4E4` | États actifs, tabs, liens. Fond d'un bouton à texte blanc : `secondary-800` (5,7:1), jamais `secondary-600` (2,8:1) |
-| `accent` | `#FF6B35` | CTA, badges podium (1er/2e/3e), alertes |
-| `neutral-0` | `#FFFFFF` | Fond des cartes |
-| `neutral-50` | `#F4F7F6` | Fond de page |
-| `neutral-900` | `#1A2332` | Texte principal |
-| `neutral-600` | `#5B6B7D` | Texte secondaire |
-| `success` | `#15803D` | Validation, import OK (texte, 4,6:1 sur `success-light`) |
-| `warning` | `#92400E` | Statut provisoire (texte, 6,6:1 sur `warning-light`) |
-| `error` | `#B91C1C` | Erreurs (6,5:1 sur blanc) |
-
-Décliner chaque couleur en palette 50→900 dans `globals.css` (voir `docs/design-system.md`).
-
-### Typographie
-
-- **Display / Headings** : Montserrat (600, 700)
-- **Body / UI** : Inter (400, 500)
-- **Data / Monospace** : JetBrains Mono (500, 700)
-
-### Composants
-
-- Border-radius : 8px (cartes/boutons), 6px (inputs), 4px (badges)
-- Ombres : `0 1px 3px rgba(10,54,99,0.08), 0 1px 2px rgba(10,54,99,0.06)`
-- Espacement : grille de 4px
-- Transitions : 150ms ease
-- Light mode uniquement (MVP)
+Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/design-system.md` et l'[artefact de design](https://claude.ai/artifact/4hd1YLZVKGhsRcjB2kjiya).
 
 ## Structure du projet
 
@@ -243,8 +216,11 @@ npm run build:mac    # Build macOS (.dmg)
 | 8 | Classement individuel + palmarès des rigolos (récompenses humoristiques auto-générées) | Classement individuel affiché |
 | 9 | Sauvegarde & restauration — export/import JSON de la base depuis Paramètres, backup auto après chaque import CSV avec rotation | Données protégées contre la perte/corruption |
 | 10 | Versioning automatique (SemVer + release notes), installeur Windows soigné (NSIS custom, sans signature de code), auto-updater in-app | App distribuable et auto-maintenue |
+| 11 | Refonte visuelle « Tableau de bassin » — tokens, polices embarquées, barre latérale, podium, écrans Accueil/Import/Classement/Individuels/Palmarès/Paramètres | Interface lisible au bord du bassin |
 
 > Détail des phases 6-9 : `docs/archive/2026-09-16-phase-6-cleanup.md`, `docs/superpowers/plans/2026-09-16-phase-7-ux-polish.md`, `docs/superpowers/plans/2026-09-16-phase-8-individual-ranking.md`, `docs/superpowers/plans/2026-09-16-phase-9-backup-restore.md`.
+>
+> **Phase 11** : `.superpowers/sdd/2026-09-27-phase-11-redesign/`.
 >
 > **Phase 10** : diffusion sur le poste du père de Jason (bénévole non technique) — nécessite un auto-updater puisqu'il ne va pas télécharger les mises à jour depuis GitHub lui-même. Voir `docs/architecture.md` pour le détail technique.
 
