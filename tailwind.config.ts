@@ -76,7 +76,7 @@ export default {
         xl: '16px',
       },
       boxShadow: {
-        card: '0 1px 3px rgba(10,54,99,0.08), 0 1px 2px rgba(10,54,99,0.06)',
+        card: 'var(--shadow-card)',
         raised: 'var(--shadow-raised)',
         segment: 'var(--shadow-segment)',
       },

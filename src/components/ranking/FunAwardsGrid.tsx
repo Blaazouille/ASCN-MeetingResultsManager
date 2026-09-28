@@ -1,7 +1,7 @@
 /**
  * Responsabilité : grille d'affichage des prix humoristiques (palmarès des rigolos).
  * Appelé par : PalmaresPage.tsx.
- * Suppression casserait : la section "Palmarès des rigolos" de la page individuelle.
+ * Suppression casserait : la section "Palmarès des rigolos" de PalmaresPage.tsx.
  */
 import { Camera, Crown, Hourglass, Sprout, UsersRound, Zap, type LucideIcon } from 'lucide-react';
 import type { FunAward, FunAwardIcon } from '@/lib/fun-awards';

@@ -53,6 +53,12 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ['warning', 'warning-light'],
   ['error', 'surface-raised'],
   ['on-marine', 'error'],
+  // Own-club row hover state (TeamRow.tsx / TeamRankingTable.tsx): the "Écart" and
+  // "Nageurs" cells show ink-muted text on these backgrounds.
+  ['ink-muted', 'corail-wash'],
+  ['error', 'error-light'],
+  ['ink-muted', 'bassin-soft'],
+  ['ink-muted', 'corail-soft'],
 ];
 
 // Non-text UI: control borders, icons, the focus ring (WCAG 1.4.11).

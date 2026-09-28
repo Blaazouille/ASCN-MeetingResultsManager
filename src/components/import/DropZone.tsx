@@ -119,7 +119,7 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, clas
           </span>
           <span className={cn('flex flex-col gap-0.5', compact && 'flex-1')}>
             <span className="text-[17px] font-semibold text-ink">
-              {compact ? 'Nouvelle version du fichier ?' : 'Déposez le fichier CSV extraNat ici'}
+              {compact ? 'Nouvelle version du fichier ?' : 'Déposez le fichier CSV extraNat ici'}
             </span>
             <span className="text-[15px] text-ink-muted">
               {compact

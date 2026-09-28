@@ -10,6 +10,7 @@ import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
 import { cn } from '@/lib/utils';
 import { Segmented, type SegmentedOption } from '@/components/ui/Segmented';
 import { Button } from '@/components/ui/Button';
+import { categoryShortLabel } from '@/lib/ui-labels';
 
 export interface SettingsFormProps {
   meeting: Meeting;
@@ -22,10 +23,6 @@ const STATUS_OPTIONS: ReadonlyArray<SegmentedOption<MeetingStatus>> = [
   { value: 'provisional', label: 'Provisoire' },
   { value: 'final', label: 'Définitif' },
 ] as const;
-
-function categoryLabel(category: string): string {
-  return category.replace(/^Classement\s+/i, '');
-}
 
 export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Element {
   const [name, setName] = useState(meeting.name);
@@ -148,7 +145,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                   <label
                     key={category}
                     className={cn(
-                      'flex items-center gap-2 text-sm',
+                      'flex min-h-11 items-center gap-2 text-sm',
                       isLastActive ? 'text-ink-muted opacity-60' : 'text-ink'
                     )}
                   >
@@ -159,7 +156,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
                       onChange={() => toggleCategory(category)}
                       className="h-5 w-5 accent-[var(--color-marine)] disabled:cursor-not-allowed"
                     />
-                    {categoryLabel(category)}
+                    {categoryShortLabel(category)}
                   </label>
                 );
               })}
@@ -192,7 +189,7 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
         <button
           type="button"
           onClick={resetRankingRules}
-          className="text-sm font-semibold text-bassin-strong underline-offset-2 hover:underline"
+          className="inline-flex h-11 items-center text-sm font-semibold text-bassin-strong underline-offset-2 hover:underline"
         >
           Réinitialiser les valeurs par défaut
         </button>

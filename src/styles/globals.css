@@ -33,7 +33,11 @@
   --color-bassin-soft: #e6f6fd;
   --color-corail: #ff6b35;
   --color-corail-strong: #b3390a;
-  --color-corail-soft: #ffe2d3;
+  /* #ffe6d8 rather than a slightly deeper #ffe2d3: the darker tint only cleared
+     4.5:1 for corail-strong text, not for ink-muted text (own-club row hover in
+     TeamRow/TeamRankingTable uses ink-muted on this background) — see
+     test/design-tokens.test.ts. */
+  --color-corail-soft: #ffe6d8;
   --color-corail-wash: #fff4ee;
   --color-corail-line: #f5d3c2;
   --color-ink: #1a2332;
@@ -79,9 +83,5 @@
   h2,
   h3 {
     @apply font-display;
-  }
-
-  [data-numeric] {
-    font-variant-numeric: tabular-nums;
   }
 }

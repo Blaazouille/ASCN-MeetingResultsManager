@@ -1,6 +1,6 @@
 /**
  * Responsabilité : calcul des prix humoristiques à partir des données nageurs.
- * Appelé par : IndividualPage.tsx et les tests.
+ * Appelé par : PalmaresPage.tsx et les tests.
  * Suppression casserait : la section "Palmarès des rigolos".
  */
 import type { RawSwimmerRow } from './csv-parser';

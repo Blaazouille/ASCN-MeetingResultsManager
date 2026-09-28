@@ -80,7 +80,7 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       {state.step === 'export-success' && (
         <p className="flex items-center gap-2 text-sm text-success">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          Sauvegarde enregistrée : {state.path}
+          Sauvegarde enregistrée{' '}: {state.path}
         </p>
       )}
 
@@ -124,12 +124,12 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
       {state.step === 'import-success' && (
         <p className="flex items-center gap-2 text-sm text-success">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          Base restaurée : {state.meetingsImported} meeting(s), {state.swimmersImported} nageur(s)
+          Base restaurée{' '}: {state.meetingsImported} meeting(s), {state.swimmersImported} nageur(s)
           {state.meetingsRemoved > 0 && ` (${state.meetingsRemoved} ancien(s) meeting(s) remplacé(s))`}.
         </p>
       )}
 
-      {state.step === 'error' && <p className="text-sm text-error">Erreur : {state.error}</p>}
+      {state.step === 'error' && <p className="text-sm text-error">Erreur{' '}: {state.error}</p>}
     </div>
   );
 }
