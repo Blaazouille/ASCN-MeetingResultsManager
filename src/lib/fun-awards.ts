@@ -6,10 +6,13 @@
 import type { RawSwimmerRow } from './csv-parser';
 import { detectGender } from './individual-ranking';
 
+export type FunAwardIcon = 'hourglass' | 'sprout' | 'duo' | 'camera' | 'crown' | 'zap';
+
 export interface FunAward {
   id: string;
   title: string;
-  emoji: string;
+  /** Icon key; FunAwardsGrid maps it to a Lucide icon and a colour. */
+  icon: FunAwardIcon;
   winner: {
     name: string;
     club: string;
@@ -58,7 +61,7 @@ function findDoyen(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'doyen',
     title: isFemale ? 'La Doyenne' : 'Le Doyen',
-    emoji: isFemale ? '👵' : '👴',
+    icon: 'hourglass',
     winner: {
       name: formatName(oldest),
       club: oldest.club,
@@ -76,7 +79,7 @@ function findReleve(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'releve',
     title: 'La Relève',
-    emoji: '🌱',
+    icon: 'sprout',
     winner: {
       name: formatName(youngest),
       club: youngest.club,
@@ -111,7 +114,7 @@ function findDuoMixte(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'duo-mixte',
     title: 'Le Duo Mixte',
-    emoji: '🤝',
+    icon: 'duo',
     winner: {
       name: `${formatName(bestF)} & ${formatName(bestM)}`,
       club: bestClub,
@@ -146,7 +149,7 @@ function findPhotoFinish(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'photo-finish',
     title: 'Le Photo-Finish',
-    emoji: '📸',
+    icon: 'camera',
     winner: {
       name: `${formatName(pairA)} et ${formatName(pairB)}`,
       club: pairA.club === pairB.club ? pairA.club : `${pairA.club} / ${pairB.club}`,
@@ -190,7 +193,7 @@ function findClubAnciens(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'club-anciens',
     title: 'Le Club des Anciens',
-    emoji: '🧓',
+    icon: 'crown',
     winner: {
       name: bestClub,
       club: bestClub,
@@ -220,7 +223,7 @@ function findJeuneGarde(swimmers: UniqueSwimmer[]): FunAward | null {
   return {
     id: 'jeune-garde',
     title: 'La Jeune Garde',
-    emoji: '🐣',
+    icon: 'zap',
     winner: {
       name: bestClub,
       club: bestClub,

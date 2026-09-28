@@ -9,6 +9,16 @@ import path from 'node:path';
 import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
 import { computeFunAwards, type FunAward } from '../src/lib/fun-awards';
 
+// One Lucide icon per prize (no emoji in the interface).
+const EXPECTED_ICONS: Record<string, string> = {
+  doyen: 'hourglass',
+  releve: 'sprout',
+  'duo-mixte': 'duo',
+  'photo-finish': 'camera',
+  'club-anciens': 'crown',
+  'jeune-garde': 'zap',
+};
+
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
 function loadRows(): RawSwimmerRow[] {
@@ -33,7 +43,7 @@ describe('computeFunAwards', () => {
     for (const award of awards) {
       expect(award.id).toBeTruthy();
       expect(award.title).toBeTruthy();
-      expect(award.emoji).toBeTruthy();
+      expect(award.icon).toBe(EXPECTED_ICONS[award.id]);
       expect(award.winner.name).toBeTruthy();
       expect(award.winner.club).toBeTruthy();
       expect(award.winner.detail).toBeTruthy();
