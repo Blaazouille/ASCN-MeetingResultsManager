@@ -5,7 +5,6 @@
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
-import { Download, FileSpreadsheet } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FilterBar } from '@/components/layout/FilterBar';
@@ -13,10 +12,10 @@ import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
 import { computeIndividualRanking, filterByCategory } from '@/lib/individual-ranking';
 import { categoryShortLabel } from '@/lib/ui-labels';
-import { Button } from '@/components/ui/Button';
 import { SearchField } from '@/components/ui/SearchField';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTable';
+import { ExportActions } from '@/components/ranking/ExportActions';
 
 /** Number of top swimmers highlighted with a prize badge (1er Prix, 2e Prix…). */
 const PRIZE_COUNT = 2;
@@ -52,23 +51,11 @@ export default function IndividualPage(): JSX.Element {
         title="Classement individuel"
         subtitle={`${categoryShortLabel(currentCategory)} · ${displayedResults.length} nageurs`}
         actions={
-          <>
-            <Button
-              icon={FileSpreadsheet}
-              disabled={isExporting || displayedResults.length === 0}
-              onClick={() => void exportExcel(meeting, currentCategory, displayedResults)}
-            >
-              Excel
-            </Button>
-            <Button
-              variant="primary"
-              icon={Download}
-              disabled={isExporting || displayedResults.length === 0}
-              onClick={() => void exportPdf(meeting, currentCategory, displayedResults)}
-            >
-              Exporter en PDF
-            </Button>
-          </>
+          <ExportActions
+            disabled={isExporting || displayedResults.length === 0}
+            onExcel={() => void exportExcel(meeting, currentCategory, displayedResults)}
+            onPdf={() => void exportPdf(meeting, currentCategory, displayedResults)}
+          />
         }
       />
       <FilterBar>

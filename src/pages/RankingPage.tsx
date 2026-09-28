@@ -5,7 +5,6 @@
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
-import { Download, FileSpreadsheet } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
@@ -13,10 +12,10 @@ import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
 import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { categoryShortLabel } from '@/lib/ui-labels';
-import { Button } from '@/components/ui/Button';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
+import { ExportActions } from '@/components/ranking/ExportActions';
 
 export default function RankingPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -57,24 +56,11 @@ export default function RankingPage(): JSX.Element {
         title="Classement par équipes"
         subtitle={`${categoryShortLabel(ranking.category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
         actions={
-          <>
-            <Button
-              icon={FileSpreadsheet}
-              disabled={isExporting}
-              onClick={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
-            >
-              Excel
-            </Button>
-            {/* PDF is the primary action: it is what gets printed and posted by the pool. */}
-            <Button
-              variant="primary"
-              icon={Download}
-              disabled={isExporting}
-              onClick={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
-            >
-              Exporter en PDF
-            </Button>
-          </>
+          <ExportActions
+            disabled={isExporting}
+            onExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
+            onPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
+          />
         }
       />
       <RankingToolbar
