@@ -99,6 +99,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── db.ts              # Opérations CRUD SQLite
 │   │   ├── backup.ts          # Export/import complet de la base en JSON
 │   │   ├── export-data.ts     # Métadonnées et helpers pour les exports
+│   │   ├── ui-labels.ts       # Libellés et valeurs d'affichage dérivés des données
 │   │   ├── pdf-export.tsx     # Génération PDF
 │   │   ├── excel-export.ts    # Génération Excel
 │   │   ├── download.ts        # Déclenchement du téléchargement navigateur
@@ -111,16 +112,24 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-print-export.ts
 │   │   └── use-auto-update.ts
 │   ├── components/
-│   │   ├── layout/            # AppShell, Sidebar, Header, UpdateToast
-│   │   ├── meeting/            # MeetingCard, MeetingList, MeetingForm
-│   │   ├── import/             # DropZone
-│   │   ├── ranking/            # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
-│   │   └── settings/           # SettingsForm
-│   └── pages/
-│       ├── HomePage.tsx
-│       ├── ImportPage.tsx
-│       ├── RankingPage.tsx
-│       └── SettingsPage.tsx
+│   │   ├── layout/             # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
+│   │   ├── meeting/             # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard
+│   │   ├── import/              # DropZone
+│   │   ├── ranking/             # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
+│   │   ├── settings/            # SettingsForm
+│   │   └── ui/                   # Button, Segmented, SearchField, StatusBadge, RankChip, ClubTag
+│   ├── pages/
+│   │   ├── HomePage.tsx
+│   │   ├── ImportPage.tsx
+│   │   ├── RankingPage.tsx
+│   │   ├── IndividualPage.tsx
+│   │   ├── PalmaresPage.tsx
+│   │   └── SettingsPage.tsx
+│   ├── styles/
+│   │   ├── globals.css        # Tailwind base + custom properties
+│   │   └── fonts.css          # Déclarations @font-face (polices embarquées)
+│   └── assets/
+│       └── fonts/              # Polices Barlow / Barlow Condensed (.woff2), embarquées hors ligne
 ├── test/
 │   └── *.test.ts
 └── docs/

@@ -18,7 +18,7 @@
 | `bassin-soft` | `#E6F6FD` | Fond des tuiles et badges bleus |
 | `corail` | `#FF6B35` | Décoratif seulement (jamais de texte blanc dessus) |
 | `corail-strong` | `#B3390A` | Texte « Notre club », alertes |
-| `corail-soft` / `corail-wash` / `corail-line` | `#FFE2D3` / `#FFF4EE` / `#F5D3C2` | Fonds et bordures corail |
+| `corail-soft` / `corail-wash` / `corail-line` | `#FFE6D8` / `#FFF4EE` / `#F5D3C2` | Fonds et bordures corail |
 | `ink` / `ink-soft` / `ink-muted` | `#1A2332` / `#3F4F66` / `#5B6B7D` | Texte principal, secondaire, discret |
 | `line` / `line-strong` | `#E8EDF2` / `#8394A6` | Bordures discrètes / bordures de contrôles (inputs, cases) |
 | `surface` / `surface-raised` / `surface-sunken` / `surface-header` | `#F4F7F6` / `#FFFFFF` / `#EEF2F6` / `#F7F9FB` | Fond de page, cartes, zones creusées, en-têtes de tableau |
@@ -34,7 +34,7 @@ Les tokens sont des variables CSS dans `src/styles/globals.css` (`--color-*`), c
 - **Titres et chiffres (`font-display`)** : Barlow Condensed (600, 700)
 - **Texte courant et UI (`font-body`)** : Barlow (400, 500, 600, 700)
 - Polices embarquées dans `src/assets/fonts/` (`.woff2`), déclarées dans `src/styles/fonts.css` — aucun appel réseau (l'app doit fonctionner hors ligne au bord du bassin)
-- `font-variant-numeric: tabular-nums` sur toutes les colonnes numériques via l'attribut `data-numeric`
+- `font-variant-numeric: tabular-nums` sur toutes les colonnes numériques via la classe utilitaire Tailwind `tabular-nums`
 
 ## Rayons, ombres, tailles tactiles
 
@@ -50,7 +50,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 
 - Texte : minimum 4,5:1 (ex. `ink` sur `surface-raised`, `on-marine` sur `marine`, `corail-strong` sur `corail-soft`)
 - UI non textuelle (bordures de contrôle, anneau de focus) : minimum 3:1 (ex. `line-strong` sur `surface-raised`)
-- Deux tokens s'écartent volontairement d'une première proposition de palette pour tenir ces seuils : `corail-strong` est `#B3390A` (un `#C2410C` plus clair ne donnait que 4,2:1 sur `corail-soft`) et `line-strong` est `#8394A6` (un `#C5D0DB` plus clair ne donnait que 1,6:1 pour les bordures de contrôle).
+- Deux tokens s'écartent volontairement d'une première proposition de palette pour tenir ces seuils : `corail-strong` est `#B3390A` (un `#C2410C` plus clair ne donnait que 4,2:1 sur `corail-soft`) et `line-strong` est `#8394A6` (un `#C5D0DB` plus clair ne donnait que 1,6:1 pour les bordures de contrôle). `corail-soft` lui-même est `#FFE6D8` plutôt qu'un `#FFE2D3` légèrement plus foncé : ce dernier tenait 4,5:1 pour `corail-strong` mais pas pour `ink-muted`, utilisé dessus au survol de la ligne du club « Notre club » (`TeamRow.tsx` / `TeamRankingTable.tsx`).
 
 ## Primitives (`src/components/ui/`)
 
@@ -66,7 +66,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 ## Formatage des nombres
 
 - Points avec espace insécable comme séparateur de milliers : `5 841` (`formatPoints()` dans `src/lib/utils.ts`)
-- `font-variant-numeric: tabular-nums` sur toutes les colonnes numériques via l'attribut `data-numeric`
+- `font-variant-numeric: tabular-nums` sur toutes les colonnes numériques via la classe utilitaire Tailwind `tabular-nums`
 
 ## Langue
 

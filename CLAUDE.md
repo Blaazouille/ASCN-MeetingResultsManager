@@ -99,6 +99,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 │   │   ├── db-schema.ts      # Schéma SQLite et migrations
 │   │   ├── db.ts             # Opérations CRUD SQLite
 │   │   ├── export-data.ts    # Métadonnées et helpers pour les exports
+│   │   ├── ui-labels.ts      # Libellés et valeurs d'affichage dérivés des données
 │   │   ├── pdf-export.tsx    # Génération PDF
 │   │   ├── excel-export.ts   # Génération Excel
 │   │   ├── download.ts       # Déclenchement du téléchargement navigateur
@@ -111,18 +112,24 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 │   │   ├── use-print-export.ts
 │   │   └── use-auto-update.ts
 │   ├── components/
-│   │   ├── layout/           # AppShell, Sidebar, Header, UpdateToast
-│   │   ├── meeting/          # MeetingCard, MeetingList, MeetingForm
+│   │   ├── layout/           # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
+│   │   ├── meeting/          # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard
 │   │   ├── import/           # DropZone
-│   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar
-│   │   └── settings/         # SettingsForm
+│   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
+│   │   ├── settings/         # SettingsForm
+│   │   └── ui/                # Button, Segmented, SearchField, StatusBadge, RankChip, ClubTag
 │   ├── pages/
 │   │   ├── HomePage.tsx
 │   │   ├── ImportPage.tsx
 │   │   ├── RankingPage.tsx
+│   │   ├── IndividualPage.tsx
+│   │   ├── PalmaresPage.tsx
 │   │   └── SettingsPage.tsx
-│   └── styles/
-│       └── globals.css       # Tailwind base + custom properties
+│   ├── styles/
+│   │   ├── globals.css       # Tailwind base + custom properties
+│   │   └── fonts.css         # Déclarations @font-face (polices embarquées)
+│   └── assets/
+│       └── fonts/             # Polices Barlow / Barlow Condensed (.woff2), embarquées hors ligne
 ├── test/
 │   ├── csv-parser.test.ts
 │   ├── ranking-engine.test.ts
@@ -220,7 +227,7 @@ npm run build:mac    # Build macOS (.dmg)
 
 > Détail des phases 6-9 : `docs/archive/2026-09-16-phase-6-cleanup.md`, `docs/superpowers/plans/2026-09-16-phase-7-ux-polish.md`, `docs/superpowers/plans/2026-09-16-phase-8-individual-ranking.md`, `docs/superpowers/plans/2026-09-16-phase-9-backup-restore.md`.
 >
-> **Phase 11** : `.superpowers/sdd/2026-09-27-phase-11-redesign/`.
+> **Phase 11** : `docs/superpowers/plans/2026-09-27-phase-11-redesign.md`.
 >
 > **Phase 10** : diffusion sur le poste du père de Jason (bénévole non technique) — nécessite un auto-updater puisqu'il ne va pas télécharger les mises à jour depuis GitHub lui-même. Voir `docs/architecture.md` pour le détail technique.
 
