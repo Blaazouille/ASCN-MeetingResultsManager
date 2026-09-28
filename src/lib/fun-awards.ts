@@ -190,9 +190,14 @@ function findClubAnciens(swimmers: UniqueSwimmer[]): FunAward | null {
     }
   }
   if (!bestClub) return null;
+  // Rows are pre-filtered to a single category before computeFunAwards runs (see
+  // PalmaresPage.tsx), so every member of the winning club shares one category —
+  // reading it off the first member is enough to pick a gender-appropriate title.
+  const bestClubMembers = clubs.get(bestClub) ?? [];
+  const isFemale = detectGender(bestClubMembers[0]?.category ?? '') === 'F';
   return {
     id: 'club-anciens',
-    title: 'Le Club des Anciens',
+    title: isFemale ? 'Le Club des Grandes Dames' : 'Le Club des Sages',
     icon: 'crown',
     winner: {
       name: bestClub,

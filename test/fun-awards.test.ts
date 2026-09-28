@@ -184,4 +184,30 @@ describe('computeFunAwards edge cases', () => {
     expect(jeune).toBeDefined();
     expect(jeune!.winner.club).toBe('YOUNG CLUB');
   });
+
+  it('club-anciens uses "Le Club des Grandes Dames" when the winning club is in the Dames category', () => {
+    // Production always filters rows to a single category before calling computeFunAwards
+    // (see PalmaresPage.tsx), so a club's members share one category here too.
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Dames', place: 1, lastname: 'A', firstname: 'B', birthyear: 1960, nation: 'FRA', club: 'OLD CLUB', points: 900, comment: '' },
+      { name: 'Classement Dames', place: 2, lastname: 'C', firstname: 'D', birthyear: 1962, nation: 'FRA', club: 'OLD CLUB', points: 800, comment: '' },
+      { name: 'Classement Dames', place: 3, lastname: 'E', firstname: 'F', birthyear: 1965, nation: 'FRA', club: 'OLD CLUB', points: 700, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const anciens = findAward(awards, 'club-anciens');
+    expect(anciens).toBeDefined();
+    expect(anciens!.title).toBe('Le Club des Grandes Dames');
+  });
+
+  it('club-anciens uses "Le Club des Sages" for a Messieurs category', () => {
+    const rows: RawSwimmerRow[] = [
+      { name: 'Classement Messieurs', place: 1, lastname: 'A', firstname: 'B', birthyear: 1960, nation: 'FRA', club: 'OLD CLUB', points: 900, comment: '' },
+      { name: 'Classement Messieurs', place: 2, lastname: 'C', firstname: 'D', birthyear: 1962, nation: 'FRA', club: 'OLD CLUB', points: 800, comment: '' },
+      { name: 'Classement Messieurs', place: 3, lastname: 'E', firstname: 'F', birthyear: 1965, nation: 'FRA', club: 'OLD CLUB', points: 700, comment: '' },
+    ];
+    const awards = computeFunAwards(rows);
+    const anciens = findAward(awards, 'club-anciens');
+    expect(anciens).toBeDefined();
+    expect(anciens!.title).toBe('Le Club des Sages');
+  });
 });
