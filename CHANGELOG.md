@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.1.1...v1.2.0) (2026-09-28)
+
+
+### Features
+
+* redesign the interface (Tableau de bassin) ([#13](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/13)) ([ca72502](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/ca72502cb1df65e3bc9187c7da92287a696f091c))
+
 ## [1.1.1](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.1.0...v1.1.1) (2026-09-28)
 
 
