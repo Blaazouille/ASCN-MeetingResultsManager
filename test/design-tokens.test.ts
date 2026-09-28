@@ -1,3 +1,9 @@
+/**
+ * Responsabilité : vérifie que les paires texte/fond et bordure/fond des tokens
+ * « Tableau de bassin » (globals.css) atteignent les seuils de contraste WCAG AA.
+ * Appelé par : Vitest.
+ * Suppression casserait : la détection d'une régression de contraste dans les tokens de couleur.
+ */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 

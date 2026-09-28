@@ -1,6 +1,7 @@
 /**
  * Responsabilité : détail déplié d'un club : phrase de synthèse et cartes des nageurs comptés.
  * Appelé par : TeamRow.tsx.
+ * Suppression casserait : le détail des nageurs affiché quand on déplie une ligne club.
  */
 import type { SwimmerEntry } from '@/lib/ranking-engine';
 import { detectGender } from '@/lib/individual-ranking';

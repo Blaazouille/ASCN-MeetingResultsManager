@@ -1,3 +1,8 @@
+/**
+ * Responsabilité : tests des fonctions de formatage textuel (libellés, écarts, statuts) de ui-labels.ts.
+ * Appelé par : Vitest.
+ * Suppression casserait : la couverture de ui-labels.ts.
+ */
 import { describe, expect, it } from 'vitest';
 import {
   birthLabel,

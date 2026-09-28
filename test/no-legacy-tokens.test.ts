@@ -1,3 +1,9 @@
+/**
+ * Responsabilité : garantit qu'aucune classe Tailwind de l'ancienne palette
+ * (primary/secondary/accent/neutral, font-mono) ne subsiste dans src/.
+ * Appelé par : Vitest.
+ * Suppression casserait : la détection d'un retour accidentel des anciens tokens de design.
+ */
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
