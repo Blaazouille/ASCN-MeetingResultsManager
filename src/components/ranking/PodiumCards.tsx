@@ -44,7 +44,9 @@ export function PodiumCards({ results }: PodiumCardsProps): JSX.Element | null {
                 {placeLabel(team.rank)}
               </span>
             </div>
-            <span className="break-words text-lg font-semibold">{team.club}</span>
+            {/* min-h reserves space for 2 lines at text-lg (1.75rem × 2 = 3.5rem) so the points row
+                below stays aligned across cards whether the club name wraps to 1 or 2 lines. */}
+            <span className="line-clamp-2 min-h-[3.5rem] break-words text-lg font-semibold">{team.club}</span>
             <div className="flex flex-wrap items-baseline gap-2">
               <span
                 className={cn(
