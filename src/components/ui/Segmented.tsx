@@ -16,7 +16,6 @@ export interface SegmentedProps<T extends string | number> {
   options: ReadonlyArray<SegmentedOption<T>>;
   value: T;
   onChange: (value: T) => void;
-  hideLabel?: boolean;
 }
 
 export function Segmented<T extends string | number>({
@@ -24,15 +23,12 @@ export function Segmented<T extends string | number>({
   options,
   value,
   onChange,
-  hideLabel = false,
 }: SegmentedProps<T>): JSX.Element {
   return (
     <div className="flex items-center gap-3">
-      {!hideLabel && (
-        <span className="text-sm font-semibold text-ink-soft" aria-hidden>
-          {label}
-        </span>
-      )}
+      <span className="text-sm font-semibold text-ink-soft" aria-hidden>
+        {label}
+      </span>
       <div role="group" aria-label={label} className="inline-flex gap-1 rounded-md bg-surface-sunken p-1">
         {options.map((option) => {
           const selected = option.value === value;
