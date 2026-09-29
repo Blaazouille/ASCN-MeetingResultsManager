@@ -3,10 +3,11 @@
  * Appelé par : HomePage.tsx.
  * Suppression casserait : la suppression de meeting depuis l'Accueil (le bouton corbeille n'ouvrirait plus rien).
  */
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
 import { isDeleteConfirmed, resultCountLabel } from '@/lib/ui-labels';
+import { useModalKeyboard } from '@/hooks/use-modal-keyboard';
 import { Button } from '@/components/ui/Button';
 
 export interface DeleteMeetingDialogProps {
@@ -21,29 +22,28 @@ export function DeleteMeetingDialog({ meeting, onConfirm, onCancel }: DeleteMeet
   const [step, setStep] = useState<Step>('warning');
   const [typed, setTyped] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Escape cancels at either step; disabled while deleting so the request is never orphaned mid-flight.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && !isDeleting) onCancel();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isDeleting, onCancel]);
+  // Escape is disabled while deleting so the request is never orphaned mid-flight.
+  useModalKeyboard(dialogRef, onCancel, !isDeleting);
 
   const confirmDelete = async (): Promise<void> => {
     setIsDeleting(true);
+    setErrorMessage(null);
     try {
       await onConfirm();
-    } catch {
-      // The error is surfaced by useMeeting on the Accueil; re-enable so the user can retry or cancel.
+    } catch (err) {
+      // Shown here because the page-level error sits behind the backdrop; re-enable so the user can retry or cancel.
+      setErrorMessage(err instanceof Error ? err.message : String(err));
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-6">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="delete-meeting-title"
@@ -76,8 +76,15 @@ export function DeleteMeetingDialog({ meeting, onConfirm, onCancel }: DeleteMeet
           </label>
         )}
 
+        {errorMessage && (
+          <p role="alert" className="text-sm font-semibold text-error">
+            La suppression a échoué&nbsp;: {errorMessage}
+          </p>
+        )}
+
         <div className="flex justify-end gap-3">
-          <Button onClick={onCancel} disabled={isDeleting}>
+          {/* Safe default: Enter/Space on step 1 cancels rather than advances. */}
+          <Button autoFocus={step === 'warning'} onClick={onCancel} disabled={isDeleting}>
             Annuler
           </Button>
           {step === 'warning' ? (
@@ -89,7 +96,7 @@ export function DeleteMeetingDialog({ meeting, onConfirm, onCancel }: DeleteMeet
               type="button"
               onClick={() => void confirmDelete()}
               disabled={isDeleting || !isDeleteConfirmed(typed, meeting.name)}
-              className="inline-flex h-11 items-center justify-center rounded-sm bg-error px-5 text-[15px] font-semibold text-white transition-colors hover:bg-error/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-sm bg-error px-5 text-[15px] font-semibold text-on-marine transition-colors hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Supprimer définitivement
             </button>
