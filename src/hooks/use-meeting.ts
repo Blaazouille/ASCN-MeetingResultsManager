@@ -14,6 +14,7 @@ export interface UseMeetingResult {
   refresh: () => Promise<void>;
   createMeeting: (input: MeetingInput) => Promise<Meeting>;
   updateMeeting: (id: number, input: Partial<MeetingInput>) => Promise<Meeting>;
+  deleteMeeting: (id: number) => Promise<void>;
   selectMeeting: (id: number | null) => void;
 }
 
@@ -71,11 +72,24 @@ export function useMeeting(): UseMeetingResult {
     }
   }, []);
 
+  const deleteMeeting = useCallback(async (id: number): Promise<void> => {
+    try {
+      await window.electronAPI.deleteMeeting(id);
+      // currentMeeting is derived from this list, so removing the open meeting
+      // also closes it: no separate reset of currentMeetingId needed.
+      setMeetings((current) => current.filter((existing) => existing.id !== id));
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  }, []);
+
   const selectMeeting = useCallback((id: number | null): void => {
     setCurrentMeetingId(id);
   }, []);
 
   const currentMeeting = meetings.find((meeting) => meeting.id === currentMeetingId) ?? null;
 
-  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, updateMeeting, selectMeeting };
+  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, updateMeeting, deleteMeeting, selectMeeting };
 }

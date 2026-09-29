@@ -17,7 +17,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 - `PageHeader` en tête.
 - Carte « Reprendre » (`ResumeMeetingCard`, fond `marine`) mettant en avant le dernier meeting ouvert, avec accès direct à l'import ou au classement.
-- Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `StatusBadge` et nombre de résultats — `resultCountLabel`) et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
+- Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `StatusBadge` et nombre de résultats — `resultCountLabel` — et un bouton corbeille qui ouvre `DeleteMeetingDialog` : avertissement, puis saisie du nom exact du meeting pour activer « Supprimer définitivement ») et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
 - Seul le nom du meeting est demandé à la création (pas de date ni de lieu — retirés du modèle de données ; la carte affiche la date de création à titre indicatif).
 - Clic sur une carte existante ou sur « Reprendre » navigue vers Import ou Classement selon l'état du meeting.
 

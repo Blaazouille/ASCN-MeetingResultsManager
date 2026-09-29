@@ -9,6 +9,7 @@ import {
   categoryShortLabel,
   countedSummary,
   formatGap,
+  isDeleteConfirmed,
   leaderRatio,
   meetingBadgeStatus,
   placeLabel,
@@ -104,5 +105,24 @@ describe('categoryShortLabel', () => {
 
   it('keeps a category without the prefix unchanged', () => {
     expect(categoryShortLabel('Relais')).toBe('Relais');
+  });
+});
+
+describe('isDeleteConfirmed', () => {
+  it('accepts the exact meeting name', () => {
+    expect(isDeleteConfirmed('Meeting de la Mer', 'Meeting de la Mer')).toBe(true);
+  });
+
+  it('ignores spaces around the typed name', () => {
+    expect(isDeleteConfirmed('  Meeting de la Mer ', 'Meeting de la Mer')).toBe(true);
+  });
+
+  it('rejects a different case, so the volunteer has to read the name', () => {
+    expect(isDeleteConfirmed('meeting de la mer', 'Meeting de la Mer')).toBe(false);
+  });
+
+  it('rejects an empty entry, even for an empty meeting name', () => {
+    expect(isDeleteConfirmed('', 'Meeting de la Mer')).toBe(false);
+    expect(isDeleteConfirmed('  ', '')).toBe(false);
   });
 });
