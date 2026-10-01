@@ -15,6 +15,8 @@ export interface MeetingBackup {
   name: string;
   createdAt: string;
   updatedAt: string;
+  /** Optional: backups made before v1.3 don't have it (restored as "never imported"). */
+  lastImportedAt?: string | null;
   defaultTopN: number;
   minSwimmers: number;
   activeCategories: string[] | null;
@@ -85,6 +87,9 @@ export function validateBackup(data: unknown): BackupData {
     // message. A legacy `status` field in older backups is simply ignored.
     if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
       throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
+    }
+    if (m.lastImportedAt !== undefined && m.lastImportedAt !== null && typeof m.lastImportedAt !== 'string') {
+      throw new Error('Format de backup invalide : meeting.lastImportedAt doit être null ou une string');
     }
     if (typeof m.defaultTopN !== 'number' || typeof m.minSwimmers !== 'number') {
       throw new Error('Format de backup invalide : meeting.defaultTopN et meeting.minSwimmers doivent être des nombres');

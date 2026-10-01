@@ -29,6 +29,7 @@ interface MeetingRow {
   name: string;
   created_at: string;
   updated_at: string;
+  last_imported_at: string | null;
   default_top_n: number;
   min_swimmers: number;
   active_categories: string | null;
@@ -77,6 +78,7 @@ export function exportDatabase(db: Database.Database): BackupData {
       name: m.name,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
+      lastImportedAt: m.last_imported_at,
       defaultTopN: m.default_top_n,
       minSwimmers: m.min_swimmers,
       activeCategories: m.active_categories ? (JSON.parse(m.active_categories) as string[]) : null,
@@ -126,8 +128,8 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
   // Prepared once outside the per-meeting loop below and reused via .run(),
   // instead of being recompiled on every iteration for identical SQL text.
   const insertMeeting = db.prepare(
-    `INSERT INTO meeting (name, created_at, updated_at, default_top_n, min_swimmers, active_categories)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO meeting (name, created_at, updated_at, last_imported_at, default_top_n, min_swimmers, active_categories)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   );
   // ON CONFLICT mirrors insertSwimmerResults in db.ts: a freshly-restored
   // meeting never has real duplicates, but a hand-edited/corrupted backup
@@ -160,6 +162,8 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
         meeting.name,
         meeting.createdAt,
         meeting.updatedAt,
+        // `?? null`: better-sqlite3 refuses `undefined`, and older backups omit the field.
+        meeting.lastImportedAt ?? null,
         meeting.defaultTopN,
         meeting.minSwimmers,
         meeting.activeCategories ? JSON.stringify(meeting.activeCategories) : null
