@@ -82,6 +82,11 @@ describe('formatMeetingImportedAt', () => {
     // 10:30 UTC stays on the 27th for local timezones from UTC-10 to UTC+13.
     const formatted = formatMeetingImportedAt({ ...base, lastImportedAt: '2026-09-27 10:30:00' });
 
-    expect(formatted).toMatch(/^27\s+sept\.?\s+2026 à \d{2} h \d{2}$/);
+    // The expected time is the same instant read in the test machine's timezone,
+    // so a wrong UTC-to-local conversion fails here. Non-breaking spaces around "h".
+    const local = new Date('2026-09-27T10:30:00Z');
+    const hh = String(local.getHours()).padStart(2, '0');
+    const mm = String(local.getMinutes()).padStart(2, '0');
+    expect(formatted).toMatch(new RegExp(`^27\\s+sept\\.?\\s+2026 à ${hh}\\u00a0h\\u00a0${mm}$`));
   });
 });

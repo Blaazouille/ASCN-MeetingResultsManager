@@ -95,7 +95,10 @@ export function validateBackup(data: unknown): BackupData {
       m.lastImportedAt !== null &&
       (typeof m.lastImportedAt !== 'string' || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(m.lastImportedAt))
     ) {
-      throw new Error('Format de backup invalide : meeting.lastImportedAt doit être null ou une date « AAAA-MM-JJ HH:MM:SS »');
+      //   = non-breaking space, required before ":" and inside « » by the project's French typography rules.
+      throw new Error(
+        'Format de backup invalide : meeting.lastImportedAt doit être null ou une date « AAAA-MM-JJ HH:MM:SS »'
+      );
     }
     if (typeof m.defaultTopN !== 'number' || typeof m.minSwimmers !== 'number') {
       throw new Error('Format de backup invalide : meeting.defaultTopN et meeting.minSwimmers doivent être des nombres');

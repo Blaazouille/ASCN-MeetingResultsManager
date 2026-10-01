@@ -53,7 +53,9 @@ export interface SwimmerRowsSummary {
  * Summarizes a set of swimmer rows the same way parseCsv() does (distinct
  * categories in first-appearance order, distinct clubs, distinct swimmers
  * by lastname+firstname+birthyear+club) — usable on rows loaded back from
- * the database, not just on a freshly parsed file.
+ * the database, not just on a freshly parsed file. The club and swimmer
+ * counts shown on Accueil are computed in SQL (SELECT_MEETING in db.ts) with
+ * the same rules: keep both in sync.
  */
 export function summarizeSwimmerRows(rows: RawSwimmerRow[]): SwimmerRowsSummary {
   const categories: string[] = [];

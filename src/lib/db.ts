@@ -66,7 +66,9 @@ function rowToMeeting(row: MeetingRow): Meeting {
 // tell "à importer" from "importé" and show clubs/swimmers without loading the
 // rows themselves. A swimmer has one row per category, so swimmer_count
 // counts distinct identities: COUNT(DISTINCT a, b) isn't valid SQLite, hence
-// the concatenation (birthyear can be NULL, hence the IFNULL).
+// the concatenation (birthyear can be NULL, hence the IFNULL). The identity
+// (lastname|firstname|birthyear|club) and the blank-club rule must stay in sync
+// with summarizeSwimmerRows in csv-parser.ts, or Accueil and Import disagree.
 const SELECT_MEETING = `
   SELECT m.*,
     (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count,

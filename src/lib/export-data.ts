@@ -44,9 +44,10 @@ export function formatMeetingImportedAt(meeting: Meeting): string | null {
   const at = parseSqliteTimestamp(meeting.lastImportedAt);
   // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
   const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
-  const hours = parts.find((p) => p.type === 'hour')?.value;
-  const minutes = parts.find((p) => p.type === 'minute')?.value;
-  return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
+  const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const minutes = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  // Non-breaking spaces keep "14 h 32" on one line when the card wraps.
+  return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
 
 /** Builds the print/export metadata from the persisted meeting record. */
