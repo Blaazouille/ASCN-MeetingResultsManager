@@ -74,7 +74,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
 
         <View style={styles.footer}>
           <Text>Calculé le {meta.computedAt}</Text>
-          <Text>{meta.status.toUpperCase()}</Text>
         </View>
       </Page>
     </Document>

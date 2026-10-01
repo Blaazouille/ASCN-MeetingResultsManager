@@ -1,13 +1,13 @@
 /**
- * Responsabilité : ligne résumant un meeting (nom, date de création, nombre de résultats, statut) sur l'Accueil, avec ouverture et suppression.
+ * Responsabilité : ligne résumant un meeting (nom, date de création, nombre de résultats, pastille « À importer ») sur l'Accueil, avec ouverture et suppression.
  * Appelé par : MeetingList.tsx.
  * Suppression casserait : l'affichage de la liste des meetings.
  */
 import { ChevronRight, Trash2 } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
 import { formatMeetingCreatedAt } from '@/lib/export-data';
-import { meetingBadgeStatus, resultCountLabel } from '@/lib/ui-labels';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { resultCountLabel } from '@/lib/ui-labels';
+import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
 
 export interface MeetingCardProps {
   meeting: Meeting;
@@ -31,7 +31,7 @@ export function MeetingCard({ meeting, onOpen, onDelete }: MeetingCardProps): JS
             Créé le {formatMeetingCreatedAt(meeting)} · {resultCountLabel(meeting.resultCount)}
           </span>
         </span>
-        <StatusBadge status={meetingBadgeStatus(meeting)} />
+        {meeting.resultCount === 0 && <ImportPendingBadge />}
         <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
       </button>
       <button

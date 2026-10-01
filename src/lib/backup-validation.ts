@@ -13,7 +13,6 @@ export interface BackupData {
 
 export interface MeetingBackup {
   name: string;
-  status: string;
   createdAt: string;
   updatedAt: string;
   defaultTopN: number;
@@ -80,13 +79,10 @@ export function validateBackup(data: unknown): BackupData {
       throw new Error('Format de backup invalide : meeting.swimmers doit être un tableau');
     }
 
-    // These fields are bound directly into SQL by restoreDatabase (including
-    // a `status` CHECK constraint), so a missing/malformed one would
-    // otherwise surface as a raw, untranslated better-sqlite3/SQLite error in
-    // the UI instead of this French validation message.
-    if (m.status !== 'provisional' && m.status !== 'final') {
-      throw new Error('Format de backup invalide : meeting.status doit être "provisional" ou "final"');
-    }
+    // These fields are bound directly into SQL by restoreDatabase, so a
+    // missing/malformed one would otherwise surface as a raw, untranslated
+    // better-sqlite3/SQLite error in the UI instead of this French validation
+    // message. A legacy `status` field in older backups is simply ignored.
     if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
       throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
     }

@@ -27,7 +27,6 @@ export function formatBackupTimestamp(): string {
 interface MeetingRow {
   id: number;
   name: string;
-  status: string;
   created_at: string;
   updated_at: string;
   default_top_n: number;
@@ -76,7 +75,6 @@ export function exportDatabase(db: Database.Database): BackupData {
 
     return {
       name: m.name,
-      status: m.status,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
       defaultTopN: m.default_top_n,
@@ -128,8 +126,8 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
   // Prepared once outside the per-meeting loop below and reused via .run(),
   // instead of being recompiled on every iteration for identical SQL text.
   const insertMeeting = db.prepare(
-    `INSERT INTO meeting (name, status, created_at, updated_at, default_top_n, min_swimmers, active_categories)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO meeting (name, created_at, updated_at, default_top_n, min_swimmers, active_categories)
+     VALUES (?, ?, ?, ?, ?, ?)`
   );
   // ON CONFLICT mirrors insertSwimmerResults in db.ts: a freshly-restored
   // meeting never has real duplicates, but a hand-edited/corrupted backup
@@ -160,7 +158,6 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
 
       const row = insertMeeting.run(
         meeting.name,
-        meeting.status,
         meeting.createdAt,
         meeting.updatedAt,
         meeting.defaultTopN,

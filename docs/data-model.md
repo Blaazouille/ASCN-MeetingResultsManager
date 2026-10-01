@@ -8,7 +8,6 @@
 CREATE TABLE IF NOT EXISTS meeting (
   id                 INTEGER PRIMARY KEY AUTOINCREMENT,
   name               TEXT NOT NULL,
-  status             TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
   created_at         TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at         TEXT NOT NULL DEFAULT (datetime('now')),
   default_top_n      INTEGER NOT NULL DEFAULT 5,      -- ajouté en migration user_version 2
@@ -49,17 +48,14 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 ```
 
-`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `3` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel — la migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `4` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage — chaque migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
 ```typescript
-type MeetingStatus = 'provisional' | 'final';
-
 interface Meeting {
   id: number;
   name: string;
-  status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
   defaultTopN: number;
@@ -70,7 +66,6 @@ interface Meeting {
 
 interface MeetingInput {
   name: string;
-  status?: MeetingStatus;
   defaultTopN?: number;
   minSwimmers?: number;
   activeCategories?: string[] | null;
@@ -131,7 +126,6 @@ interface BackupData {
 
 interface MeetingBackup {
   name: string;
-  status: string;
   createdAt: string;
   updatedAt: string;
   defaultTopN: number;          // Règle de calcul : top N par défaut

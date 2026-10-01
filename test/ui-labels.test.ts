@@ -1,5 +1,5 @@
 /**
- * Responsabilité : tests des fonctions de formatage textuel (libellés, écarts, statuts) de ui-labels.ts.
+ * Responsabilité : tests des fonctions de formatage textuel (libellés, écarts) de ui-labels.ts.
  * Appelé par : Vitest.
  * Suppression casserait : la couverture de ui-labels.ts.
  */
@@ -11,7 +11,6 @@ import {
   formatGap,
   isDeleteConfirmed,
   leaderRatio,
-  meetingBadgeStatus,
   placeLabel,
   resultCountLabel,
 } from '../src/lib/ui-labels';
@@ -83,17 +82,6 @@ describe('resultCountLabel', () => {
     expect(resultCountLabel(0)).toBe('Aucun résultat importé');
     expect(resultCountLabel(1)).toBe('1 résultat importé');
     expect(resultCountLabel(1422)).toBe(`1${NBSP}422 résultats importés`);
-  });
-});
-
-describe('meetingBadgeStatus', () => {
-  it('reads "pending" while nothing is imported, whatever the status', () => {
-    expect(meetingBadgeStatus({ status: 'final', resultCount: 0 })).toBe('pending');
-  });
-
-  it('reads the meeting status once results exist', () => {
-    expect(meetingBadgeStatus({ status: 'provisional', resultCount: 422 })).toBe('provisional');
-    expect(meetingBadgeStatus({ status: 'final', resultCount: 422 })).toBe('final');
   });
 });
 

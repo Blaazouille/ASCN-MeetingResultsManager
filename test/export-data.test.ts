@@ -20,11 +20,10 @@ describe('slugifyCategory', () => {
 });
 
 describe('buildPrintMeta', () => {
-  it('maps the meeting name and provisional status', () => {
+  it('maps the meeting name and a computation timestamp', () => {
     const meta = buildPrintMeta({
       id: 1,
       name: 'Meeting de la Mer 2026',
-      status: 'provisional',
       createdAt: '2026-01-01 00:00:00',
       updatedAt: '2026-01-01 00:00:00',
       defaultTopN: 5,
@@ -34,24 +33,7 @@ describe('buildPrintMeta', () => {
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
-    expect(meta.status).toBe('Provisoire');
     expect(meta.computedAt.length).toBeGreaterThan(0);
-  });
-
-  it('maps a final meeting to "Définitif"', () => {
-    const meta = buildPrintMeta({
-      id: 2,
-      name: 'Meeting de la Mer 2026',
-      status: 'final',
-      createdAt: '2026-01-01 00:00:00',
-      updatedAt: '2026-01-01 00:00:00',
-      defaultTopN: 5,
-      minSwimmers: 0,
-      activeCategories: null,
-      resultCount: 0,
-    });
-
-    expect(meta.status).toBe('Définitif');
   });
 });
 
@@ -60,7 +42,6 @@ describe('formatMeetingCreatedAt', () => {
     const formatted = formatMeetingCreatedAt({
       id: 1,
       name: 'Meeting de la Mer 2026',
-      status: 'provisional',
       createdAt: '2026-11-16 12:00:00',
       updatedAt: '2026-11-16 12:00:00',
       defaultTopN: 5,

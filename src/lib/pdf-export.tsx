@@ -68,7 +68,6 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
 
         <View style={styles.footer}>
           <Text>Calculé le {meta.computedAt}</Text>
-          <Text>{meta.status.toUpperCase()}</Text>
         </View>
       </Page>
     </Document>

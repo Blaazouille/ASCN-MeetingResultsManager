@@ -4,11 +4,10 @@
  * Suppression casserait : l'écran de paramètres.
  */
 import { useState, type FormEvent } from 'react';
-import type { Meeting, MeetingInput, MeetingStatus } from '@/lib/db';
+import type { Meeting, MeetingInput } from '@/lib/db';
 import { ALL_CATEGORIES } from '@/lib/ranking-engine';
 import { TOP_N_OPTIONS, type TopN } from '@/hooks/use-ranking';
 import { cn } from '@/lib/utils';
-import { Segmented, type SegmentedOption } from '@/components/ui/Segmented';
 import { Button } from '@/components/ui/Button';
 import { categoryShortLabel } from '@/lib/ui-labels';
 
@@ -19,14 +18,8 @@ export interface SettingsFormProps {
 
 const DEFAULT_TOP_N: TopN = 5;
 
-const STATUS_OPTIONS: ReadonlyArray<SegmentedOption<MeetingStatus>> = [
-  { value: 'provisional', label: 'Provisoire' },
-  { value: 'final', label: 'Définitif' },
-] as const;
-
 export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Element {
   const [name, setName] = useState(meeting.name);
-  const [status, setStatus] = useState<MeetingStatus>(meeting.status);
   const [defaultTopN, setDefaultTopN] = useState<TopN>(
     (TOP_N_OPTIONS as readonly number[]).includes(meeting.defaultTopN) ? (meeting.defaultTopN as TopN) : DEFAULT_TOP_N
   );
@@ -68,7 +61,6 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
     try {
       await onSave({
         name,
-        status,
         defaultTopN,
         minSwimmers: minSwimmers === '' ? 0 : Number(minSwimmers),
         activeCategories: activeCategories.length === ALL_CATEGORIES.length ? null : activeCategories,
@@ -102,15 +94,6 @@ export function SettingsForm({ meeting, onSave }: SettingsFormProps): JSX.Elemen
               className="mt-1.5 h-11 w-full rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
             />
           </div>
-          <Segmented
-            label="Statut"
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(next) => {
-              setStatus(next);
-              setSavedAt(null);
-            }}
-          />
         </div>
 
         <div className="space-y-4 rounded-lg bg-surface-raised p-6 shadow-card">

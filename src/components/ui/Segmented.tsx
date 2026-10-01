@@ -1,7 +1,7 @@
 /**
- * Responsabilité : sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés, statut).
- * Appelé par : CategoryTabs.tsx, RankingToolbar.tsx, SettingsForm.tsx.
- * Suppression casserait : le choix de la catégorie, du nombre de nageurs comptés et du statut.
+ * Responsabilité : sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés).
+ * Appelé par : CategoryTabs.tsx, RankingToolbar.tsx.
+ * Suppression casserait : le choix de la catégorie, du nombre de nageurs comptés.
  */
 import { cn } from '@/lib/utils';
 

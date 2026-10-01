@@ -117,7 +117,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/              # DropZone
 │   │   ├── ranking/             # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
 │   │   ├── settings/            # SettingsForm
-│   │   └── ui/                   # Button, Segmented, SearchField, StatusBadge, RankChip, ClubTag
+│   │   └── ui/                   # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
 │   ├── pages/
 │   │   ├── HomePage.tsx
 │   │   ├── ImportPage.tsx
