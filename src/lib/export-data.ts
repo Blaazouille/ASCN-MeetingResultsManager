@@ -42,7 +42,10 @@ export function formatMeetingCreatedAt(meeting: Meeting): string {
 export function formatMeetingImportedAt(meeting: Meeting): string | null {
   if (meeting.lastImportedAt === null) return null;
   const at = parseSqliteTimestamp(meeting.lastImportedAt);
-  const [hours, minutes] = IMPORT_TIME_FORMATTER.format(at).split(':');
+  // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
+  const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
+  const hours = parts.find((p) => p.type === 'hour')?.value;
+  const minutes = parts.find((p) => p.type === 'minute')?.value;
   return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
 

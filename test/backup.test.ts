@@ -284,4 +284,11 @@ describe('lastImportedAt in backups', () => {
 
     expect(() => validateBackup(backup)).toThrow('lastImportedAt');
   });
+
+  it('rejects a lastImportedAt string that is not a SQLite timestamp', () => {
+    const backup = JSON.parse(JSON.stringify(exportDatabase(importedDb()))) as { meetings: Array<Record<string, unknown>> };
+    backup.meetings[0]!.lastImportedAt = 'hier';
+
+    expect(() => validateBackup(backup)).toThrow('lastImportedAt');
+  });
 });

@@ -88,8 +88,14 @@ export function validateBackup(data: unknown): BackupData {
     if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
       throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
     }
-    if (m.lastImportedAt !== undefined && m.lastImportedAt !== null && typeof m.lastImportedAt !== 'string') {
-      throw new Error('Format de backup invalide : meeting.lastImportedAt doit être null ou une string');
+    // Same "YYYY-MM-DD HH:MM:SS" shape SQLite writes: formatMeetingImportedAt turns it into a
+    // Date on every Accueil render, and an unparsable string would throw there.
+    if (
+      m.lastImportedAt !== undefined &&
+      m.lastImportedAt !== null &&
+      (typeof m.lastImportedAt !== 'string' || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(m.lastImportedAt))
+    ) {
+      throw new Error('Format de backup invalide : meeting.lastImportedAt doit être null ou une date « AAAA-MM-JJ HH:MM:SS »');
     }
     if (typeof m.defaultTopN !== 'number' || typeof m.minSwimmers !== 'number') {
       throw new Error('Format de backup invalide : meeting.defaultTopN et meeting.minSwimmers doivent être des nombres');

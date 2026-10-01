@@ -120,6 +120,15 @@ describe('clubCount and swimmerCount', () => {
     expect(loaded.clubCount).toBe(2);
   });
 
+  it('do not count a blank club as a club (same rule as the CSV import summary)', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'M' });
+
+    insertSwimmerResults(db, meeting.id, [row({ lastname: 'A', club: 'CLUB X' }), row({ lastname: 'B', club: '' })]);
+
+    expect(firstMeeting(db).clubCount).toBe(1);
+  });
+
   it('tell homonyms apart by birth year and by club', () => {
     const db = createDatabase(':memory:');
     const meeting = createMeeting(db, { name: 'M' });

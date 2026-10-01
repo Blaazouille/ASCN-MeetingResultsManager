@@ -70,7 +70,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
 const SELECT_MEETING = `
   SELECT m.*,
     (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count,
-    (SELECT COUNT(DISTINCT s.club) FROM swimmer_result s WHERE s.meeting_id = m.id) AS club_count,
+    (SELECT COUNT(DISTINCT NULLIF(s.club, '')) FROM swimmer_result s WHERE s.meeting_id = m.id) AS club_count,
     (SELECT COUNT(DISTINCT s.lastname || '|' || s.firstname || '|' || IFNULL(s.birthyear, '') || '|' || s.club)
        FROM swimmer_result s WHERE s.meeting_id = m.id) AS swimmer_count
   FROM meeting m`;
