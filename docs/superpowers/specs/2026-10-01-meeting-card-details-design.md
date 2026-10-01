@@ -52,7 +52,7 @@ Ajoute `lastImportedAt: string | null`, `clubCount: number`, `swimmerCount: numb
 - Meeting importé avant la migration (`lastImportedAt` NULL, `resultCount > 0`) : stats affichées, pas de ligne d'import.
 
 ### `ResumeMeetingCard` (carte « Reprendre »)
-Remplace `resultCountLabel` par `38 clubs · 412 nageurs · import du 27 sept. à 14 h 32` (couleurs `on-marine`). Même règles de masquage.
+Remplace `resultCountLabel` par `38 clubs · 412 nageurs · Dernier import le 27 sept. 2026 à 14 h 32` (couleurs `on-marine`). Même règles de masquage.
 
 ### Hors périmètre
 Barre latérale (`SidebarMeetingCard`), écran Import, dialogue de suppression : inchangés. Le dialogue de suppression et l'écran Import gardent `resultCountLabel`.

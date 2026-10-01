@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS meeting (
   updated_at         TEXT NOT NULL DEFAULT (datetime('now')),
   default_top_n      INTEGER NOT NULL DEFAULT 5,      -- ajouté en migration user_version 2
   min_swimmers       INTEGER NOT NULL DEFAULT 0,       -- ajouté en migration user_version 2
-  active_categories  TEXT                              -- ajouté en migration user_version 2 (JSON, NULL = toutes actives)
+  active_categories  TEXT,                             -- ajouté en migration user_version 2 (JSON, NULL = toutes actives)
+  last_imported_at   TEXT                              -- ajouté en migration user_version 5 (NULL = jamais importé)
 );
 
 CREATE TABLE IF NOT EXISTS swimmer_result (
@@ -48,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, ca
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 ```
 
-`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `4` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage — chaque migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `5` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage ; `5` a ajouté `last_imported_at` (date du dernier import CSV, posée par `insertSwimmerResults` ; NULL jusqu'au prochain import pour les meetings existants) — chaque migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
@@ -62,6 +63,9 @@ interface Meeting {
   minSwimmers: number;
   activeCategories: string[] | null; // null = toutes les catégories présentes sont actives
   resultCount: number; // nombre de lignes swimmer_result du meeting ; 0 = rien importé pour l'instant
+  lastImportedAt: string | null; // timestamp SQLite (UTC) du dernier import CSV ; null = jamais importé
+  clubCount: number;             // clubs distincts parmi les résultats importés
+  swimmerCount: number;          // nageurs distincts (un nageur présent dans plusieurs catégories compte une fois)
 }
 
 interface MeetingInput {
@@ -128,6 +132,7 @@ interface MeetingBackup {
   name: string;
   createdAt: string;
   updatedAt: string;
+  lastImportedAt?: string | null;  // absent des anciennes sauvegardes, restauré comme « jamais importé »
   defaultTopN: number;          // Règle de calcul : top N par défaut
   minSwimmers: number;          // Règle de calcul : seuil minimum
   activeCategories: string[] | null;  // Règle de calcul : catégories actives
