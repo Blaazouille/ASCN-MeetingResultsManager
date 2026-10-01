@@ -57,3 +57,13 @@ export function meetingBadgeStatus(meeting: Pick<Meeting, 'status' | 'resultCoun
 export function categoryShortLabel(category: string): string {
   return category.replace(/^Classement\s+/i, '');
 }
+
+/**
+ * Step 2 of the delete confirmation: the typed text must match the meeting name.
+ * Case-sensitive on purpose (it forces reading the name); trimmed because a stray
+ * space is not a reason to block a deliberate action. An empty entry never matches.
+ */
+export function isDeleteConfirmed(typed: string, meetingName: string): boolean {
+  const entry = typed.trim();
+  return entry !== '' && entry === meetingName.trim();
+}

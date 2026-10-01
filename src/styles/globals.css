@@ -50,6 +50,8 @@
   --color-surface-sunken: #eef2f6;
   --color-surface-header: #f7f9fb;
   --color-success-bright: #22c55e;
+  /* Modal backdrop: Tailwind 3 cannot apply an /opacity modifier to var() colors, so the alpha lives in the token. */
+  --color-overlay: rgba(26, 35, 50, 0.5);
   --shadow-raised: 0 8px 24px rgba(10, 54, 99, 0.22);
   --shadow-segment: 0 1px 3px rgba(10, 54, 99, 0.18);
 

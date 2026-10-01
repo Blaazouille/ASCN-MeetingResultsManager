@@ -3,10 +3,12 @@
  * Appelé par : App.tsx (route index).
  * Suppression casserait : l'écran d'accueil de l'application.
  */
+import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import type { Meeting } from '@/lib/db';
+import { DeleteMeetingDialog } from '@/components/meeting/DeleteMeetingDialog';
 import { MeetingForm } from '@/components/meeting/MeetingForm';
 import { MeetingList } from '@/components/meeting/MeetingList';
 import { ResumeMeetingCard } from '@/components/meeting/ResumeMeetingCard';
@@ -16,6 +18,7 @@ const STEPS = ['Créer le meeting', "Importer le CSV exporté d'extraNat", 'Cons
 export default function HomePage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
   const navigate = useNavigate();
+  const [meetingToDelete, setMeetingToDelete] = useState<Meeting | null>(null);
   // getAllMeetings returns meetings by id DESC: the first one is the most recent.
   const latest = meetingState.meetings[0];
 
@@ -48,7 +51,11 @@ export default function HomePage(): JSX.Element {
           {meetingState.isLoading ? (
             <p className="text-[15px] text-ink-muted">Chargement des meetings…</p>
           ) : (
-            <MeetingList meetings={meetingState.meetings} onOpen={(meeting) => openAt(meeting, '/classement')} />
+            <MeetingList
+              meetings={meetingState.meetings}
+              onOpen={(meeting) => openAt(meeting, '/classement')}
+              onDelete={setMeetingToDelete}
+            />
           )}
         </section>
 
@@ -75,6 +82,17 @@ export default function HomePage(): JSX.Element {
           </ol>
         </section>
       </div>
+
+      {meetingToDelete && (
+        <DeleteMeetingDialog
+          meeting={meetingToDelete}
+          onCancel={() => setMeetingToDelete(null)}
+          onConfirm={async () => {
+            await meetingState.deleteMeeting(meetingToDelete.id);
+            setMeetingToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }

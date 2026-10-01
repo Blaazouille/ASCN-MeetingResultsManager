@@ -9,9 +9,10 @@ import { MeetingCard } from './MeetingCard';
 export interface MeetingListProps {
   meetings: Meeting[];
   onOpen: (meeting: Meeting) => void;
+  onDelete: (meeting: Meeting) => void;
 }
 
-export function MeetingList({ meetings, onOpen }: MeetingListProps): JSX.Element {
+export function MeetingList({ meetings, onOpen, onDelete }: MeetingListProps): JSX.Element {
   if (meetings.length === 0) {
     return (
       <p className="rounded-lg bg-surface-raised p-5 text-[15px] text-ink-muted shadow-card">
@@ -24,7 +25,7 @@ export function MeetingList({ meetings, onOpen }: MeetingListProps): JSX.Element
     <ul className="divide-y divide-line overflow-hidden rounded-lg bg-surface-raised shadow-card">
       {meetings.map((meeting) => (
         <li key={meeting.id}>
-          <MeetingCard meeting={meeting} onOpen={onOpen} />
+          <MeetingCard meeting={meeting} onOpen={onOpen} onDelete={onDelete} />
         </li>
       ))}
     </ul>

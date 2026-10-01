@@ -53,6 +53,7 @@ export default {
           soft: 'var(--color-ink-soft)',
           muted: 'var(--color-ink-muted)',
         },
+        overlay: 'var(--color-overlay)',
         line: {
           DEFAULT: 'var(--color-line)',
           strong: 'var(--color-line-strong)',
