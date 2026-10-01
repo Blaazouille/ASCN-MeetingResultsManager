@@ -30,6 +30,7 @@ describe('buildPrintMeta', () => {
       minSwimmers: 0,
       activeCategories: null,
       resultCount: 0,
+      lastImportedAt: null,
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
@@ -48,6 +49,7 @@ describe('formatMeetingCreatedAt', () => {
       minSwimmers: 0,
       activeCategories: null,
       resultCount: 0,
+      lastImportedAt: null,
     });
 
     expect(formatted).toMatch(/16 novembre 2026/);

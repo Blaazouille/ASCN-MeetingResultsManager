@@ -17,6 +17,8 @@ export interface Meeting {
   activeCategories: string[] | null;
   /** Number of swimmer_result rows (one per swimmer per category); 0 = nothing imported yet. */
   resultCount: number;
+  /** SQLite UTC timestamp of the last CSV import; null = never imported. */
+  lastImportedAt: string | null;
 }
 
 export interface MeetingInput {
@@ -35,6 +37,7 @@ interface MeetingRow {
   min_swimmers: number;
   active_categories: string | null;
   result_count: number;
+  last_imported_at: string | null;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -47,6 +50,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
     minSwimmers: row.min_swimmers,
     activeCategories: row.active_categories ? (JSON.parse(row.active_categories) as string[]) : null,
     resultCount: row.result_count,
+    lastImportedAt: row.last_imported_at,
   };
 }
 
@@ -156,6 +160,7 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
     'SELECT id, category, lastname, firstname, birthyear, club FROM swimmer_result WHERE meeting_id = ? AND category = ?'
   );
   const deleteById = db.prepare('DELETE FROM swimmer_result WHERE id = ?');
+  const stampImport = db.prepare("UPDATE meeting SET last_imported_at = datetime('now') WHERE id = ?");
 
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
     for (const row of rowsToInsert) {
@@ -203,6 +208,8 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
         }
       }
     }
+    // Inside the transaction: a failed import rolls the date back with the rows.
+    stampImport.run(meetingId);
   });
   insertAll(rows);
 }
