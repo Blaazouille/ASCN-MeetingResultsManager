@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, formatMeetingCreatedAt, slugifyCategory } from '../src/lib/export-data';
+import { buildPrintMeta, formatMeetingCreatedAt, formatMeetingImportedAt, slugifyCategory } from '../src/lib/export-data';
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {
@@ -57,5 +57,31 @@ describe('formatMeetingCreatedAt', () => {
     });
 
     expect(formatted).toMatch(/16 novembre 2026/);
+  });
+});
+
+describe('formatMeetingImportedAt', () => {
+  const base = {
+    id: 1,
+    name: 'Meeting de la Mer 2026',
+    createdAt: '2026-01-01 00:00:00',
+    updatedAt: '2026-01-01 00:00:00',
+    defaultTopN: 5,
+    minSwimmers: 0,
+    activeCategories: null,
+    resultCount: 0,
+    clubCount: 0,
+    swimmerCount: 0,
+  };
+
+  it('is null when the meeting was never imported', () => {
+    expect(formatMeetingImportedAt({ ...base, lastImportedAt: null })).toBeNull();
+  });
+
+  it('formats a SQLite UTC timestamp as "27 sept. 2026 à 14 h 32" (local time)', () => {
+    // Midday UTC keeps the calendar day stable in any timezone the tests run in.
+    const formatted = formatMeetingImportedAt({ ...base, lastImportedAt: '2026-09-27 12:30:00' });
+
+    expect(formatted).toMatch(/^27\s+sept\.?\s+2026 à \d{2} h \d{2}$/);
   });
 });
