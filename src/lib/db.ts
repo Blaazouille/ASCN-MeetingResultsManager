@@ -19,6 +19,10 @@ export interface Meeting {
   resultCount: number;
   /** SQLite UTC timestamp of the last CSV import; null = never imported. */
   lastImportedAt: string | null;
+  /** Distinct clubs across the meeting's imported results. */
+  clubCount: number;
+  /** Distinct swimmers (a swimmer listed in several categories counts once). */
+  swimmerCount: number;
 }
 
 export interface MeetingInput {
@@ -38,6 +42,8 @@ interface MeetingRow {
   active_categories: string | null;
   result_count: number;
   last_imported_at: string | null;
+  club_count: number;
+  swimmer_count: number;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -51,13 +57,23 @@ function rowToMeeting(row: MeetingRow): Meeting {
     activeCategories: row.active_categories ? (JSON.parse(row.active_categories) as string[]) : null,
     resultCount: row.result_count,
     lastImportedAt: row.last_imported_at,
+    clubCount: row.club_count,
+    swimmerCount: row.swimmer_count,
   };
 }
 
-// Every read of a meeting carries its result count, so Accueil and the sidebar
-// can tell "à importer" from "importé" without loading the rows themselves.
-const SELECT_MEETING =
-  'SELECT m.*, (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count FROM meeting m';
+// Every read of a meeting carries its counts, so Accueil and the sidebar can
+// tell "à importer" from "importé" and show clubs/swimmers without loading the
+// rows themselves. A swimmer has one row per category, so swimmer_count
+// counts distinct identities: COUNT(DISTINCT a, b) isn't valid SQLite, hence
+// the concatenation (birthyear can be NULL, hence the IFNULL).
+const SELECT_MEETING = `
+  SELECT m.*,
+    (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count,
+    (SELECT COUNT(DISTINCT s.club) FROM swimmer_result s WHERE s.meeting_id = m.id) AS club_count,
+    (SELECT COUNT(DISTINCT s.lastname || '|' || s.firstname || '|' || IFNULL(s.birthyear, '') || '|' || s.club)
+       FROM swimmer_result s WHERE s.meeting_id = m.id) AS swimmer_count
+  FROM meeting m`;
 
 export function getAllMeetings(db: Database.Database): Meeting[] {
   const rows = db.prepare(`${SELECT_MEETING} ORDER BY m.id DESC`).all() as MeetingRow[];
