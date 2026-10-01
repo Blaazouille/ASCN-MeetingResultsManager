@@ -165,6 +165,11 @@ function swimmerKey(row: { category: string; lastname: string; firstname: string
  * partial re-import never touches categories it didn't mention.
  */
 export function insertSwimmerResults(db: Database.Database, meetingId: number, rows: RawSwimmerRow[]): void {
+  // An empty import (header-only or wrong file) changes nothing: it must not
+  // stamp a "last import" date that never really happened.
+  if (rows.length === 0) {
+    return;
+  }
   const stmt = db.prepare(`
     INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
     VALUES (@meetingId, @category, @rank, @lastname, @firstname, @birthyear, @nation, @club, @points, @rawLine)

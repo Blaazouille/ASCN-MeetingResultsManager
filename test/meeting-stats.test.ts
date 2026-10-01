@@ -69,6 +69,18 @@ describe('lastImportedAt', () => {
     expect(firstMeeting(db).lastImportedAt).toBeNull();
   });
 
+  it('is left untouched by an empty import', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'M' });
+    insertSwimmerResults(db, meeting.id, [row()]);
+    db.prepare("UPDATE meeting SET last_imported_at = '2020-01-01 00:00:00' WHERE id = ?").run(meeting.id);
+
+    insertSwimmerResults(db, meeting.id, []);
+
+    expect(firstMeeting(db).lastImportedAt).toBe('2020-01-01 00:00:00');
+    expect(getAllMeetings(db)[0]?.resultCount).toBe(1);
+  });
+
   it('only changes the meeting that was imported', () => {
     const db = createDatabase(':memory:');
     const imported = createMeeting(db, { name: 'Importé' });

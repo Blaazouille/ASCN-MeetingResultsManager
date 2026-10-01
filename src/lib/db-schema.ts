@@ -108,7 +108,7 @@ function migrateSchema(db: Database.Database): void {
     // rename or a top-N change. NULL = never imported (existing meetings stay
     // NULL until their next import — updated_at would be a wrong backfill).
     // Same existence check as v3/v4, so a database that already has the column
-    // is a no-op rather than an "duplicate column" error.
+    // is a no-op rather than a "duplicate column" error.
     const columns = db.prepare('PRAGMA table_info(meeting)').all() as Array<{ name: string }>;
     if (!columns.some((c) => c.name === 'last_imported_at')) {
       db.exec('ALTER TABLE meeting ADD COLUMN last_imported_at TEXT');

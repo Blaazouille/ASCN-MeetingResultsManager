@@ -79,8 +79,8 @@ describe('formatMeetingImportedAt', () => {
   });
 
   it('formats a SQLite UTC timestamp as "27 sept. 2026 à 14 h 32" (local time)', () => {
-    // Midday UTC keeps the calendar day stable in any timezone the tests run in.
-    const formatted = formatMeetingImportedAt({ ...base, lastImportedAt: '2026-09-27 12:30:00' });
+    // 10:30 UTC stays on the 27th for local timezones from UTC-10 to UTC+13.
+    const formatted = formatMeetingImportedAt({ ...base, lastImportedAt: '2026-09-27 10:30:00' });
 
     expect(formatted).toMatch(/^27\s+sept\.?\s+2026 à \d{2} h \d{2}$/);
   });
