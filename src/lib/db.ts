@@ -7,12 +7,9 @@ import type Database from 'better-sqlite3';
 import type { RawSwimmerRow } from './csv-parser';
 import type { TeamResult } from './ranking-engine';
 
-export type MeetingStatus = 'provisional' | 'final';
-
 export interface Meeting {
   id: number;
   name: string;
-  status: MeetingStatus;
   createdAt: string;
   updatedAt: string;
   defaultTopN: number;
@@ -24,7 +21,6 @@ export interface Meeting {
 
 export interface MeetingInput {
   name: string;
-  status?: MeetingStatus;
   defaultTopN?: number;
   minSwimmers?: number;
   activeCategories?: string[] | null;
@@ -33,7 +29,6 @@ export interface MeetingInput {
 interface MeetingRow {
   id: number;
   name: string;
-  status: MeetingStatus;
   created_at: string;
   updated_at: string;
   default_top_n: number;
@@ -46,7 +41,6 @@ function rowToMeeting(row: MeetingRow): Meeting {
   return {
     id: row.id,
     name: row.name,
-    status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     defaultTopN: row.default_top_n,
@@ -69,12 +63,11 @@ export function getAllMeetings(db: Database.Database): Meeting[] {
 export function createMeeting(db: Database.Database, input: MeetingInput): Meeting {
   const result = db
     .prepare(
-      `INSERT INTO meeting (name, status, default_top_n, min_swimmers, active_categories)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT INTO meeting (name, default_top_n, min_swimmers, active_categories)
+       VALUES (?, ?, ?, ?)`
     )
     .run(
       input.name,
-      input.status ?? 'provisional',
       input.defaultTopN ?? 5,
       input.minSwimmers ?? 0,
       input.activeCategories ? JSON.stringify(input.activeCategories) : null
@@ -90,7 +83,6 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
   }
   const merged = {
     name: input.name ?? current.name,
-    status: input.status ?? current.status,
     defaultTopN: input.defaultTopN ?? current.default_top_n,
     minSwimmers: input.minSwimmers ?? current.min_swimmers,
     activeCategories:
@@ -102,9 +94,9 @@ export function updateMeeting(db: Database.Database, id: number, input: Partial<
   };
   db.prepare(
     `UPDATE meeting
-     SET name = ?, status = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
+     SET name = ?, default_top_n = ?, min_swimmers = ?, active_categories = ?, updated_at = datetime('now')
      WHERE id = ?`
-  ).run(merged.name, merged.status, merged.defaultTopN, merged.minSwimmers, merged.activeCategories, id);
+  ).run(merged.name, merged.defaultTopN, merged.minSwimmers, merged.activeCategories, id);
   const row = db.prepare(`${SELECT_MEETING} WHERE m.id = ?`).get(id) as MeetingRow;
   return rowToMeeting(row);
 }

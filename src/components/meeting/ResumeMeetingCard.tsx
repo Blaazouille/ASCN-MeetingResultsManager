@@ -1,12 +1,12 @@
 /**
- * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (statut, résultats, accès direct).
+ * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (pastille « À importer », résultats, accès direct).
  * Appelé par : HomePage.tsx.
  * Suppression casserait : l'accès en un clic au meeting du jour.
  */
 import { ArrowRight } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
-import { meetingBadgeStatus, resultCountLabel } from '@/lib/ui-labels';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { resultCountLabel } from '@/lib/ui-labels';
+import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
 
 export interface ResumeMeetingCardProps {
   meeting: Meeting;
@@ -26,7 +26,7 @@ export function ResumeMeetingCard({ meeting, onOpenRanking, onImport }: ResumeMe
         <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-on-marine-muted">Reprendre</span>
         <span className="font-display text-4xl font-bold leading-none">{meeting.name}</span>
         <div className="flex items-center gap-2.5 text-[15px] text-on-marine-subtle">
-          <StatusBadge status={meetingBadgeStatus(meeting)} />
+          {meeting.resultCount === 0 && <ImportPendingBadge />}
           <span>{resultCountLabel(meeting.resultCount)}</span>
         </div>
       </div>

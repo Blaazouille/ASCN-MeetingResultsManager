@@ -32,7 +32,6 @@ describe('meeting CRUD', () => {
 
     expect(meeting.id).toBeGreaterThan(0);
     expect(meeting.name).toBe('Meeting de la Mer 2026');
-    expect(meeting.status).toBe('provisional');
     expect(meeting.createdAt).toBeTruthy();
     expect(meeting.updatedAt).toBeTruthy();
   });
@@ -50,15 +49,15 @@ describe('meeting CRUD', () => {
     const db = freshDb();
     const meeting = createMeeting(db, { name: 'Meeting de la Mer' });
 
-    const updated = updateMeeting(db, meeting.id, { status: 'final' });
+    const updated = updateMeeting(db, meeting.id, { defaultTopN: 3 });
 
-    expect(updated.status).toBe('final');
+    expect(updated.defaultTopN).toBe(3);
     expect(updated.name).toBe('Meeting de la Mer');
   });
 
   it('throws when updating a missing meeting', () => {
     const db = freshDb();
-    expect(() => updateMeeting(db, 999, { status: 'final' })).toThrow('Meeting 999 not found');
+    expect(() => updateMeeting(db, 999, { name: 'Absent' })).toThrow('Meeting 999 not found');
   });
 
   it('deletes a meeting', () => {

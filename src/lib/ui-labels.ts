@@ -1,9 +1,8 @@
 /**
- * Responsabilité : libellés et valeurs d'affichage dérivés des données (places, écarts, statuts, catégories).
+ * Responsabilité : libellés et valeurs d'affichage dérivés des données (places, écarts, catégories).
  * Appelé par : les composants de classement, d'accueil, d'import et la barre latérale.
  * Suppression casserait : les textes calculés de l'interface (« 1re place », « −477 », « À importer »…).
  */
-import type { Meeting, MeetingStatus } from './db';
 import type { Gender } from './individual-ranking';
 import { formatPoints } from './utils';
 
@@ -44,13 +43,6 @@ export function countedSummary(counted: number, entered: number): string {
 export function resultCountLabel(count: number): string {
   if (count === 0) return 'Aucun résultat importé';
   return count === 1 ? '1 résultat importé' : `${formatPoints(count)} résultats importés`;
-}
-
-export type BadgeStatus = MeetingStatus | 'pending';
-
-/** A meeting with nothing imported reads "À importer" whatever its status. */
-export function meetingBadgeStatus(meeting: Pick<Meeting, 'status' | 'resultCount'>): BadgeStatus {
-  return meeting.resultCount === 0 ? 'pending' : meeting.status;
 }
 
 /** "Classement Mixte" → "Mixte": the prefix repeats on every tab and adds nothing. */

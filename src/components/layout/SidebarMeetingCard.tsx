@@ -1,11 +1,10 @@
 /**
- * Responsabilité : carte « Meeting ouvert » (nom + statut) ou « Aucun meeting ouvert » dans la barre latérale.
+ * Responsabilité : carte « Meeting ouvert » (nom + pastille « À importer ») ou « Aucun meeting ouvert » dans la barre latérale.
  * Appelé par : Sidebar.tsx.
- * Suppression casserait : l'indication permanente du meeting en cours et de son statut.
+ * Suppression casserait : l'indication permanente du meeting en cours.
  */
 import type { Meeting } from '@/lib/db';
-import { meetingBadgeStatus } from '@/lib/ui-labels';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
 
 const CARD_LABEL = 'text-xs font-semibold uppercase tracking-[0.08em] text-on-marine-muted';
 
@@ -29,9 +28,11 @@ export function SidebarMeetingCard({ meeting }: SidebarMeetingCardProps): JSX.El
     <div className="flex flex-col gap-2 rounded-lg bg-marine-raised p-3.5">
       <span className={CARD_LABEL}>Meeting ouvert</span>
       <span className="text-base font-semibold leading-tight text-on-marine">{meeting.name}</span>
-      <span>
-        <StatusBadge status={meetingBadgeStatus(meeting)} />
-      </span>
+      {meeting.resultCount === 0 && (
+        <span>
+          <ImportPendingBadge />
+        </span>
+      )}
     </div>
   );
 }

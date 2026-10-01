@@ -7,7 +7,7 @@
 Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écrans (`Sidebar.tsx` dans `AppShell.tsx` — il n'y a plus de barre d'en-tête séparée, elle a été retirée en Phase 11).
 
 - Logo/nom de l'app en haut.
-- Carte du meeting courant (`SidebarMeetingCard`) : nom + `StatusBadge` sur fond `marine-raised` ; état vide en pointillés quand aucun meeting n'est ouvert.
+- Carte du meeting courant (`SidebarMeetingCard`) : nom + `ImportPendingBadge` (si rien n'est importé) sur fond `marine-raised` ; état vide en pointillés quand aucun meeting n'est ouvert.
 - Sections de navigation à plat : Meetings, Données (Import), Résultats (Classement, Individuels, Palmarès), Paramètres.
 - Les entrées Données/Résultats restent visibles mais grisées/désactivées tant qu'aucun meeting n'est ouvert (plutôt que masquées, pour que le bénévole sache qu'elles existent).
 - L'entrée « Import CSV » affiche une coche verte (`bg-success-bright`) dès que des résultats ont été importés (`resultCount > 0`).
@@ -17,7 +17,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 - `PageHeader` en tête.
 - Carte « Reprendre » (`ResumeMeetingCard`, fond `marine`) mettant en avant le dernier meeting ouvert, avec accès direct à l'import ou au classement.
-- Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `StatusBadge` et nombre de résultats — `resultCountLabel` — et un bouton corbeille qui ouvre `DeleteMeetingDialog` : avertissement, puis saisie du nom exact du meeting pour activer « Supprimer définitivement ») et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
+- Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `ImportPendingBadge` (si rien n'est importé) et nombre de résultats — `resultCountLabel` — et un bouton corbeille qui ouvre `DeleteMeetingDialog` : avertissement, puis saisie du nom exact du meeting pour activer « Supprimer définitivement ») et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
 - Seul le nom du meeting est demandé à la création (pas de date ni de lieu — retirés du modèle de données ; la carte affiche la date de création à titre indicatif).
 - Clic sur une carte existante ou sur « Reprendre » navigue vers Import ou Classement selon l'état du meeting.
 
@@ -55,7 +55,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le seul moyen de restaurer une sauvegarde sur une installation neuve, avant qu'aucun meeting n'existe.
 
-- Formulaire de configuration du meeting (`SettingsForm`) : nom, statut. N'apparaît que si un meeting est ouvert.
+- Formulaire de configuration du meeting (`SettingsForm`) : nom. N'apparaît que si un meeting est ouvert.
 - Règles de calcul : top N par défaut, catégories actives, seuil minimum de nageurs par club.
 
 ### Sauvegarde et restauration

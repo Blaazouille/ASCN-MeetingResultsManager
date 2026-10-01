@@ -23,7 +23,7 @@
 | `line` / `line-strong` | `#E8EDF2` / `#8394A6` | Bordures discrètes / bordures de contrôles (inputs, cases) |
 | `surface` / `surface-raised` / `surface-sunken` / `surface-header` | `#F4F7F6` / `#FFFFFF` / `#EEF2F6` / `#F7F9FB` | Fond de page, cartes, zones creusées, en-têtes de tableau |
 | `success` / `success-light` / `success-bright` | `#15803D` / `#DCFCE7` / `#22C55E` | Validation, import OK (texte sur `-light`, `-bright` pour les puces) |
-| `warning` / `warning-light` | `#92400E` / `#FEF3C7` | Statut provisoire |
+| `warning` / `warning-light` | `#92400E` / `#FEF3C7` | Récompense « couronne » du palmarès |
 | `error` / `error-light` | `#B91C1C` / `#FEE2E2` | Erreurs |
 | `medal-gold` / `medal-silver` / `medal-bronze` | `#D4AF37` / `#A8A9AD` / `#CD7F32` | Podium — toujours avec des chiffres `ink` dessus (le blanc n'y passe pas 4,5:1) |
 
@@ -60,8 +60,8 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 | `ClubTag` | Étiquette « Notre club » accolée à AS Cherbourg Natation dans les classements |
 | `RankChip` | Numéro de rang, aux couleurs de la médaille pour les trois premiers (chiffres `ink`, jamais blancs) |
 | `SearchField` | Champ de recherche avec loupe, filtre à la frappe |
-| `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés, statut) |
-| `StatusBadge` | Pastille de statut d'un meeting (Provisoire, Définitif, À importer) |
+| `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés) |
+| `ImportPendingBadge` | Pastille « À importer » d'un meeting sans résultat importé |
 
 ## Formatage des nombres
 

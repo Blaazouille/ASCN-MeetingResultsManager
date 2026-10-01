@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import { createDatabase } from '../src/lib/db-schema';
-import { createMeeting } from '../src/lib/db';
+import { createMeeting, getAllMeetings } from '../src/lib/db';
 import {
   exportDatabase,
   validateBackup,
@@ -149,10 +149,15 @@ describe('validateBackup', () => {
     expect(() => validateBackup(backup)).toThrow();
   });
 
-  it('rejects invalid meeting.status', () => {
-    const backup = exportDatabase(db);
-    backup.meetings[0]!.status = 'bogus';
-    expect(() => validateBackup(backup)).toThrow();
+  it('accepts a legacy backup that still carries meeting.status', () => {
+    const legacy = exportDatabase(db);
+    (legacy.meetings[0] as unknown as Record<string, unknown>).status = 'final';
+    const validated = validateBackup(legacy);
+
+    const target = freshDb();
+    restoreDatabase(target, validated);
+    expect(getAllMeetings(target).map((m) => m.name)).toEqual(['Test Meeting']);
+    target.close();
   });
 });
 

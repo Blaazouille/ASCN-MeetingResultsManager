@@ -117,7 +117,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 │   │   ├── import/           # DropZone
 │   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
 │   │   ├── settings/         # SettingsForm
-│   │   └── ui/                # Button, Segmented, SearchField, StatusBadge, RankChip, ClubTag
+│   │   └── ui/                # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
 │   ├── pages/
 │   │   ├── HomePage.tsx
 │   │   ├── ImportPage.tsx
@@ -180,7 +180,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 1. **Accueil** — Liste des meetings, créer/ouvrir
 2. **Import** — Drag & drop CSV, preview, validation colonnes
 3. **Classement** — Tableau des clubs avec drill-down nageurs, filtres par catégorie, sélecteur top N, export PDF/Excel
-4. **Paramètres** — Config meeting (nom, date, lieu, statut) et règles de calcul (top N, catégories)
+4. **Paramètres** — Config meeting (nom) et règles de calcul (top N, catégories)
 
 Les specs détaillées de chaque écran sont dans `docs/screens.md`.
 

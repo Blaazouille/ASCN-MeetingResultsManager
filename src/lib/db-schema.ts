@@ -9,7 +9,6 @@ const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS meeting (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   name        TEXT NOT NULL,
-  status      TEXT NOT NULL DEFAULT 'provisional' CHECK(status IN ('provisional', 'final')),
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -92,5 +91,16 @@ function migrateSchema(db: Database.Database): void {
       db.exec('ALTER TABLE meeting DROP COLUMN location');
     }
     db.pragma('user_version = 3');
+  }
+  if (version < 4) {
+    // The provisional/final status was never used by the club: removed so the
+    // schema stops carrying it. Same existence check as v3 — a fresh database
+    // built from SCHEMA_SQL never had the column, and DROP COLUMN errors on a
+    // missing one.
+    const columns = db.prepare('PRAGMA table_info(meeting)').all() as Array<{ name: string }>;
+    if (columns.some((c) => c.name === 'status')) {
+      db.exec('ALTER TABLE meeting DROP COLUMN status');
+    }
+    db.pragma('user_version = 4');
   }
 }
