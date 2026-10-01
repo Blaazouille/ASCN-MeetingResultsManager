@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.2.0...v1.3.0) (2026-10-01)
+
+
+### Features
+
+* delete a meeting with double confirmation ([#15](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/15)) ([027d651](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/027d651879e8bff71d02539c9b83a2ae3170a687))
+
 ## [1.2.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.1.1...v1.2.0) (2026-09-28)
 
 
