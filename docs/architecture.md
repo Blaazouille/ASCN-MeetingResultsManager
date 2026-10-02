@@ -1,6 +1,6 @@
 # Architecture
 
-> Décrit l'état actuel de l'application. Mis à jour à chaque phase.
+> Décrit l'état actuel de l'application. Mis à jour à chaque changement de comportement. Ce fichier contient **la seule arborescence** du dépôt (voir « Organisation des dossiers ») ; un test (`test/docs-architecture.test.ts`) vérifie que chaque fichier de `src/lib/`, `src/hooks/` et `electron/` y figure.
 
 ## Stack technique
 
@@ -28,7 +28,11 @@ Le parseur CSV (`src/lib/csv-parser.ts`) et le moteur de calcul (`src/lib/rankin
 
 Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/lib/db.ts`) et enregistre les handlers IPC (`electron/ipc-handlers.ts`). Le **renderer** (React) n'accède jamais directement à SQLite : il passe par l'API exposée dans `electron/preload.ts` via `contextBridge`, sur la fenêtre globale `window.electronAPI`. Les noms de canaux sont centralisés dans `electron/ipc-channels.ts` pour éviter toute divergence entre les deux côtés du bridge.
 
-Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Les canaux IPC de calcul/sauvegarde de classement existent et sont testés, mais ne sont pas encore appelés — réservés à un usage futur (historique de classements).
+Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie.
+
+**Canaux déclarés mais jamais appelés par le renderer** (dette connue, à trancher dans une issue séparée — règle « pas de code mort ») :
+- `ranking:compute` / `ranking:save` : le premier calcule et persiste (`saveTeamRanking`), le second est un no-op. Les handlers existent et `saveTeamRanking` est testé (`test/db.test.ts`), mais aucun écran ne les invoque.
+- `export:pdf` / `export:excel` : handlers qui lèvent « not implemented ». Les exports passent en réalité par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`).
 
 ## Sauvegarde et restauration (Phase 9)
 
@@ -43,7 +47,7 @@ BackupData (JSON : version, appName, exportedAt, meetings[])
     ↓
 Fichier .json sur disque
     ↓
-validateBackup() [src/lib/backup.ts]
+validateBackup() [src/lib/backup-validation.ts]
     ↓
 restoreDatabase() [src/lib/backup.ts]
     ↓
@@ -58,11 +62,12 @@ La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans
 
 ### Canaux IPC pour backup/restore
 
-Nouveaux canaux IPC enregistrés dans `electron/ipc-channels.ts` :
+Canaux IPC de `electron/ipc-channels.ts` :
 
 - `backup:export` — exporte la base entière en JSON
 - `backup:import` — valide un fichier JSON importé
 - `backup:confirm-import` — enregistre l'import après confirmation de l'utilisateur
+- `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
 - `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde
@@ -82,61 +87,71 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 ## Organisation des dossiers
 
 ```
+├── CLAUDE.md                      # Porte d'entrée IA : résumé, règles, liens (pas d'arborescence)
+├── README.md                      # Présentation, installation, commandes, liens
+├── .ai/                           # Règles de collaboration IA (conventions, PR, tests, revue…)
 ├── electron/
-│   ├── main.ts               # Process principal Electron
-│   ├── preload.ts            # Context bridge IPC
-│   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
-│   ├── ipc-channels.ts       # Noms de canaux IPC partagés
-│   └── auto-backup.ts        # Sauvegarde automatique après import CSV
-│   └── auto-updater.ts       # Vérification et téléchargement des mises à jour
+│   ├── main.ts                    # Process principal Electron
+│   ├── preload.ts                 # Context bridge IPC
+│   ├── ipc-handlers.ts            # Handlers filesystem + SQLite
+│   ├── ipc-channels.ts            # Noms de canaux IPC partagés
+│   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
+│   └── auto-updater.ts            # Vérification et téléchargement des mises à jour
 ├── src/
-│   ├── main.tsx               # Point d'entrée React
-│   ├── App.tsx                # Routeur principal
-│   ├── lib/
-│   │   ├── csv-parser.ts      # Parseur CSV FFN extraNat
-│   │   ├── ranking-engine.ts  # Algorithme de classement
-│   │   ├── db-schema.ts       # Schéma SQLite et migrations
-│   │   ├── db.ts              # Opérations CRUD SQLite
-│   │   ├── backup.ts          # Export/import complet de la base en JSON
-│   │   ├── export-data.ts     # Métadonnées et helpers pour les exports
-│   │   ├── ui-labels.ts       # Libellés et valeurs d'affichage dérivés des données
-│   │   ├── pdf-export.tsx     # Génération PDF
-│   │   ├── excel-export.ts    # Génération Excel
-│   │   ├── download.ts        # Déclenchement du téléchargement navigateur
-│   │   └── utils.ts           # Helpers (formatPoints, cn, etc.)
+│   ├── main.tsx                   # Point d'entrée React
+│   ├── App.tsx                    # Routeur principal
+│   ├── lib/                       # Logique pure, indépendante de React
+│   │   ├── csv-parser.ts          # Parseur CSV FFN extraNat
+│   │   ├── ranking-engine.ts      # Classement par équipes
+│   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
+│   │   ├── fun-awards.ts          # Prix rigolos du palmarès
+│   │   ├── db-schema.ts           # Schéma SQLite et migrations
+│   │   ├── db.ts                  # Opérations CRUD SQLite
+│   │   ├── backup.ts              # Export/restauration complète de la base en JSON
+│   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
+│   │   ├── export-data.ts         # Métadonnées et helpers pour les exports
+│   │   ├── pdf-export.tsx         # PDF du classement par équipes
+│   │   ├── excel-export.ts        # Excel du classement par équipes
+│   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
+│   │   ├── individual-excel-export.ts  # Excel du classement individuel
+│   │   ├── download.ts            # Déclenchement du téléchargement navigateur
+│   │   ├── focus-trap.ts          # Calcul du focus suivant dans une modale
+│   │   ├── ui-labels.ts           # Libellés et valeurs d'affichage dérivés des données
+│   │   └── utils.ts               # Helpers (formatPoints, cn, etc.)
 │   ├── hooks/
-│   │   ├── use-meeting.ts
-│   │   ├── use-import.ts
-│   │   ├── use-ranking.ts
-│   │   ├── use-meeting-rows.ts
-│   │   ├── use-print-export.ts
-│   │   └── use-auto-update.ts
+│   │   ├── use-meeting.ts         # Meetings : liste, création, mise à jour, suppression
+│   │   ├── use-meeting-rows.ts    # Lignes nageurs d'un meeting (cache)
+│   │   ├── use-import.ts          # Import CSV (parse, aperçu, persistance)
+│   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
+│   │   ├── use-print-export.ts    # Exports PDF/Excel du classement par équipes (nom hérité, voir note)
+│   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
+│   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
+│   │   ├── use-app-version.ts     # Version de l'app
+│   │   └── use-auto-update.ts     # Notification de mise à jour téléchargée
 │   ├── components/
-│   │   ├── layout/             # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
-│   │   ├── meeting/             # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard
-│   │   ├── import/              # DropZone
-│   │   ├── ranking/             # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
-│   │   ├── settings/            # SettingsForm
-│   │   └── ui/                   # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
-│   ├── pages/
-│   │   ├── HomePage.tsx
-│   │   ├── ImportPage.tsx
-│   │   ├── RankingPage.tsx
-│   │   ├── IndividualPage.tsx
-│   │   ├── PalmaresPage.tsx
-│   │   └── SettingsPage.tsx
+│   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
+│   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
+│   │   ├── import/                # DropZone, StatTile
+│   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
+│   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
+│   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
+│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
+│   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage
 │   ├── styles/
-│   │   ├── globals.css        # Tailwind base + custom properties
-│   │   └── fonts.css          # Déclarations @font-face (polices embarquées)
-│   └── assets/
-│       └── fonts/              # Polices Barlow / Barlow Condensed (.woff2), embarquées hors ligne
-├── test/
-│   └── *.test.ts
+│   │   ├── globals.css            # Tailwind base + custom properties (tokens)
+│   │   └── fonts.css              # Déclarations @font-face (polices embarquées)
+│   └── assets/fonts/              # Barlow / Barlow Condensed (.woff2), embarquées hors ligne
+├── test/                          # Tests Vitest : un fichier par module de src/lib et electron, plus les
+│   │                              # garde-fous design-tokens, no-legacy-tokens et docs-architecture
+│   └── fixtures/                  # sample.csv (vrai CSV Latin-1), expected-ranking.json, CSV d'essais manuels
+├── resources/icon.png
 └── docs/
-    ├── architecture.md
+    ├── architecture.md            # Ce fichier
     ├── screens.md
     ├── data-model.md
     ├── design-system.md
     ├── algorithms.md
-    └── archive/                # Specs et plans des phases précédentes
+    └── archive/                   # Specs et plans des phases terminées (historique figé, ne pas mettre à jour)
 ```
+
+**Nommage hérité** : `use-print-export.ts` (`usePrintExport`, `buildPrintMeta` dans `export-data.ts`) garde le mot « print » bien que l'impression ait été retirée en Phase 6. Il pilote en réalité les exports PDF/Excel ; le renommage est volontairement laissé hors de la remise à plat de la documentation.

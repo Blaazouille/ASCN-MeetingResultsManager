@@ -75,70 +75,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 
 ## Structure du projet
 
-```
-├── CLAUDE.md                 ← Ce fichier
-├── docs/
-│   ├── architecture.md       # Stack, flux de données, IPC, dossiers
-│   ├── screens.md            # Description de chaque écran
-│   ├── data-model.md         # Schéma SQLite, interfaces TypeScript
-│   ├── design-system.md      # Couleurs, typo, composants
-│   ├── algorithms.md         # Algorithmes de calcul
-│   └── archive/               # Specs et plans des phases précédentes
-├── electron/
-│   ├── main.ts               # Process principal Electron
-│   ├── preload.ts            # Context bridge IPC
-│   ├── ipc-handlers.ts       # Handlers filesystem + SQLite
-│   ├── ipc-channels.ts       # Noms de canaux IPC partagés
-│   └── auto-updater.ts       # Vérification et téléchargement des mises à jour
-├── src/
-│   ├── main.tsx
-│   ├── App.tsx
-│   ├── lib/
-│   │   ├── csv-parser.ts     # Parseur CSV (wrapper Papa Parse)
-│   │   ├── ranking-engine.ts # Algorithme de classement
-│   │   ├── db-schema.ts      # Schéma SQLite et migrations
-│   │   ├── db.ts             # Opérations CRUD SQLite
-│   │   ├── export-data.ts    # Métadonnées et helpers pour les exports
-│   │   ├── ui-labels.ts      # Libellés et valeurs d'affichage dérivés des données
-│   │   ├── pdf-export.tsx    # Génération PDF
-│   │   ├── excel-export.ts   # Génération Excel
-│   │   ├── download.ts       # Déclenchement du téléchargement navigateur
-│   │   └── utils.ts          # Helpers (formatPoints, cn, etc.)
-│   ├── hooks/
-│   │   ├── use-meeting.ts
-│   │   ├── use-import.ts
-│   │   ├── use-ranking.ts
-│   │   ├── use-meeting-rows.ts
-│   │   ├── use-print-export.ts
-│   │   └── use-auto-update.ts
-│   ├── components/
-│   │   ├── layout/           # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
-│   │   ├── meeting/          # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard
-│   │   ├── import/           # DropZone
-│   │   ├── ranking/          # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar, PodiumCards
-│   │   ├── settings/         # SettingsForm
-│   │   └── ui/                # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
-│   ├── pages/
-│   │   ├── HomePage.tsx
-│   │   ├── ImportPage.tsx
-│   │   ├── RankingPage.tsx
-│   │   ├── IndividualPage.tsx
-│   │   ├── PalmaresPage.tsx
-│   │   └── SettingsPage.tsx
-│   ├── styles/
-│   │   ├── globals.css       # Tailwind base + custom properties
-│   │   └── fonts.css         # Déclarations @font-face (polices embarquées)
-│   └── assets/
-│       └── fonts/             # Polices Barlow / Barlow Condensed (.woff2), embarquées hors ligne
-├── test/
-│   ├── csv-parser.test.ts
-│   ├── ranking-engine.test.ts
-│   └── fixtures/
-│       ├── sample.csv        # Vrai CSV Latin-1 du Meeting de la Mer
-│       └── expected-ranking.json
-└── resources/
-    └── icon.png
-```
+L'arborescence complète (une seule, maintenue à jour par un test) est dans `docs/architecture.md`. En bref : `electron/` (main, preload, IPC, sauvegarde auto, mises à jour), `src/lib/` (logique pure : parseur, moteurs de classement, exports, base), `src/hooks/`, `src/components/`, `src/pages/`, `test/`, `docs/`.
 
 ## Conventions de code
 
@@ -175,12 +112,14 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 - Ponctuation française (espace insécable avant `:`, `;`, `!`, `?`)
 - Dates : `Intl.DateTimeFormat` avec `fr-FR` → "16 nov. 2026"
 
-## Écrans (MVP)
+## Écrans
 
 1. **Accueil** — Liste des meetings, créer/ouvrir
 2. **Import** — Drag & drop CSV, preview, validation colonnes
 3. **Classement** — Tableau des clubs avec drill-down nageurs, filtres par catégorie, sélecteur top N, export PDF/Excel
-4. **Paramètres** — Config meeting (nom) et règles de calcul (top N, catégories)
+4. **Individuels** — Classement des nageurs par catégorie, export PDF/Excel
+5. **Palmarès** — Prix rigolos générés automatiquement
+6. **Paramètres** — Config meeting (nom), règles de calcul (top N, catégories, seuil), sauvegarde et restauration
 
 Les specs détaillées de chaque écran sont dans `docs/screens.md`.
 
@@ -192,7 +131,7 @@ La base SQLite tourne dans le **main process** Electron. Le renderer communique 
 
 ## Documentation détaillée
 
-Les fichiers dans `docs/` décrivent l'état actuel de l'application :
+Les fichiers dans `docs/` (hors `archive/`) décrivent l'état actuel de l'application :
 - `docs/architecture.md` — Stack, flux de données, structure
 - `docs/screens.md` — Description de chaque écran
 - `docs/data-model.md` — Schéma SQLite et types
@@ -224,12 +163,13 @@ npm run build:mac    # Build macOS (.dmg)
 | 9 | Sauvegarde & restauration — export/import JSON de la base depuis Paramètres, backup auto après chaque import CSV avec rotation | Données protégées contre la perte/corruption |
 | 10 | Versioning automatique (SemVer + release notes), installeur Windows soigné (NSIS custom, sans signature de code), auto-updater in-app | App distribuable et auto-maintenue |
 | 11 | Refonte visuelle « Tableau de bassin » — tokens, polices embarquées, barre latérale, podium, écrans Accueil/Import/Classement/Individuels/Palmarès/Paramètres | Interface lisible au bord du bassin |
+| — | Évolutions post-phase 11 : suppression d'un meeting (#15), retrait du statut provisoire/définitif (#17), détails sur les cartes d'Accueil (#18), remise à plat de la documentation (#29) | Hors phases, suivies par issues/PR |
 
-> Détail des phases 6-9 : `docs/archive/2026-09-16-phase-6-cleanup.md`, `docs/superpowers/plans/2026-09-16-phase-7-ux-polish.md`, `docs/superpowers/plans/2026-09-16-phase-8-individual-ranking.md`, `docs/superpowers/plans/2026-09-16-phase-9-backup-restore.md`.
->
-> **Phase 11** : `docs/superpowers/plans/2026-09-27-phase-11-redesign.md`.
+> Les specs et plans des phases terminées sont archivés dans `docs/archive/` (historique figé, nommé `AAAA-MM-JJ-<sujet>.md`). Plans de référence : phases 6-11 (`2026-09-16-phase-6-cleanup.md`, `2026-09-16-phase-7-ux-polish.md`, `2026-09-16-phase-8-individual-ranking.md`, `2026-09-16-phase-9-backup-restore.md`, `2026-09-27-phase-10-auto-update.md`, `2026-09-27-phase-11-redesign.md`).
 >
 > **Phase 10** : diffusion sur le poste du père de Jason (bénévole non technique) — nécessite un auto-updater puisqu'il ne va pas télécharger les mises à jour depuis GitHub lui-même. Voir `docs/architecture.md` pour le détail technique.
+>
+> **Règle** : un plan terminé est déplacé dans `docs/archive/` dans la PR qui le clôt.
 
 ---
 
@@ -278,3 +218,4 @@ Deeper rule sets live in `.ai/`. Load the relevant file when the task calls for 
 | `.ai/review-checklist.md` | Before any PR or code review |
 | `.ai/unfamiliar-stack.md` | When reviewing tech you don't master directly |
 | `.ai/PRINCIPLES.md` | Core principles — humans own "what/why", AI owns "how" |
+| `.ai/prompt-block.md` | Version compressée des règles, à coller dans une session IA |
