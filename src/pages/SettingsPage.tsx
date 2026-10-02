@@ -38,8 +38,9 @@ export default function SettingsPage(): JSX.Element {
           ci-dessous fonctionnent sans meeting ouvert.
         </p>
       )}
-      {/* Outside SettingsForm: the club is app-wide, the same from one meeting to the next, and settable with no meeting open. */}
-      <OurClubSection meeting={meeting} />
+      {/* Outside SettingsForm: the club is app-wide, the same from one meeting to the next, and settable with no meeting open.
+          Keyed on the meeting so an unsaved choice from one meeting's club list doesn't carry over to another's. */}
+      <OurClubSection key={meeting?.id ?? 'none'} meeting={meeting} />
       <BackupSection onRestored={onRestored} />
       <BackupConfigSection />
       <UpdateSection />

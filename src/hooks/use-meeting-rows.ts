@@ -1,7 +1,7 @@
 /**
  * Responsabilité : charge et met en cache les lignes nageurs d'un meeting (via IPC).
- * Appelé par : RankingPage.tsx.
- * Suppression casserait : l'affichage du classement (plus de données nageurs).
+ * Appelé par : RankingPage.tsx, IndividualPage.tsx, PalmaresPage.tsx, CeremonyPage.tsx, OurClubSection.tsx.
+ * Suppression casserait : les classements, le palmarès, la cérémonie et la liste des clubs de Paramètres (plus de données nageurs).
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';

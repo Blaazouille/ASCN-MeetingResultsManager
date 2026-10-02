@@ -6,12 +6,14 @@
 import { useState } from 'react';
 import { Download, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { readableClubName } from '@/lib/ui-labels';
+import { DEFAULT_OUR_CLUB } from '@/lib/our-club';
 
 type BackupState =
   | { step: 'idle' }
   | { step: 'busy' }
   | { step: 'export-success'; path: string }
-  | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number }
+  | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number; ourClub: string | null }
   | { step: 'import-success'; meetingsRemoved: number; meetingsImported: number; swimmersImported: number; safetyCopyPath: string | null }
   | { step: 'error'; error: string };
 
@@ -93,6 +95,12 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
                 donc ce nombre est plus élevé que le nombre réel de nageurs. */}
             {' '}
             (comptées par catégorie).
+          </p>
+          {/* The restore also replaces the club highlighted everywhere: say which one, so a surprise shows before confirming. */}
+          <p className="text-sm text-ink">
+            Notre club{' '}: {readableClubName(state.ourClub ?? DEFAULT_OUR_CLUB)}
+            {/* A backup made before the setting existed restores the default club: say so rather than show nothing. */}
+            {state.ourClub === null && ' (valeur par défaut)'}
           </p>
           <p className="text-sm font-medium text-error">
             La restauration remplace toute la base actuelle par le contenu de ce fichier

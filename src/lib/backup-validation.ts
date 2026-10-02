@@ -71,7 +71,7 @@ export function validateBackup(data: unknown): BackupData {
   // Checked here because restoreDatabase stores it as is: an empty or
   // non-string value would otherwise reach setOurClub's error or SQLite raw.
   if (obj.ourClub !== undefined && (typeof obj.ourClub !== 'string' || obj.ourClub.trim() === '')) {
-    throw new Error('Format de backup invalide : ourClub doit être un nom de club non vide');
+    throw new Error('Format de backup invalide : le club enregistré dans la sauvegarde est vide ou illisible');
   }
 
   if (!Array.isArray(obj.meetings)) {
