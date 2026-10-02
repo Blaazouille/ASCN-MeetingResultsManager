@@ -11,7 +11,8 @@ export interface UseMeetingResult {
   currentMeeting: Meeting | null;
   isLoading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  /** Reloads the meeting list. Resolves to false when it failed (the message is in `error`), so a caller elsewhere than Accueil can say so where the volunteer is. */
+  refresh: () => Promise<boolean>;
   createMeeting: (input: MeetingInput) => Promise<Meeting>;
   updateMeeting: (id: number, input: Partial<MeetingInput>) => Promise<Meeting>;
   deleteMeeting: (id: number) => Promise<void>;
@@ -25,7 +26,7 @@ export function useMeeting(): UseMeetingResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -36,8 +37,10 @@ export function useMeeting(): UseMeetingResult {
       // reading currentMeeting would silently fall back to null with no
       // indication why the meeting they had open "disappeared".
       setCurrentMeetingId((current) => (current !== null && !fetched.some((m) => m.id === current) ? null : current));
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      return false;
     } finally {
       setIsLoading(false);
     }

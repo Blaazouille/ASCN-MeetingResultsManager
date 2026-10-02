@@ -15,6 +15,15 @@ export interface ImportOutcome {
   notices: string[];
 }
 
+/** Why the drop zone refused what was dropped, before any reading. */
+export type FileRejectionReason = 'not-csv' | 'several-files';
+
+const REJECTION_MESSAGES: Record<FileRejectionReason, string> = {
+  'not-csv': 'Fichier non supporté (.csv attendu)',
+  // Reading only the first file would import whichever one the system listed first, not necessarily the right one.
+  'several-files': 'Un seul fichier à la fois : déposez uniquement le fichier CSV extraNat.',
+};
+
 export interface UseImportResult {
   result: CsvParseResult | null;
   fileName: string | null;
@@ -24,7 +33,7 @@ export interface UseImportResult {
   outcome: ImportOutcome | null;
   setOutcome: (outcome: ImportOutcome | null) => void;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
-  handleFileRejected: () => void;
+  handleFileRejected: (reason: FileRejectionReason) => void;
   reset: () => void;
 }
 
@@ -55,8 +64,12 @@ export function useImport(): UseImportResult {
     }
   }, [setError]);
 
-  const handleFileRejected = useCallback((): void => {
-    setError('Fichier non supporté (.csv attendu)');
+  // Clears the previous file too: its "importé" card next to the error would read as if the refused file had been imported.
+  const handleFileRejected = useCallback((reason: FileRejectionReason): void => {
+    setResult(null);
+    setFileName(null);
+    setOutcome(null);
+    setError(REJECTION_MESSAGES[reason]);
   }, [setError]);
 
   /** Clears the import state. Called when the selected meeting changes, so one meeting's imported data never leaks into another's screens. */

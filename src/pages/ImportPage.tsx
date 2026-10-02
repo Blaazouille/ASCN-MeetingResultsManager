@@ -18,7 +18,7 @@ import { checkImportAgainstExisting, type ImportWarning } from '@/lib/import-che
 import { summarizeImportChanges } from '@/lib/import-diff';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
-import type { ImportOutcome } from '@/hooks/use-import';
+import type { FileRejectionReason, ImportOutcome } from '@/hooks/use-import';
 
 // The parser's encoding ids, as a volunteer would read them.
 const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
@@ -53,7 +53,10 @@ export default function ImportPage(): JSX.Element {
       let changes: ImportOutcome['changes'] = null;
       try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
-        await refresh();
+        // refresh() reports its own failure only on Accueil, hence the notice here.
+        if (!(await refresh())) {
+          found.push("Les résultats sont enregistrés, mais la liste des meetings n'a pas pu être rechargée : la barre latérale et l'Accueil peuvent afficher l'état d'avant l'import. Redémarrez l'application si cela persiste.");
+        }
         // No snapshot = first import of this meeting: nothing to compare with.
         const [snapshot, current] = await Promise.all([
           window.electronAPI.getImportSnapshot(meetingId),
@@ -111,6 +114,13 @@ export default function ImportPage(): JSX.Element {
     const { parsed, warnings } = pending;
     setPending(null);
     void persist(parsed, warnings.filter((warning) => !warning.blocking));
+  };
+
+  const handleRejected = (reason: FileRejectionReason): void => {
+    // Same guard as handleAccepted: clearing the screen mid-save would hide the outcome of the file being saved.
+    if (isPersisting) return;
+    setPersistError(null);
+    handleFileRejected(reason);
   };
 
   const cancelPending = (): void => {
@@ -181,7 +191,7 @@ export default function ImportPage(): JSX.Element {
             </StatTile>
           </div>
 
-          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
+          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.invalidRowCount > 0 || result.duplicateRowCount > 0) && (
             <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
               <p className="font-semibold">À savoir</p>
               <ul className="list-disc space-y-1 pl-5">
@@ -189,6 +199,9 @@ export default function ImportPage(): JSX.Element {
                   <li key={notice}>{notice}</li>
                 ))}
                 {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}
+                {result.invalidRowCount > 0 && (
+                  <li>Lignes à la place ou à l'année de naissance illisible, non importées&nbsp;: {result.invalidRowCount} (détail dans les avertissements).</li>
+                )}
                 {result.duplicateRowCount > 0 && <li>Nageurs en double dans une catégorie (seul le dernier est gardé)&nbsp;: {result.duplicateRowCount}.</li>}
               </ul>
             </div>
@@ -225,7 +238,7 @@ export default function ImportPage(): JSX.Element {
 
       {pending && <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />}
 
-      <DropZone compact={hasResult} error={error} errorId={errorId} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
+      <DropZone compact={hasResult} error={error} errorId={errorId} onFileAccepted={handleAccepted} onFileRejected={handleRejected} />
     </div>
   );
 }

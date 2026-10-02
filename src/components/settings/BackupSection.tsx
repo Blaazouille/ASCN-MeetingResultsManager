@@ -17,7 +17,7 @@ type BackupState =
 
 export interface BackupSectionProps {
   /** Called after a successful restore so the caller can refresh any renderer state (e.g. the meeting list) derived from the DB. */
-  onRestored?: () => void | Promise<void>;
+  onRestored?: () => void | Promise<unknown>;
 }
 
 /** Maps a {success, error?} IPC result to the next state: `onSuccess` returning null falls through to 'idle' (a plain cancel, e.g. the user closed the file dialog). */

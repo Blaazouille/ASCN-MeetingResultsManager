@@ -7,12 +7,13 @@ import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEv
 import { AlertTriangle, FileUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import type { FileRejectionReason } from '@/hooks/use-import';
 
 export interface DropZoneProps {
   /** Called once a .csv file has been dropped or selected and "processed". */
   onFileAccepted?: (file: File) => void | Promise<void>;
-  /** Called when a non-CSV file is dropped or selected. */
-  onFileRejected?: (file: File) => void;
+  /** Called when a non-CSV file, or several files at once, are dropped or selected. */
+  onFileRejected?: (reason: FileRejectionReason) => void;
   /** Smaller horizontal version, shown under a successful import. */
   compact?: boolean;
   /** Last error to show inside the zone (rejected file, unreadable CSV…). */
@@ -57,7 +58,7 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, erro
   const handleFile = useCallback(
     async (file: File) => {
       if (!isCsvFile(file)) {
-        onFileRejected?.(file);
+        onFileRejected?.('not-csv');
         return;
       }
       setState('processing');
@@ -73,13 +74,20 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, erro
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       event.preventDefault();
+      // A drop while the previous file is still being processed is ignored, like a click on "Parcourir…" at that moment.
+      if (state === 'processing') return;
       setState('idle');
-      const file = event.dataTransfer.files[0];
+      const { files } = event.dataTransfer;
+      if (files.length > 1) {
+        onFileRejected?.('several-files');
+        return;
+      }
+      const file = files[0];
       if (file) {
         void handleFile(file);
       }
     },
-    [handleFile]
+    [handleFile, onFileRejected, state]
   );
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
