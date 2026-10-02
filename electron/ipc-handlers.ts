@@ -1,7 +1,7 @@
 /**
  * Responsabilité : enregistre les handlers IPC pour les opérations DB et fichiers.
  * Appelé par : electron/main.ts au démarrage.
- * Suppression casserait : toutes les opérations de persistance (meetings, imports, exports).
+ * Suppression casserait : toutes les opérations de persistance (meetings, imports, sauvegardes).
  */
 import { app, ipcMain, dialog, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
@@ -14,12 +14,10 @@ import {
   getAllMeetings,
   getSwimmerResults,
   insertSwimmerResults,
-  saveTeamRanking,
   updateMeeting,
   type MeetingInput,
 } from '../src/lib/db';
 import { getImportSnapshot } from '../src/lib/import-snapshot';
-import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import { exportDatabase, validateBackup, restoreDatabase, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
@@ -50,30 +48,6 @@ export function registerIpcHandlers(db: Database.Database): void {
   );
 
   ipcMain.handle(IpcChannels.getImportSnapshot, async (_event, meetingId: number) => getImportSnapshot(db, meetingId));
-
-  // computeRanking/saveRanking below: wired and tested but not currently invoked
-  // by the renderer, which computes rankings client-side instead. See the
-  // comment in ipc-channels.ts for why this is intentional, not dead code to
-  // clean up.
-  ipcMain.handle(IpcChannels.computeRanking, async (_event, meetingId: number, params: RankingParams) => {
-    const rows = getSwimmerResults(db, meetingId, params.category);
-    const results = computeTeamRanking(rows, params);
-    saveTeamRanking(db, meetingId, params.category, params.topN, results);
-    return results;
-  });
-
-  ipcMain.handle(IpcChannels.saveRanking, async () => {
-    // No-op: computeRanking already persists via saveTeamRanking. Registered
-    // so the renderer's saveRanking call never hits "no handler registered".
-  });
-
-  ipcMain.handle(IpcChannels.exportPdf, async (_event, _meetingId: number, _category: string) => {
-    throw new Error('exportPdf: not implemented yet (Phase 3 — @react-pdf/renderer)');
-  });
-
-  ipcMain.handle(IpcChannels.exportExcel, async (_event, _meetingId: number, _category: string) => {
-    throw new Error('exportExcel: not implemented yet (Phase 3 — ExcelJS)');
-  });
 
   ipcMain.handle(IpcChannels.openFileDialog, async (_event, filters?: OpenDialogOptions['filters']) => {
     const result = await dialog.showOpenDialog({
