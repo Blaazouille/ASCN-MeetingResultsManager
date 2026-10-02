@@ -18,13 +18,13 @@ Les fichiers de ce dossier sont tous dérivés de `test/fixtures/sample.csv` (La
 |---|---|---|---|
 | A | `01-baseline.csv` (premier import) | **Pas de modale.** Carte « Fichier importé et enregistré », tuiles nageurs / clubs / catégories (3). Ni encart « Depuis l'import… » ni encart « À savoir ». 1 fichier de sauvegarde créé. | Oui |
 | B | `02-identical.csv` | Modale « Ce fichier est-il le bon ? » : « Ce fichier est identique au dernier import (… à … h …). Rien ne changera. » **Annuler** a le focus. | Non tant que rien n'est confirmé |
-| C | `03-corrected.csv` (10 scores +5 pts, 2 nageurs en moins) | **Pas de modale.** Encart « Depuis l'import du … » : 2 nageurs en moins, des résultats modifiés. | Oui |
+| C | `03-corrected.csv` (10 scores +5 pts, 2 nageurs en moins) | **Pas de modale.** Encart « Avant d'importer » au-dessus de la zone de dépôt : « 2 nageurs absents du nouveau fichier seront retirés du classement Mixte. », « Importer » a le focus. Après « Importer » : encart « Depuis l'import du … » : 2 nageurs en moins, des résultats modifiés. « Annuler » ne touche pas la base. | Oui, après « Importer » |
 | D | `04-partial-mixte-only.csv` (Mixte seul) | **Pas de modale.** Encart « À savoir » : « Le classement Dames n'est plus dans ce fichier : il est conservé tel quel. » et idem Messieurs. Les onglets Dames et Messieurs du Classement restent remplis. | Oui (Mixte seul) |
-| E | `05-incomplete-export.csv` (Mixte réduit à 52) | Modale : « Ce fichier contient 52 nageurs en Mixte, contre 211 actuellement. Il pourrait s'agir d'un export incomplet. » | Non tant que rien n'est confirmé |
-| F | `06-other-meeting.csv` (tous les noms changés) | Modale : « La plupart des nageurs de ce fichier sont différents de ceux déjà importés. S'agit-il bien du même meeting ? » | Non tant que rien n'est confirmé |
-| G | `07-wrong-file-small.csv` (5 nageurs Mixte inconnus) | Modale avec 4 lignes : Dames absent, Messieurs absent (info), 5 nageurs en Mixte contre 211, nageurs différents. | Non tant que rien n'est confirmé |
+| E | `05-incomplete-export.csv` (Mixte réduit à 52) | Modale : « Ce fichier contient 52 nageurs en Mixte, contre 211 actuellement. Il pourrait s'agir d'un export incomplet. » et « 159 nageurs absents du nouveau fichier seront retirés du classement Mixte. » | Non tant que rien n'est confirmé |
+| F | `06-other-meeting.csv` (tous les noms changés) | Modale : les nageurs retirés par catégorie (Dames 90, Messieurs 121, Mixte 211), puis « La plupart des nageurs de ce fichier sont différents de ceux déjà importés. S'agit-il bien du même meeting ? » | Non tant que rien n'est confirmé |
+| G | `07-wrong-file-small.csv` (5 nageurs Mixte inconnus) | Modale avec 5 lignes : Dames absent, Messieurs absent (info), 5 nageurs en Mixte contre 211, 211 nageurs retirés du classement Mixte, nageurs différents. | Non tant que rien n'est confirmé |
 | H | `08-header-only.csv`, puis `09-no-points-column.csv` | Message rouge **dans la zone de dépôt** (bordure et fond rouges, icône) « Aucune ligne exploitable dans ce fichier… », la zone tremble. Pas de carte de succès, pas de modale. | Non, aucune sauvegarde créée |
-| I | `10-ignored-and-duplicates.csv` | **Pas de modale.** Carte de succès + « À savoir » : « Lignes sans points, non importées : 3. » et « Nageurs en double dans une catégorie (seul le dernier est gardé) : 2. » Les 3 nageurs sans points disparaissent de la base (absents du fichier), c'est normal. | Oui |
+| I | `10-ignored-and-duplicates.csv` | **Pas de modale.** Encart « Avant d'importer » : « 3 nageurs absents du nouveau fichier seront retirés du classement Dames. », puis « Importer » : carte de succès + « À savoir » : « Lignes sans points, non importées : 3. » et « Nageurs en double dans une catégorie (seul le dernier est gardé) : 2. » Les 3 nageurs sans points disparaissent de la base (absents du fichier), c'est normal. | Oui |
 | J | `11-not-a-csv.txt` | Même rendu rouge dans la zone : « Fichier non supporté (.csv attendu) ». Redéposer le même fichier fait trembler la zone à nouveau. | Non |
 
 ### Comportement de la modale (scénarios B, E, F, G)
@@ -41,6 +41,7 @@ Pour chacun, vérifier :
 
 - **Après un échec** : déposer `08-header-only.csv`, puis `01-baseline.csv` : l'erreur disparaît et la suite fonctionne.
 - **Après une annulation** : annuler `05`, puis déposer `03-corrected.csv` : import normal, pas de reste de l'ancienne modale.
+- **Même fichier redéposé** : après C, déposer à nouveau `03-corrected.csv`, confirmer « Importer quand même » : l'encart « Depuis l'import du … » affiche toujours les 2 nageurs en moins (et non « Aucun changement »), et les flèches du Classement sont toujours là.
 - **Autre meeting** : créer un 2ᵉ meeting vide, importer `06-other-meeting.csv` : **pas de modale** (premier import). Le meeting « Test garde-fous » n'est pas modifié.
 
 ## Sauvegardes

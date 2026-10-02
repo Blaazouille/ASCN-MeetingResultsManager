@@ -194,5 +194,5 @@ Raison de la séparation : la config survit à une restauration complète de la 
 - `swimmer_result.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `team_ranking.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `swimmer_result` est unique par `(meeting_id, category, lastname, firstname, birthyear, club)` : un ré-import du même fichier met à jour les lignes existantes plutôt que de les dupliquer, et retire les nageurs absents du nouvel import (scopé aux catégories présentes).
-- `import_snapshot` est unique par `meeting_id` ; chaque import avec des résultats déjà présents le remplace, le premier import d'un meeting le supprime (rien à comparer).
+- `import_snapshot` est unique par `meeting_id` ; chaque import avec des résultats déjà présents le remplace, sauf s'il laisse toutes les lignes identiques (même fichier redéposé : l'instantané est conservé) ; le premier import d'un meeting le supprime (rien à comparer).
 - `team_ranking` est unique par `(meeting_id, category, club)`.

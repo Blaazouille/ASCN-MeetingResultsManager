@@ -1,14 +1,14 @@
 /**
  * Responsabilité : compare un fichier CSV à analyser avec les résultats déjà en base, avant toute écriture, pour repérer un mauvais fichier.
  * Appelé par : ImportPage.tsx.
- * Suppression casserait : les alertes avant import (mauvais fichier, export partiel, fichier identique) — un import écraserait les résultats sans prévenir.
+ * Suppression casserait : les alertes avant import (mauvais fichier, export partiel, fichier identique, nageurs retirés) — un import écraserait les résultats sans prévenir.
  */
 import type { RawSwimmerRow } from './csv-parser';
 import { formatImportTimestamp } from './export-data';
-import { categoryShortLabel } from './ui-labels';
+import { categoryShortLabel, swimmerCountLabel } from './ui-labels';
 
 export interface ImportWarning {
-  kind: 'identical' | 'shrunk' | 'different' | 'missing-category';
+  kind: 'identical' | 'shrunk' | 'different' | 'missing-category' | 'removed';
   /** Info-only warnings (a missing category is kept as is) never trigger the confirmation screen on their own. */
   blocking: boolean;
   message: string;
@@ -73,6 +73,20 @@ export function checkImportAgainstExisting(
         message: `Ce fichier contient ${now} nageurs en ${label}, contre ${count} actuellement. Il pourrait s'agir d'un export incomplet.`,
       });
     }
+  }
+
+  // Announced before the write: insertSwimmerResults deletes these rows, and a drop under
+  // SHRINK_THRESHOLD (a few withdrawals) would otherwise only show up in the summary, after the fact.
+  // Not blocking: a corrected FFN export routinely drops a withdrawn swimmer.
+  const incomingKeys = new Set(incoming.map(rowKey));
+  const removed = countByCategory(existing.filter((row) => after.has(row.name) && !incomingKeys.has(rowKey(row))));
+  for (const [category, count] of removed) {
+    const verb = count < 2 ? 'absent du nouveau fichier sera retiré' : 'absents du nouveau fichier seront retirés';
+    warnings.push({
+      kind: 'removed',
+      blocking: false,
+      message: `${swimmerCountLabel(count)} ${verb} du classement ${categoryShortLabel(category)}.`,
+    });
   }
 
   // Only categories present on both sides: a file bringing a new category says nothing about the others.

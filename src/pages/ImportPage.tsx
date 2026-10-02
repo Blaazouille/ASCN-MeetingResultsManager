@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
 import { StatTile } from '@/components/import/StatTile';
 import { ImportGuardDialog } from '@/components/import/ImportGuardDialog';
+import { ImportRemovalNotice } from '@/components/import/ImportRemovalNotice';
 import { ImportChanges } from '@/components/import/ImportChanges';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
@@ -96,7 +97,9 @@ export default function ImportPage(): JSX.Element {
         setIsPersisting(false);
         return;
       }
-      if (warnings.some((warning) => warning.blocking)) {
+      // Swimmers about to be removed also wait for a click (inline, not the guard modal):
+      // the volunteer must learn it before the write, not from the summary afterwards.
+      if (warnings.some((warning) => warning.blocking || warning.kind === 'removed')) {
         setIsPersisting(false);
         setPending({ parsed, warnings });
         return;
@@ -110,7 +113,8 @@ export default function ImportPage(): JSX.Element {
     if (!pending) return;
     const { parsed, warnings } = pending;
     setPending(null);
-    void persist(parsed, warnings.filter((warning) => !warning.blocking));
+    // Removals were read before confirming: repeated in « À savoir » they would say « seront retirés » after the fact.
+    void persist(parsed, warnings.filter((warning) => !warning.blocking && warning.kind !== 'removed'));
   };
 
   const cancelPending = (): void => {
@@ -223,7 +227,12 @@ export default function ImportPage(): JSX.Element {
         </p>
       )}
 
-      {pending && <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />}
+      {pending &&
+        (pending.warnings.some((warning) => warning.blocking) ? (
+          <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />
+        ) : (
+          <ImportRemovalNotice warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />
+        ))}
 
       <DropZone compact={hasResult} error={error} errorId={errorId} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
     </div>
