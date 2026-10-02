@@ -4,7 +4,17 @@
  * Suppression casserait : la vérification du libellé « N retenus sur M » du classement par équipes.
  */
 import { describe, expect, it } from 'vitest';
-import { formatRetainedSwimmers } from '../src/lib/utils';
+import { formatDateTimeFr, formatRetainedSwimmers } from '../src/lib/utils';
+
+describe('formatDateTimeFr', () => {
+  it('formats an instant as "2 oct. 2026 à 14 h 05" in local time, with non-breaking spaces around "h"', () => {
+    // 10:05 UTC stays on the 2nd for local timezones from UTC-10 to UTC+13.
+    const at = new Date('2026-10-02T10:05:00Z');
+    const hh = String(at.getHours()).padStart(2, '0');
+    const mm = String(at.getMinutes()).padStart(2, '0');
+    expect(formatDateTimeFr(at)).toMatch(new RegExp(`^2\\s+oct\\.?\\s+2026 à ${hh}\\u00a0h\\u00a0${mm}$`));
+  });
+});
 
 const NBSP = '\u00a0';
 
