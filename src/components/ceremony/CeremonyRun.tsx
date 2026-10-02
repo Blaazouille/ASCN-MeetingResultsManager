@@ -5,8 +5,9 @@
  */
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { CeremonyRun as CeremonyRunState } from '@/lib/ceremony-session';
-import { isCeremonyFinished, type CeremonyMove } from '@/lib/ceremony-navigation';
-import { progressLabel } from '@/lib/ceremony-labels';
+import { doneCount, type CeremonyMove } from '@/lib/ceremony-navigation';
+import { finishedLabel, progressLabel } from '@/lib/ceremony-labels';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { CeremonyStepCard } from './CeremonyStepCard';
 import { CeremonyStepList } from './CeremonyStepList';
@@ -21,8 +22,9 @@ export interface CeremonyRunProps {
 export function CeremonyRun({ run, hasNewerData, onStep, onGoTo }: CeremonyRunProps): JSX.Element {
   const { steps, progress } = run;
   const total = steps.length;
-  const finished = isCeremonyFinished(progress, total);
+  const { finished } = progress;
   const isLast = progress.current === total - 1;
+  const done = doneCount(progress, total);
   const step = steps[progress.current]!;
 
   return (
@@ -48,18 +50,24 @@ export function CeremonyRun({ run, hasNewerData, onStep, onGoTo }: CeremonyRunPr
             aria-label="Annonces faites"
             aria-valuemin={0}
             aria-valuemax={total}
-            aria-valuenow={progress.reached}
+            aria-valuenow={done}
             className="h-2 overflow-hidden rounded-full bg-surface-sunken"
           >
             {/* Width is the one dynamic value here, hence the inline style. */}
-            <div className="h-full rounded-full bg-bassin" style={{ width: `${(progress.reached / total) * 100}%` }} />
+            <div className="h-full rounded-full bg-bassin" style={{ width: `${(done / total) * 100}%` }} />
           </div>
         </div>
 
         {finished && (
-          <p role="status" className="flex items-center gap-3 rounded-lg bg-success-light px-5 py-3 text-base font-semibold text-success">
-            <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden />
-            Toutes les annonces ont été faites. Bravo&nbsp;!
+          <p
+            role="status"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-5 py-3 text-base font-semibold',
+              done === total ? 'bg-success-light text-success' : 'border border-corail-line bg-corail-wash text-corail-strong'
+            )}
+          >
+            {done === total ? <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden /> : <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden />}
+            {finishedLabel(total - done)}
           </p>
         )}
 
@@ -70,7 +78,7 @@ export function CeremonyRun({ run, hasNewerData, onStep, onGoTo }: CeremonyRunPr
             Précédent
           </Button>
           <span className="text-sm text-ink-muted">Clavier&nbsp;: ← → ou espace</span>
-          <Button variant="primary" size="lg" iconAfter={isLast ? undefined : ArrowRight} disabled={finished} onClick={() => onStep('next')}>
+          <Button variant="primary" size="lg" iconAfter={isLast ? undefined : ArrowRight} disabled={finished && isLast} onClick={() => onStep('next')}>
             {isLast ? 'Terminer' : 'Suivant'}
           </Button>
         </div>

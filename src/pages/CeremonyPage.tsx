@@ -13,6 +13,7 @@ import { useCeremonyExport } from '@/hooks/use-ceremony-export';
 import { Button } from '@/components/ui/Button';
 import { CeremonyPreparation } from '@/components/ceremony/CeremonyPreparation';
 import { CeremonyRun } from '@/components/ceremony/CeremonyRun';
+import { LeaveCeremonyDialog } from '@/components/ceremony/LeaveCeremonyDialog';
 
 export default function CeremonyPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -46,11 +47,13 @@ export default function CeremonyPage(): JSX.Element {
               Imprimer le déroulé
             </Button>
             {run === null ? (
-              <Button variant="primary" icon={Play} disabled={ceremony.preview.length === 0} onClick={ceremony.start}>
+              // Distinct keys: React must not reuse one <button> for the other, or the
+              // focus left on « Lancer » would land on « Revenir à la préparation ».
+              <Button key="start" variant="primary" icon={Play} disabled={ceremony.preview.length === 0} onClick={ceremony.start}>
                 Lancer le déroulé
               </Button>
             ) : (
-              <Button icon={Undo2} onClick={ceremony.stop}>
+              <Button key="leave" icon={Undo2} onClick={ceremony.requestLeave}>
                 Revenir à la préparation
               </Button>
             )}
@@ -76,6 +79,7 @@ export default function CeremonyPage(): JSX.Element {
           onGoTo={ceremony.goTo}
         />
       )}
+      {ceremony.isLeaving && <LeaveCeremonyDialog onConfirm={ceremony.confirmLeave} onCancel={ceremony.cancelLeave} />}
     </div>
   );
 }

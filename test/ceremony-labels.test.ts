@@ -8,7 +8,7 @@ import type { CeremonyStep, CeremonyWinner } from '../src/lib/ceremony-script';
 import {
   gapLabel,
   pointsLabel,
-  prizeLabel,
+  finishedLabel,
   progressLabel,
   stepContext,
   stepCountLabel,
@@ -56,10 +56,14 @@ describe('stepContext', () => {
   });
 });
 
-describe('prizeLabel', () => {
-  it('writes French prize ordinals', () => {
-    expect(prizeLabel(1)).toBe('1er Prix');
-    expect(prizeLabel(2)).toBe('2e Prix');
+describe('finishedLabel', () => {
+  it('congratulates when every announcement was made', () => {
+    expect(finishedLabel(0)).toBe(`Toutes les annonces ont été faites. Bravo${NBSP}!`);
+  });
+
+  it('counts the announcements jumped over', () => {
+    expect(finishedLabel(1)).toBe(`Fin du déroulé${NBSP}: 1 annonce n'a pas été faite. Elles ne sont pas cochées dans la liste.`);
+    expect(finishedLabel(3)).toContain("3 annonces n'ont pas été faites");
   });
 });
 

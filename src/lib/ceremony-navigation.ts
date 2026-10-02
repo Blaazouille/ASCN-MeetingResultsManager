@@ -1,6 +1,6 @@
 /**
  * Responsabilité : progression dans le déroulé (annonce courante, annonces faites, raccourcis clavier).
- * Appelé par : use-ceremony.ts, ceremony-session.ts et les tests.
+ * Appelé par : use-ceremony.ts, ceremony-session.ts, les composants de src/components/ceremony/ et les tests.
  * Suppression casserait : la navigation Précédent / Suivant et le cochage des annonces faites.
  */
 
@@ -8,45 +8,79 @@ export interface CeremonyProgress {
   /** Index of the announcement on screen. */
   current: number;
   /**
-   * Furthest point reached: every announcement before it has been read. Kept
-   * apart from `current` so going back to check a name doesn't untick the
-   * announcements already made. Equals the step count once the last one is done.
+   * Announcements that have been on screen, ascending. Only these can be
+   * ticked: jumping ahead through the list leaves the skipped ones unticked,
+   * so the manager sees what was never announced.
    */
-  reached: number;
+  shown: number[];
+  /** "Terminer" was pressed on the last announcement. */
+  finished: boolean;
 }
 
 export type CeremonyMove = 'next' | 'previous';
 
-export const START_PROGRESS: CeremonyProgress = { current: 0, reached: 0 };
+export const START_PROGRESS: CeremonyProgress = { current: 0, shown: [0], finished: false };
 
-/** Jumps to an announcement (clamped to the script); passing it marks everything before as read. */
+function withShown(shown: number[], index: number): number[] {
+  return shown.includes(index) ? shown : [...shown, index].sort((a, b) => a - b);
+}
+
+/** Jumps to an announcement (clamped to the script) and records it as shown. */
 export function goToStep(progress: CeremonyProgress, index: number, total: number): CeremonyProgress {
   if (total === 0) return START_PROGRESS;
   const current = Math.min(Math.max(index, 0), total - 1);
-  return { current, reached: Math.max(progress.reached, current) };
+  return { ...progress, current, shown: withShown(progress.shown, current) };
 }
 
-/**
- * Next / previous announcement. "Next" on the last one doesn't move: it marks
- * it read, which ends the ceremony.
- */
+/** Next / previous announcement. "Next" on the last one doesn't move: it ends the ceremony. */
 export function moveStep(progress: CeremonyProgress, move: CeremonyMove, total: number): CeremonyProgress {
   if (move === 'previous') return goToStep(progress, progress.current - 1, total);
-  if (progress.current >= total - 1) return { current: progress.current, reached: total };
+  if (progress.current >= total - 1) return { ...progress, finished: true };
   return goToStep(progress, progress.current + 1, total);
 }
 
-/** An announcement is ticked once read, except the one on screen while it is still being read. */
-export function isStepDone(progress: CeremonyProgress, index: number, total: number): boolean {
-  return index < progress.reached && (index !== progress.current || isCeremonyFinished(progress, total));
+/**
+ * Ticked once it has been shown and left behind. The one on screen is still
+ * being read, so it is only ticked once the ceremony is finished.
+ */
+export function isStepDone(progress: CeremonyProgress, index: number): boolean {
+  return progress.shown.includes(index) && (index !== progress.current || progress.finished);
 }
 
-export function isCeremonyFinished(progress: CeremonyProgress, total: number): boolean {
-  return total > 0 && progress.reached >= total;
+/** Never shown although a later announcement was: jumped over, so not announced yet. */
+export function isStepSkipped(progress: CeremonyProgress, index: number): boolean {
+  return !progress.shown.includes(index) && progress.shown.some((shown) => shown > index);
 }
 
-/** Keyboard shortcuts: → or space for the next announcement, ← for the previous one. */
-export function keyToMove(key: string): CeremonyMove | null {
+/** How many announcements are ticked. */
+export function doneCount(progress: CeremonyProgress, total: number): number {
+  let count = 0;
+  for (let index = 0; index < total; index++) {
+    if (isStepDone(progress, index)) count++;
+  }
+  return count;
+}
+
+/** What the keyboard handler knows about a key press. */
+export interface ShortcutKey {
+  key: string;
+  repeat: boolean;
+  /** Alt, Ctrl or Meta held: leave browser and system shortcuts alone. */
+  withModifier: boolean;
+  /** Focus is in an input, textarea or select: the key is typing, not navigation. */
+  inField: boolean;
+  /** A dialog is open on top of the run: its own buttons own the keyboard. */
+  dialogOpen: boolean;
+}
+
+/**
+ * → or space for the next announcement, ← for the previous one; null when the
+ * key must be left to the page. Space is taken even when a button has focus,
+ * so it never clicks that button instead (e.g. jumping to a list entry).
+ * Held keys are ignored: auto-repeat would race through announcements.
+ */
+export function shortcutMove({ key, repeat, withModifier, inField, dialogOpen }: ShortcutKey): CeremonyMove | null {
+  if (repeat || withModifier || inField || dialogOpen) return null;
   if (key === 'ArrowRight' || key === ' ') return 'next';
   if (key === 'ArrowLeft') return 'previous';
   return null;

@@ -5,7 +5,7 @@
  */
 import type { CeremonyBlock, CeremonyStep, CeremonyWinner } from './ceremony-script';
 import type { CeremonyWarning } from './ceremony-warnings';
-import { categoryShortLabel, placeLabel } from './ui-labels';
+import { categoryShortLabel, placeLabel, prizeLabel } from './ui-labels';
 import { formatPoints } from './utils';
 
 export const CEREMONY_BLOCK_LABELS: Record<CeremonyBlock, string> = {
@@ -13,11 +13,6 @@ export const CEREMONY_BLOCK_LABELS: Record<CeremonyBlock, string> = {
   'individual-prizes': 'Prix individuels',
   'team-ranking': 'Classement par équipes',
 };
-
-/** "1er Prix", "2e Prix": same wording as the prize tags of the Individuels screen. */
-export function prizeLabel(rank: number): string {
-  return rank === 1 ? '1er Prix' : `${rank}e Prix`;
-}
 
 /** What is being awarded: "3e place", "1er Prix ex æquo", "La Doyenne". */
 export function stepHeading(step: CeremonyStep): string {
@@ -40,6 +35,13 @@ export function progressLabel(index: number, total: number): string {
 export function stepCountLabel(count: number): string {
   if (count === 0) return 'Aucune annonce';
   return count === 1 ? '1 annonce' : `${count} annonces`;
+}
+
+/** Message once « Terminer » is pressed; announcements jumped over are counted so none is forgotten. */
+export function finishedLabel(notDone: number): string {
+  if (notDone === 0) return 'Toutes les annonces ont été faites. Bravo\u00a0!';
+  const what = notDone === 1 ? "1 annonce n'a pas été faite" : `${notDone} annonces n'ont pas été faites`;
+  return `Fin du déroulé\u00a0: ${what}. Elles ne sont pas cochées dans la liste.`;
 }
 
 /** "1 274 points", "1 point": a winner's score as read out. */

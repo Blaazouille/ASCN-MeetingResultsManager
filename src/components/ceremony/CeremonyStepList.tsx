@@ -1,11 +1,11 @@
 /**
- * Responsabilité : liste latérale des annonces du déroulé (faite cochée, courante en évidence, clic pour y aller).
+ * Responsabilité : liste latérale des annonces du déroulé (faite cochée, sautée signalée, courante en évidence, clic pour y aller).
  * Appelé par : CeremonyRun.tsx.
  * Suppression casserait : la vue d'ensemble de la progression pendant la cérémonie.
  */
 import { Check } from 'lucide-react';
 import type { CeremonyStep } from '@/lib/ceremony-script';
-import { isStepDone, type CeremonyProgress } from '@/lib/ceremony-navigation';
+import { isStepDone, isStepSkipped, type CeremonyProgress } from '@/lib/ceremony-navigation';
 import { stepContext, stepHeading } from '@/lib/ceremony-labels';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +20,8 @@ export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepList
     <ol aria-label="Toutes les annonces" className="flex flex-col gap-1">
       {steps.map((step, index) => {
         const current = index === progress.current;
-        const done = isStepDone(progress, index, steps.length);
+        const done = isStepDone(progress, index);
+        const skipped = isStepSkipped(progress, index);
         return (
           <li key={step.id}>
             <button
@@ -45,6 +46,7 @@ export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepList
                 <span className={cn('truncate text-[13px]', current ? 'text-on-marine-muted' : 'text-ink-muted')}>
                   {stepContext(step)}
                 </span>
+                {skipped && <span className="text-[13px] font-semibold text-corail-strong">Non annoncée</span>}
               </span>
             </button>
           </li>

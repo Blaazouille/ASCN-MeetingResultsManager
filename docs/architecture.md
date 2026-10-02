@@ -121,7 +121,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
 │   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre → options du déroulé
-│   │   ├── ceremony-navigation.ts # Progression : annonce courante, annonces faites, raccourcis clavier
+│   │   ├── ceremony-navigation.ts # Progression : annonce courante, annonces affichées/faites/sautées, filtre des raccourcis clavier
 │   │   ├── ceremony-session.ts    # Déroulé figé au lancement, relu depuis sessionStorage
 │   │   ├── ceremony-warnings.ts   # Points à vérifier avant la cérémonie (ex æquo, import ancien, catégorie vide)
 │   │   ├── ceremony-labels.ts     # Textes du déroulé (intitulés, progression, écarts, alertes)
@@ -152,8 +152,9 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
 │   │   ├── use-ranking-export.ts  # Exports PDF/Excel du classement par équipes
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
-│   │   ├── use-ceremony.ts        # Écran Cérémonie : préparation, déroulé figé, navigation clavier
+│   │   ├── use-ceremony.ts        # Écran Cérémonie : préparation, déroulé figé, progression, confirmation de sortie
 │   │   ├── use-ceremony-export.ts # Impression PDF du déroulé de cérémonie
+│   │   ├── use-ceremony-shortcuts.ts # Raccourcis clavier du déroulé (← → espace), interceptés hors champs et modales
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
 │   │   ├── use-auto-update.ts     # Notification de mise à jour téléchargée

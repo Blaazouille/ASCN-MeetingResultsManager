@@ -20,7 +20,7 @@ const RUN: CeremonyRun = {
       gapToNext: null,
     },
   ],
-  progress: { current: 0, reached: 0 },
+  progress: { current: 0, shown: [0], finished: false },
 };
 
 describe('parseCeremonyRun', () => {
@@ -37,7 +37,13 @@ describe('parseCeremonyRun', () => {
   });
 
   it('rejects a progress that points outside the script', () => {
-    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { current: 1, reached: 1 } }))).toBeNull();
-    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { current: 0, reached: 2 } }))).toBeNull();
+    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { ...RUN.progress, current: 1 } }))).toBeNull();
+    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { ...RUN.progress, shown: [0, 2] } }))).toBeNull();
+    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { ...RUN.progress, finished: 'yes' } }))).toBeNull();
+  });
+
+  it('rejects positions that are not whole numbers', () => {
+    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { ...RUN.progress, current: 0.5 } }))).toBeNull();
+    expect(parseCeremonyRun(JSON.stringify({ ...RUN, progress: { ...RUN.progress, shown: [0.2] } }))).toBeNull();
   });
 });

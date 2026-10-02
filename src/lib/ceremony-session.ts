@@ -53,15 +53,17 @@ function isStep(value: unknown): value is CeremonyStep {
   );
 }
 
+function isStepIndex(value: unknown, total: number): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < total;
+}
+
 function isProgress(value: unknown, total: number): value is CeremonyProgress {
   return (
     isRecord(value) &&
-    typeof value.current === 'number' &&
-    typeof value.reached === 'number' &&
-    value.current >= 0 &&
-    value.current < total &&
-    value.reached >= 0 &&
-    value.reached <= total
+    isStepIndex(value.current, total) &&
+    Array.isArray(value.shown) &&
+    value.shown.every((index) => isStepIndex(index, total)) &&
+    typeof value.finished === 'boolean'
   );
 }
 

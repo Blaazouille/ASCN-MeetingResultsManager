@@ -5,20 +5,27 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  doneCount,
   goToStep,
-  isCeremonyFinished,
   isStepDone,
-  keyToMove,
+  isStepSkipped,
   moveStep,
+  shortcutMove,
   START_PROGRESS,
+  type ShortcutKey,
 } from '../src/lib/ceremony-navigation';
 
 describe('moveStep', () => {
-  it('goes forward and marks the previous announcement as read', () => {
+  it('starts on the first announcement, not yet ticked', () => {
+    expect(START_PROGRESS.current).toBe(0);
+    expect(isStepDone(START_PROGRESS, 0)).toBe(false);
+  });
+
+  it('goes forward and ticks the announcement just read', () => {
     const progress = moveStep(START_PROGRESS, 'next', 5);
-    expect(progress).toEqual({ current: 1, reached: 1 });
-    expect(isStepDone(progress, 0, 5)).toBe(true);
-    expect(isStepDone(progress, 1, 5)).toBe(false);
+    expect(progress.current).toBe(1);
+    expect(isStepDone(progress, 0)).toBe(true);
+    expect(isStepDone(progress, 1)).toBe(false);
   });
 
   it('does not go before the first announcement', () => {
@@ -26,24 +33,45 @@ describe('moveStep', () => {
   });
 
   it('keeps read announcements ticked when going back to check one', () => {
-    const progress = moveStep({ current: 3, reached: 3 }, 'previous', 5);
-    expect(progress).toEqual({ current: 2, reached: 3 });
-    expect(isStepDone(progress, 1, 5)).toBe(true);
+    let progress = moveStep(START_PROGRESS, 'next', 5);
+    progress = moveStep(progress, 'next', 5);
+    progress = moveStep(progress, 'previous', 5);
+    expect(progress.current).toBe(1);
+    expect(isStepDone(progress, 0)).toBe(true);
     // The one on screen is being read again: not shown as done.
-    expect(isStepDone(progress, 2, 5)).toBe(false);
+    expect(isStepDone(progress, 1)).toBe(false);
+    expect(isStepDone(progress, 2)).toBe(true);
   });
 
   it('ends the ceremony on "next" from the last announcement, without moving', () => {
-    const progress = moveStep({ current: 4, reached: 4 }, 'next', 5);
-    expect(progress).toEqual({ current: 4, reached: 5 });
-    expect(isCeremonyFinished(progress, 5)).toBe(true);
-    expect(isStepDone(progress, 4, 5)).toBe(true);
+    let progress = START_PROGRESS;
+    for (let i = 0; i < 5; i++) progress = moveStep(progress, 'next', 5);
+    expect(progress.current).toBe(4);
+    expect(progress.finished).toBe(true);
+    expect(isStepDone(progress, 4)).toBe(true);
+    expect(doneCount(progress, 5)).toBe(5);
   });
 });
 
 describe('goToStep', () => {
-  it('jumps to an announcement, ticking everything before it', () => {
-    expect(goToStep(START_PROGRESS, 3, 5)).toEqual({ current: 3, reached: 3 });
+  it('does not tick the announcements skipped by a jump ahead', () => {
+    const progress = moveStep(goToStep(START_PROGRESS, 3, 5), 'next', 5);
+    expect(isStepDone(progress, 0)).toBe(true);
+    expect(isStepDone(progress, 1)).toBe(false);
+    expect(isStepDone(progress, 2)).toBe(false);
+    expect(isStepDone(progress, 3)).toBe(true);
+    expect(doneCount(progress, 5)).toBe(2);
+  });
+
+  it('marks the jumped-over announcements as not announced, and only those', () => {
+    const progress = goToStep(START_PROGRESS, 3, 5);
+    expect([0, 1, 2, 3, 4].map((index) => isStepSkipped(progress, index))).toEqual([false, true, true, false, false]);
+  });
+
+  it('ticks a skipped announcement once it has been shown', () => {
+    const progress = goToStep(goToStep(START_PROGRESS, 3, 5), 1, 5);
+    expect(isStepSkipped(progress, 1)).toBe(false);
+    expect(isStepDone(goToStep(progress, 3, 5), 1)).toBe(true);
   });
 
   it('stays within the script', () => {
@@ -53,18 +81,24 @@ describe('goToStep', () => {
   });
 });
 
-describe('isCeremonyFinished', () => {
-  it('is false until the last announcement is read, and for an empty script', () => {
-    expect(isCeremonyFinished({ current: 4, reached: 4 }, 5)).toBe(false);
-    expect(isCeremonyFinished(START_PROGRESS, 0)).toBe(false);
-  });
-});
+describe('shortcutMove', () => {
+  const press = (key: string, overrides: Partial<ShortcutKey> = {}): ReturnType<typeof shortcutMove> =>
+    shortcutMove({ key, repeat: false, withModifier: false, inField: false, dialogOpen: false, ...overrides });
 
-describe('keyToMove', () => {
   it('maps → and space to next, ← to previous, anything else to nothing', () => {
-    expect(keyToMove('ArrowRight')).toBe('next');
-    expect(keyToMove(' ')).toBe('next');
-    expect(keyToMove('ArrowLeft')).toBe('previous');
-    expect(keyToMove('Enter')).toBeNull();
+    expect(press('ArrowRight')).toBe('next');
+    expect(press(' ')).toBe('next');
+    expect(press('ArrowLeft')).toBe('previous');
+    expect(press('Enter')).toBeNull();
+  });
+
+  it('leaves the key alone while typing in a field or when a dialog is open', () => {
+    expect(press(' ', { inField: true })).toBeNull();
+    expect(press('ArrowRight', { dialogOpen: true })).toBeNull();
+  });
+
+  it('ignores held keys and shortcuts with Alt, Ctrl or Meta', () => {
+    expect(press('ArrowRight', { repeat: true })).toBeNull();
+    expect(press('ArrowLeft', { withModifier: true })).toBeNull();
   });
 });

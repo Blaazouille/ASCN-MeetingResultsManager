@@ -1,5 +1,5 @@
 /**
- * Responsabilité : état de l'écran Cérémonie (préparation, déroulé figé, annonce courante, raccourcis clavier).
+ * Responsabilité : état de l'écran Cérémonie (préparation, déroulé figé, annonce courante, confirmation de sortie).
  * Appelé par : CeremonyPage.tsx.
  * Suppression casserait : l'écran Cérémonie.
  */
@@ -8,9 +8,10 @@ import type { RawSwimmerRow } from '@/lib/csv-parser';
 import type { Meeting } from '@/lib/db';
 import { buildCeremonyScript, DEFAULT_TEAM_PLACES, type CeremonyBlock, type CeremonyStep } from '@/lib/ceremony-script';
 import { DEFAULT_PLAN, moveBlock, planToOptions, toggleBlock, type PlannedBlock } from '@/lib/ceremony-plan';
-import { goToStep, keyToMove, moveStep, START_PROGRESS, type CeremonyMove } from '@/lib/ceremony-navigation';
+import { goToStep, moveStep, START_PROGRESS, type CeremonyMove } from '@/lib/ceremony-navigation';
 import { parseCeremonyRun, type CeremonyRun } from '@/lib/ceremony-session';
 import { ceremonyWarnings, type CeremonyWarning } from '@/lib/ceremony-warnings';
+import { useCeremonyShortcuts } from './use-ceremony-shortcuts';
 
 // sessionStorage, not SQLite: the run only has to survive a detour through
 // another screen (e.g. a re-import) during the ceremony; losing it when the
@@ -34,15 +35,6 @@ function storeRun(run: CeremonyRun | null): void {
   }
 }
 
-/** Shortcuts must not hijack typing, nor double a space that already clicks the focused button. */
-function shortcutMove(event: KeyboardEvent): CeremonyMove | null {
-  if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return null;
-  const target = event.target instanceof Element ? event.target : null;
-  if (target?.closest('input, textarea, select')) return null;
-  if (event.key === ' ' && target?.closest('button, a')) return null;
-  return keyToMove(event.key);
-}
-
 export interface UseCeremonyResult {
   plan: PlannedBlock[];
   toggleBlock: (block: CeremonyBlock) => void;
@@ -57,7 +49,12 @@ export interface UseCeremonyResult {
   /** True when results were imported after the run was launched. */
   hasNewerData: boolean;
   start: () => void;
-  stop: () => void;
+  /** True while the « Abandonner le déroulé ? » confirmation is open. */
+  isLeaving: boolean;
+  /** Asks for confirmation before dropping the run: its progress can't be recovered. */
+  requestLeave: () => void;
+  cancelLeave: () => void;
+  confirmLeave: () => void;
   step: (move: CeremonyMove) => void;
   goTo: (index: number) => void;
 }
@@ -85,7 +82,11 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     setStoredRun({ meetingId: meeting.id, importedAt: meeting.lastImportedAt, steps: preview, progress: START_PROGRESS });
   }, [meeting, preview]);
 
-  const stop = useCallback((): void => setStoredRun(null), []);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const confirmLeave = useCallback((): void => {
+    setIsLeaving(false);
+    setStoredRun(null);
+  }, []);
 
   const step = useCallback((move: CeremonyMove): void => {
     setStoredRun((current) => current && { ...current, progress: moveStep(current.progress, move, current.steps.length) });
@@ -95,18 +96,7 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     setStoredRun((current) => current && { ...current, progress: goToStep(current.progress, index, current.steps.length) });
   }, []);
 
-  const isRunning = run !== null;
-  useEffect(() => {
-    if (!isRunning) return undefined;
-    function onKeyDown(event: KeyboardEvent): void {
-      const move = shortcutMove(event);
-      if (move === null) return;
-      event.preventDefault(); // Space would otherwise scroll the page.
-      step(move);
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isRunning, step]);
+  useCeremonyShortcuts(run !== null, isLeaving, step);
 
   return {
     plan,
@@ -119,7 +109,10 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     run,
     hasNewerData: run !== null && meeting !== null && meeting.lastImportedAt !== run.importedAt,
     start,
-    stop,
+    isLeaving,
+    requestLeave: () => setIsLeaving(true),
+    cancelLeave: () => setIsLeaving(false),
+    confirmLeave,
     step,
     goTo,
   };
