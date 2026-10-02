@@ -12,6 +12,11 @@ export function placeLabel(rank: number): string {
   return `${rank === 1 ? '1re' : `${rank}e`} place`;
 }
 
+/** "1er Prix", "2e Prix": the individual prize of a rank (Individuels screen and ceremony). */
+export function prizeLabel(rank: number): string {
+  return rank === 1 ? '1er Prix' : `${rank}e Prix`;
+}
+
 /** Gap to the leader with a real minus sign (U+2212), or "—" for the leader itself. */
 export function formatGap(points: number, leaderPoints: number): string {
   const gap = leaderPoints - points;
