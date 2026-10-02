@@ -75,7 +75,7 @@ interface MeetingInput {
 // src/lib/csv-parser.ts
 interface RawSwimmerRow {
   name: string;       // catégorie (ex: "Classement Mixte")
-  place: number;
+  place: number | null; // rang du fichier ; null si la cellule est vide ou illisible
   lastname: string;
   firstname: string;
   birthyear: number;
@@ -93,7 +93,7 @@ interface SwimmerEntry {
   firstname: string;
   birthyear: number;
   points: number;
-  rank: number; // rang individuel dans la catégorie source
+  rank: number | null; // rang individuel dans la catégorie source (null si absent du fichier)
 }
 
 interface TeamResult {
@@ -174,4 +174,4 @@ Raison de la séparation : la config survit à une restauration complète de la 
 - `swimmer_result.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `import_snapshot.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `swimmer_result` est unique par `(meeting_id, category, lastname, firstname, birthyear, club)` : un ré-import du même fichier met à jour les lignes existantes plutôt que de les dupliquer, et retire les nageurs absents du nouvel import (scopé aux catégories présentes).
-- `import_snapshot` est unique par `meeting_id` ; chaque import avec des résultats déjà présents le remplace, le premier import d'un meeting le supprime (rien à comparer).
+- `import_snapshot` est unique par `meeting_id` ; chaque import avec des résultats déjà présents le remplace, sauf s'il laisse toutes les lignes identiques (même fichier redéposé : l'instantané est conservé) ; le premier import d'un meeting le supprime (rien à comparer).

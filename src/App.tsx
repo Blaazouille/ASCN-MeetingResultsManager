@@ -10,6 +10,7 @@ import ImportPage from '@/pages/ImportPage';
 import RankingPage from '@/pages/RankingPage';
 import IndividualPage from '@/pages/IndividualPage';
 import PalmaresPage from '@/pages/PalmaresPage';
+import CeremonyPage from '@/pages/CeremonyPage';
 import SettingsPage from '@/pages/SettingsPage';
 
 export default function App(): JSX.Element {
@@ -22,6 +23,7 @@ export default function App(): JSX.Element {
           <Route path="classement" element={<RankingPage />} />
           <Route path="individuels" element={<IndividualPage />} />
           <Route path="palmares" element={<PalmaresPage />} />
+          <Route path="ceremonie" element={<CeremonyPage />} />
           <Route path="parametres" element={<SettingsPage />} />
         </Route>
       </Routes>

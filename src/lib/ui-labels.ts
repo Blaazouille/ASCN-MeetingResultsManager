@@ -12,6 +12,11 @@ export function placeLabel(rank: number): string {
   return `${rank === 1 ? '1re' : `${rank}e`} place`;
 }
 
+/** "1er Prix", "2e Prix": the individual prize of a rank (Individuels screen and ceremony). */
+export function prizeLabel(rank: number): string {
+  return rank === 1 ? '1er Prix' : `${rank}e Prix`;
+}
+
 /** Gap to the leader with a real minus sign (U+2212), or "—" for the leader itself. */
 export function formatGap(points: number, leaderPoints: number): string {
   const gap = leaderPoints - points;
@@ -54,6 +59,12 @@ export function clubCountLabel(count: number): string {
 /** "412 nageurs" — counts people, not rows (see Meeting.swimmerCount). */
 export function swimmerCountLabel(count: number): string {
   return count < 2 ? `${count} nageur` : `${formatPoints(count)} nageurs`;
+}
+
+/** "2 clubs non classés : moins de 3 nageurs" — explains why clubs are missing from the team ranking. */
+export function unrankedClubsLabel(count: number, minSwimmers: number): string {
+  const clubs = count >= 2 ? `${count} clubs non classés` : `${count} club non classé`;
+  return `${clubs} : moins de ${minSwimmers} nageurs dans la catégorie`;
 }
 
 /** "38 clubs · 412 nageurs": the one-line size of an imported meeting, shared by both Accueil cards. */
@@ -123,4 +134,12 @@ export function importChangeParts(changes: ImportChanges): string[] {
     parts.push(changes.clubsMoved >= 2 ? `${changes.clubsMoved} clubs ont changé de rang` : '1 club a changé de rang');
   }
   return parts;
+}
+
+/** « À savoir » line naming the swimmers left out of an import for an unreadable birth year, and what it costs them. */
+export function excludedSwimmersNotice(names: string[]): string {
+  const several = names.length >= 2;
+  const what = several ? 'non importés' : 'non importé';
+  const consequence = several ? 'Leurs points ne comptent' : 'Ses points ne comptent';
+  return `${swimmerCountLabel(names.length)} ${what} (année de naissance vide ou illisible dans le fichier) : ${names.join(', ')}. ${consequence} dans aucun classement.`;
 }

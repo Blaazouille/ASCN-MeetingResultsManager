@@ -146,7 +146,7 @@ interface SwimmerResultRow {
 function rowToRawSwimmerRow(row: SwimmerResultRow): RawSwimmerRow {
   return {
     name: row.category,
-    place: row.rank ?? 0,
+    place: row.rank,
     lastname: row.lastname,
     firstname: row.firstname,
     birthyear: row.birthyear ?? 0,
@@ -190,11 +190,11 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
   const stampImport = db.prepare("UPDATE meeting SET last_imported_at = datetime('now') WHERE id = ?");
 
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
-    // Before any write, so the snapshot is the state the new import is compared with.
+    // Read before any write: this is the state the new import is compared with.
     const previous = db.prepare('SELECT last_imported_at FROM meeting WHERE id = ?').get(meetingId) as
       | { last_imported_at: string | null }
       | undefined;
-    saveImportSnapshot(db, meetingId, getSwimmerResults(db, meetingId), previous?.last_imported_at ?? null);
+    const before = getSwimmerResults(db, meetingId);
     for (const row of rowsToInsert) {
       stmt.run({
         meetingId,
@@ -240,19 +240,22 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
         }
       }
     }
+    // After the writes, so it can tell whether this import changed anything at all.
+    saveImportSnapshot(db, meetingId, before, getSwimmerResults(db, meetingId), previous?.last_imported_at ?? null);
     // Inside the transaction: a failed import rolls the date back with the rows.
     stampImport.run(meetingId);
   });
   insertAll(rows);
 }
 
+/** A swimmer without a rank (empty place cell in the file) comes after the ranked ones, not first as SQLite sorts NULL. */
 export function getSwimmerResults(db: Database.Database, meetingId: number, category?: string): RawSwimmerRow[] {
   const rows = category
     ? (db
-        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? AND category = ? ORDER BY rank')
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? AND category = ? ORDER BY rank IS NULL, rank')
         .all(meetingId, category) as SwimmerResultRow[])
     : (db
-        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank')
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank IS NULL, rank')
         .all(meetingId) as SwimmerResultRow[]);
   return rows.map(rowToRawSwimmerRow);
 }

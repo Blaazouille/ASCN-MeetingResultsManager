@@ -42,8 +42,37 @@ describe('import snapshot', () => {
     const { db, id } = setup();
     insertSwimmerResults(db, id, [row('Un', 100)]);
     const first = db.prepare('SELECT last_imported_at FROM meeting WHERE id = ?').get(id) as { last_imported_at: string };
-    insertSwimmerResults(db, id, [row('Un', 100)]);
+    insertSwimmerResults(db, id, [row('Un', 105)]);
     expect(getImportSnapshot(db, id)?.importedAt).toBe(first.last_imported_at);
+  });
+
+  it('is kept when the same file is imported again (A then A)', () => {
+    const { db, id } = setup();
+    insertSwimmerResults(db, id, [row('Un', 100)]);
+    // Distinct, known import dates: datetime('now') could give the same second to every import of a test.
+    db.prepare("UPDATE meeting SET last_imported_at = '2026-10-02 10:00:00' WHERE id = ?").run(id);
+    const fileA = [row('Un', 110), row('Deux', 90)];
+    insertSwimmerResults(db, id, fileA);
+    db.prepare("UPDATE meeting SET last_imported_at = '2026-10-02 11:00:00' WHERE id = ?").run(id);
+    insertSwimmerResults(db, id, [...fileA].reverse());
+    expect(getImportSnapshot(db, id)).toEqual({ importedAt: '2026-10-02 10:00:00', rows: [row('Un', 100)] });
+  });
+
+  it('stays absent when the first file is imported a second time', () => {
+    const { db, id } = setup();
+    insertSwimmerResults(db, id, [row('Un', 100)]);
+    insertSwimmerResults(db, id, [row('Un', 100)]);
+    expect(getImportSnapshot(db, id)).toBeNull();
+  });
+
+  it('is replaced when going back to an earlier file (B then A): the return is a real change', () => {
+    const { db, id } = setup();
+    const fileA = [row('Un', 100)];
+    insertSwimmerResults(db, id, fileA);
+    insertSwimmerResults(db, id, [row('Un', 120)]);
+    db.prepare("UPDATE meeting SET last_imported_at = '2026-10-02 11:00:00' WHERE id = ?").run(id);
+    insertSwimmerResults(db, id, fileA);
+    expect(getImportSnapshot(db, id)).toEqual({ importedAt: '2026-10-02 11:00:00', rows: [row('Un', 120)] });
   });
 
   it('is not replaced by an empty import', () => {

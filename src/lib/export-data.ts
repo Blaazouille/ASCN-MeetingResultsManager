@@ -1,10 +1,11 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-ranking-export.ts, use-individual-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, use-ceremony-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, ceremony-pdf-export.tsx, ceremony-warnings.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
 import { categoryShortLabel } from './ui-labels';
+import { formatDateTimeFr } from './utils';
 
 export interface ExportMeta {
   meetingName: string;
@@ -19,18 +20,12 @@ export const DEMO_EXPORT_NOTICE = 'EXEMPLE — non officiel';
 const CREATED_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 
-// Date and time are formatted apart and joined by hand: a single Intl call with
-// dateStyle + timeStyle yields "14:32" or "à 14:32" depending on the ICU version,
-// while the club reads "14 h 32".
-const IMPORT_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-const IMPORT_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
 /**
  * Parses a SQLite `datetime('now')` timestamp ("YYYY-MM-DD HH:MM:SS", always
  * UTC) into a Date. `new Date(...)` needs an explicit "Z" to treat the string
  * as UTC instead of local time.
  */
-function parseSqliteTimestamp(value: string): Date {
+export function parseSqliteTimestamp(value: string): Date {
   return new Date(`${value.replace(' ', 'T')}Z`);
 }
 
@@ -50,13 +45,7 @@ export function formatMeetingImportedAt(meeting: Meeting): string | null {
 
 /** Same format for any SQLite import timestamp (e.g. the previous import's, kept in the snapshot). */
 export function formatImportTimestamp(timestamp: string): string {
-  const at = parseSqliteTimestamp(timestamp);
-  // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
-  const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
-  const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';
-  const minutes = parts.find((p) => p.type === 'minute')?.value ?? '00';
-  // Non-breaking spaces keep "14 h 32" on one line when the card wraps.
-  return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
+  return formatDateTimeFr(parseSqliteTimestamp(timestamp));
 }
 
 /** Builds the export metadata from the persisted meeting record. */

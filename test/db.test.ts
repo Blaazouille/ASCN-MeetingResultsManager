@@ -168,6 +168,19 @@ describe('swimmer results persistence', () => {
     expect(mixte.map((r) => r.lastname)).toEqual(['DUPONT', 'MARTIN']);
   });
 
+  it('keeps a missing rank empty (not 0) and lists that swimmer after the ranked ones', () => {
+    const db = createDatabase(':memory:');
+    const meeting = createMeeting(db, { name: 'Test' });
+    const [first, second] = sampleRows();
+    insertSwimmerResults(db, meeting.id, [{ ...first!, place: null }, second!]);
+
+    const mixte = getSwimmerResults(db, meeting.id, 'Classement Mixte');
+    expect(mixte.map((r) => [r.lastname, r.place])).toEqual([
+      ['MARTIN', 2],
+      ['DUPONT', null],
+    ]);
+  });
+
   it('re-importing the same swimmer updates rather than duplicates', () => {
     const db = createDatabase(':memory:');
     const meeting = createMeeting(db, { name: 'Test' });
