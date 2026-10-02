@@ -3,7 +3,7 @@
  * Appelé par : RankingPage.tsx (action secondaire du PageHeader).
  * Suppression casserait : le pack de fin de meeting (tous les résultats en un clic).
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Meeting } from '@/lib/db';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
 import { buildExportMeta } from '@/lib/export-data';
@@ -40,10 +40,19 @@ export interface UseExportPackResult {
  * receives the bytes and writes them. Generating in main would mean bundling
  * the React PDF components a second time for Node.
  */
-export function useExportPack(): UseExportPackResult {
+export function useExportPack(meetingId: number | null): UseExportPackResult {
   const [isExporting, setIsExporting] = useState(false);
   const [outcome, setOutcome] = useState<ExportPackOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const currentMeetingId = useRef(meetingId);
+
+  // The report names another meeting's folder once the volunteer switches
+  // meeting: clear it, and drop the result of an export still running for the old one.
+  useEffect(() => {
+    currentMeetingId.current = meetingId;
+    setOutcome(null);
+    setError(null);
+  }, [meetingId]);
 
   async function generateFiles(
     request: ExportPackRequest,
@@ -80,16 +89,18 @@ export function useExportPack(): UseExportPackResult {
       const chosen = await window.electronAPI.chooseExportPackDir();
       if (!chosen.success) throw new Error(chosen.error);
       // Cancelling the folder dialog is a choice, not an error: nothing to report.
-      if (!chosen.path) return;
+      if (!chosen.chosen) return;
 
       const { payloads, failed } = await generateFiles(request, plan);
+      if (request.meeting.id !== currentMeetingId.current) return;
       if (payloads.length === 0) {
         setOutcome({ folderPath: null, writtenCount: 0, totalCount: plan.files.length, failed });
         return;
       }
-      const written = await window.electronAPI.writeExportPack(chosen.path, plan.folderName, payloads);
+      const written = await window.electronAPI.writeExportPack(plan.folderName, payloads);
       if (!written.success || !written.folderPath) throw new Error(written.error);
 
+      if (request.meeting.id !== currentMeetingId.current) return;
       const allFailed = [...failed, ...(written.failed ?? [])];
       setOutcome({
         folderPath: written.folderPath,

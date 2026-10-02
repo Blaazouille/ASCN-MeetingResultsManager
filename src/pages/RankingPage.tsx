@@ -43,7 +43,7 @@ export default function RankingPage(): JSX.Element {
     minSwimmers,
   });
   const { isExporting, error, notice, exportPdf, exportExcel } = useRankingExport();
-  const pack = useExportPack();
+  const pack = useExportPack(meetingId);
   const { rows: previousRows, failed: previousRowsFailed } = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
   // Same category, top N and threshold as the displayed ranking, or the arrows would compare different things.
   const movements = useMemo(

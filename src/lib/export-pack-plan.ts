@@ -48,18 +48,34 @@ function localDay(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+/** Whether `name` is one of the five planned files: the main process writes nothing else. */
+export function isPackFileName(name: string): boolean {
+  return PACK_FILES.some((file) => file.fileName === name);
+}
+
+/**
+ * Longest meeting name kept in the folder name. Windows refuses paths over
+ * 260 characters (MAX_PATH) by default; Documents/MDLM Ranking/Exports, the
+ * date, a "(2)" suffix and the longest file name must still fit after it.
+ */
+const MAX_MEETING_NAME_LENGTH = 100;
+/** Room for the meeting name plus " – YYYY-MM-DD", so re-sanitizing a planned name never cuts its date. */
+const MAX_FOLDER_NAME_LENGTH = 120;
+
 /**
  * The meeting name is free text typed by the volunteer, but it becomes a
  * folder name: Windows rejects \ / : * ? " < > | and names ending with a dot
- * or a space, and a "/" would silently create a sub-folder elsewhere.
+ * or a space, and a "/" would silently create a sub-folder elsewhere. The
+ * main process applies it again to whatever name the renderer sends.
  */
-export function safeFolderName(name: string): string {
-  const cleaned = name
+export function safeFolderName(name: string, maxLength: number = MAX_FOLDER_NAME_LENGTH): string {
+  const replaced = name
     // Control characters are invalid in Windows file names too.
     .replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ')
     .replace(/\s+/g, ' ')
-    .replace(/[. ]+$/, '')
     .trim();
+  // Array.from counts characters, not UTF-16 units: an emoji is never cut in half.
+  const cleaned = Array.from(replaced).slice(0, maxLength).join('').replace(/[. ]+$/, '');
   return cleaned || 'Meeting';
 }
 
@@ -70,7 +86,7 @@ export function safeFolderName(name: string): string {
  */
 export function planExportPack(meetingName: string, categories: readonly string[], date: Date): ExportPackPlan {
   return {
-    folderName: `${safeFolderName(meetingName)} – ${localDay(date)}`,
+    folderName: `${safeFolderName(meetingName, MAX_MEETING_NAME_LENGTH)} – ${localDay(date)}`,
     files: categories.length === 0 ? [] : PACK_FILES.map((file) => ({ ...file })),
   };
 }

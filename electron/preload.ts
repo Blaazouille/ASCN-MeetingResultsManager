@@ -61,16 +61,16 @@ const electronAPI = {
   // path is null when the volunteer cancels the dialog; success is false only on a real failure.
   chooseBackupDir: (): Promise<{ success: boolean; path?: string | null; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.backupChooseDir),
-  // End-of-meeting pack. chooseExportPackDir: path is null when the volunteer cancels the dialog.
-  chooseExportPackDir: (): Promise<{ success: boolean; path?: string | null; error?: string }> =>
+  // End-of-meeting pack. chooseExportPackDir: chosen is false when the volunteer cancels the dialog;
+  // the picked folder stays in the main process, which writeExportPack writes into.
+  chooseExportPackDir: (): Promise<{ success: boolean; chosen?: boolean; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.exportChoosePackDir),
   // success is false only when the folder itself could not be created; per-file errors are in `failed`.
   writeExportPack: (
-    parentDir: string,
     folderName: string,
     files: PackFilePayload[]
   ): Promise<{ success: boolean; folderPath?: string; failed?: PackFileFailure[]; error?: string }> =>
-    ipcRenderer.invoke(IpcChannels.exportWritePack, parentDir, folderName, files),
+    ipcRenderer.invoke(IpcChannels.exportWritePack, folderName, files),
   openExportPackFolder: (folderPath: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.exportOpenPackFolder, folderPath),
 

@@ -4,7 +4,7 @@
  * Suppression casserait : la couverture de export-pack-plan.ts (critère d'acceptation de l'issue #24).
  */
 import { describe, expect, it } from 'vitest';
-import { packFolderCandidate, planExportPack, safeFolderName } from '../src/lib/export-pack-plan';
+import { isPackFileName, packFolderCandidate, planExportPack, safeFolderName } from '../src/lib/export-pack-plan';
 
 const CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'];
 // Local time, late evening: the folder must carry the meeting's day, not the UTC one.
@@ -56,6 +56,38 @@ describe('safeFolderName', () => {
 
   it('falls back to "Meeting" when nothing usable is left', () => {
     expect(safeFolderName(' / ')).toBe('Meeting');
+  });
+
+  it('cuts a very long name so the path stays under the Windows limit', () => {
+    expect(Array.from(safeFolderName('A'.repeat(500))).length).toBeLessThanOrEqual(120);
+    expect(safeFolderName('A'.repeat(500), 10)).toBe('AAAAAAAAAA');
+  });
+
+  it('does not end on a dot or space after the cut', () => {
+    expect(safeFolderName('Meeting . suite', 9)).toBe('Meeting');
+  });
+});
+
+describe('planExportPack — long meeting names', () => {
+  it('keeps at most 100 characters of the meeting name and always keeps the date', () => {
+    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, MEETING_DAY);
+    expect(folderName).toBe(`${'M'.repeat(100)} – 2026-11-16`);
+  });
+
+  it('gives a name that the main process leaves unchanged when it cleans it again', () => {
+    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, MEETING_DAY);
+    expect(safeFolderName(folderName)).toBe(folderName);
+  });
+});
+
+describe('isPackFileName', () => {
+  it('accepts exactly the five planned file names', () => {
+    for (const file of planExportPack('Meeting', CATEGORIES, MEETING_DAY).files) {
+      expect(isPackFileName(file.fileName)).toBe(true);
+    }
+    expect(isPackFileName('../Palmarès.pdf')).toBe(false);
+    expect(isPackFileName('palmarès.pdf')).toBe(false);
+    expect(isPackFileName('autre.pdf')).toBe(false);
   });
 });
 

@@ -23,7 +23,7 @@ import { isDemoMeeting, resetDemoMeeting } from '../src/lib/demo-meeting';
 import { exportDatabase, validateBackup, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 import { restoreWithSafetyCopy } from './pre-restore-backup';
-import { defaultExportDir, writeExportPack } from './export-pack-writer';
+import { createExportPackSession, defaultExportDir } from './export-pack-writer';
 import type { PackFilePayload } from '../src/lib/export-pack-plan';
 
 // Embedded in the package (see "files" in package.json's build config): the
@@ -204,6 +204,9 @@ export function registerIpcHandlers(db: Database.Database): void {
     return { success: true };
   });
 
+  // Holds the folder picked below and the folders written: see ExportPackSession.
+  const exportPack = createExportPackSession();
+
   ipcMain.handle(IpcChannels.exportChoosePackDir, async () => {
     try {
       // Created up front so the dialog opens there: the pack folder lands in
@@ -216,32 +219,26 @@ export function registerIpcHandlers(db: Database.Database): void {
         defaultPath: defaultDir,
         properties: ['openDirectory', 'createDirectory'],
       });
-      return { success: true, path: result.canceled ? null : (result.filePaths[0] ?? null) };
+      const chosen = result.canceled ? null : (result.filePaths[0] ?? null);
+      if (chosen) exportPack.chooseParentDir(chosen);
+      // The renderer only learns whether a folder was picked: export:writePack takes no path.
+      return { success: true, chosen: chosen !== null };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
-  // Folders written by writeExportPack in this session: openExportPackFolder
-  // only opens one of them, so the renderer cannot ask the OS to open an
-  // arbitrary path (shell.openPath also launches files).
-  const writtenPackFolders = new Set<string>();
-
-  ipcMain.handle(
-    IpcChannels.exportWritePack,
-    async (_event, parentDir: string, folderName: string, files: PackFilePayload[]) => {
-      try {
-        const result = writeExportPack(parentDir, folderName, files);
-        writtenPackFolders.add(result.folderPath);
-        return { success: true, ...result };
-      } catch (error) {
-        return { success: false, error: error instanceof Error ? error.message : String(error) };
-      }
+  ipcMain.handle(IpcChannels.exportWritePack, async (_event, folderName: string, files: PackFilePayload[]) => {
+    try {
+      return { success: true, ...exportPack.write(folderName, files) };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
-  );
+  });
 
+  // shell.openPath also launches files: only a folder this session wrote may be opened.
   ipcMain.handle(IpcChannels.exportOpenPackFolder, async (_event, folderPath: string) => {
-    if (!writtenPackFolders.has(folderPath)) {
+    if (!exportPack.wrote(folderPath)) {
       return { success: false, error: 'Dossier inconnu' };
     }
     // openPath resolves with an error message, or '' on success; it does not reject.
