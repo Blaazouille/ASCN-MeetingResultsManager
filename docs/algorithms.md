@@ -39,23 +39,25 @@ Les 38 clubs doivent correspondre exactement à `test/fixtures/expected-ranking.
 
 ## Classement individuel
 
-Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `detectGender`, `filterByGender`).
+Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `detectGender`, `filterByCategory`).
 
 ```
-1. Regrouper tous les nageurs de la session (toutes catégories)
-2. Dédupliquer par (nom, prénom, année de naissance, club) — les doublons sont ignorés
-3. Détecter le genre (Homme/Femme) pour chaque nageur :
-   - Analyse du prénom français (liste de prénoms féminins / masculins)
-   - Fallback : catégorie de la première occurrence (ex: "Classement Dames")
-4. Filtrer optionnellement par genre (Dames, Messieurs) ou retourner tous
-5. Trier par points DESC
-6. Attribuer le rang (1-indexed, sans gaps)
+1. Regrouper toutes les lignes importées du meeting (toutes catégories)
+2. Dédupliquer par (nom, prénom, année de naissance, club) : on garde la ligne aux points les plus élevés
+3. Détecter le genre depuis le NOM DE LA CATÉGORIE (detectGender) :
+   « dames » → F, « messieurs » → M, sinon (Mixte) → aucun genre
+   Un nageur vu en Dames/Messieurs ET en Mixte garde le genre connu
+4. Trier par points DESC
+5. Attribuer le rang (1-indexed, sans gaps) — rang « global », toutes catégories confondues
 ```
+
+Le genre n'est jamais déduit du prénom : seule la catégorie fait foi.
+
+L'écran n'affiche pas ce classement global tel quel : `filterByCategory` ne garde que les résultats dont la catégorie est celle de l'onglet actif et **recalcule le rang** (1, 2, 3…) sur cette sélection. Un nageur dédupliqué n'apparaît donc que dans la catégorie où il a obtenu son meilleur score.
 
 ### Badges de prix
 
-- **1er Prix** : 1er nageur (toute catégories) ou 1er par genre (vue filtrée)
-- **2e Prix** : 2e nageur (toute catégories) ou 2e par genre (vue filtrée)
+L'écran Individuels (`IndividualRankingTable`) affiche « 1er Prix » et « 2e Prix » sur les deux premiers nageurs de la vue affichée (donc de l'onglet de catégorie actif).
 
 ### Recherche par nom ou club
 
@@ -63,17 +65,17 @@ Même logique que le classement par équipes : filtre insensible à la casse, re
 
 ## Prix rigolos (Fun Awards)
 
-Implémenté dans `src/lib/fun-awards.ts` (`computeFunAwards`).
+Implémenté dans `src/lib/fun-awards.ts` (`computeFunAwards`). Affiché par `PalmaresPage` (écran dédié `/palmares`), qui n'envoie à la fonction que les lignes de la catégorie de l'onglet actif.
 
-6 prix humoristiques calculés sur tous les nageurs présents :
+Les nageurs sont dédupliqués comme pour le classement individuel. Six prix, chacun omis si les données ne permettent pas de le calculer :
 
-| Prix | Critère | Description |
-|------|---------|-------------|
-| **Doyen** | Année de naissance la plus ancienne | L'expérience, c'est bien en natation |
-| **Relève** | Année de naissance la plus récente | L'avenir de la natation française |
-| **Loup Solitaire** | Club unique (seul nageur du club) | Pas facile de représenter son club seul |
-| **Photo-Finish** | Écart minimal entre deux nageurs consécutifs | Des points qui se jouent à rien |
-| **Régulier** | Nageur dont le score est le plus proche de la moyenne générale de tous les nageurs | Équilibre et régularité |
-| **Armada** | Club avec le plus grand nombre de nageurs inscrits (dédupliqués) | Force du club en nombre |
+| Prix | Critère |
+|------|---------|
+| **Le Doyen / La Doyenne** | Année de naissance la plus ancienne (titre féminin si la catégorie est « Dames ») |
+| **La Relève** | Année de naissance la plus récente |
+| **Le Duo Mixte** | Parmi les clubs ayant exactement 1 nageuse (catégorie Dames) et 1 nageur (catégorie Messieurs), celui dont le total de points est le plus élevé |
+| **Le Photo-Finish** | Plus petit écart de points entre deux nageurs consécutifs au classement (ex æquo possible) |
+| **Le Club des Sages / Le Club des Grandes Dames** | Club à la moyenne d'âge la plus élevée (titre féminin si la catégorie est « Dames ») |
+| **La Jeune Garde** | Club à la moyenne d'âge la plus basse |
 
-**Affichage** : section "Palmarès des rigolos" visible uniquement en vue `Tous` (non-filtrée), au bas de la page Individuels.
+Les deux prix par club (Sages / Jeune Garde) ne considèrent que les clubs d'au moins 3 nageurs (`MIN_CLUB_SIZE`) ayant une année de naissance valide. L'âge est calculé avec l'année civile en cours (`new Date().getFullYear()`).
