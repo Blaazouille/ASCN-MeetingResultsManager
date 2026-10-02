@@ -39,7 +39,7 @@ export function ImportGuardDialog({ warnings, onConfirm, onCancel }: ImportGuard
                 <li key={warning.message}>{warning.message}</li>
               ))}
             </ul>
-            <p className="text-[15px] text-ink-soft">Une sauvegarde des résultats actuels est faite avant l'import.</p>
+            <p className="text-[15px] text-ink-soft">Les résultats actuels figurent dans la dernière sauvegarde automatique.</p>
           </div>
         </div>
 

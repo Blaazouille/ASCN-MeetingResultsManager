@@ -58,7 +58,7 @@ SQLite (remplacement complet — tous les meetings existants sont supprimés ava
 
 ### Sauvegardes automatiques
 
-Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` dans le handler `import:csv` : une fois avant `insertSwimmerResults` quand le meeting a déjà des résultats (point de restauration si le fichier était le mauvais), et une fois après chaque import réussi. Elles ne bloquent jamais l'import — tout défaut de sauvegarde est journalisé et ignoré (`performAutoBackup` enveloppe le code dans un try/catch qui swallow les erreurs).
+Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après chaque import CSV réussi (fin de `insertSwimmerResults` dans le handler `import:csv`). Pas de sauvegarde avant import : les résultats ne changent que par import, donc la sauvegarde du dernier import contient déjà l'état qu'un nouvel import va écraser. Elles ne bloquent jamais l'import — tout défaut de sauvegarde est journalisé et ignoré (`performAutoBackup` enveloppe le code dans un try/catch qui swallow les erreurs).
 
 La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans un fichier JSON distinct (`backup-config.json`) sous `app.getPath('userData')`, en dehors de SQLite. Cela garantit que la config survit à une restauration complète de la base (la restauration ne touche que les tables SQLite, pas le système de fichiers Electron).
 
