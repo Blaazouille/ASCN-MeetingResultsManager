@@ -7,6 +7,7 @@ import { buildExportMeta } from '@/lib/export-data';
 import { exportCeremonyToPdf } from '@/lib/ceremony-pdf-export';
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import type { Meeting } from '@/lib/db';
+import { useOurClub } from './use-our-club';
 import { useExportStatus, type UseExportStatusResult } from './use-export-status';
 
 export interface UseCeremonyExportResult extends Omit<UseExportStatusResult, 'run'> {
@@ -15,9 +16,10 @@ export interface UseCeremonyExportResult extends Omit<UseExportStatusResult, 'ru
 
 export function useCeremonyExport(): UseCeremonyExportResult {
   const { run, ...status } = useExportStatus();
+  const ourClub = useOurClub();
 
   return {
     ...status,
-    exportPdf: (meeting, steps) => run('pdf', () => exportCeremonyToPdf(buildExportMeta(meeting), steps)),
+    exportPdf: (meeting, steps) => run('pdf', () => exportCeremonyToPdf(buildExportMeta(meeting, ourClub), steps)),
   };
 }

@@ -5,7 +5,8 @@
  */
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import { gapLabel, stepContext, stepHeading, winnerLine } from '@/lib/ceremony-labels';
-import { ASCN_CLUB_NAME } from '@/lib/utils';
+import { isOurClub } from '@/lib/our-club';
+import { useOurClub } from '@/hooks/use-our-club';
 import { ClubTag } from '@/components/ui/ClubTag';
 import { RankChip } from '@/components/ui/RankChip';
 
@@ -17,6 +18,7 @@ export interface CeremonyStepCardProps {
 // standing, at arm's length, while announcing or prompting the speaker.
 export function CeremonyStepCard({ step }: CeremonyStepCardProps): JSX.Element {
   const tied = step.winners.length > 1;
+  const ourClub = useOurClub();
   return (
     <article aria-live="polite" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-10 py-8 shadow-card">
       <div className="flex flex-col gap-2">
@@ -37,7 +39,7 @@ export function CeremonyStepCard({ step }: CeremonyStepCardProps): JSX.Element {
           <li key={`${winner.name}|${winner.club}`} className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-3">
               <span className="font-display text-[44px] font-bold leading-tight text-ink">{winner.name}</span>
-              {winner.club === ASCN_CLUB_NAME && <ClubTag />}
+              {isOurClub(winner.club, ourClub) && <ClubTag />}
             </div>
             <span className="text-xl font-semibold tabular-nums text-ink-soft">{winnerLine(winner)}</span>
             {winner.swimmers.length > 0 && (

@@ -5,6 +5,7 @@
  */
 import type Database from 'better-sqlite3';
 import { validateBackup, type BackupData, type MeetingBackup, type RestoreResult } from './backup-validation';
+import { clearOurClub, getOurClub, setOurClub } from './app-settings';
 
 // Re-exported so existing callers (ipc-handlers.ts, tests) can keep importing
 // everything backup-related from this one module.
@@ -93,6 +94,8 @@ export function exportDatabase(db: Database.Database): BackupData {
     version: 1,
     appName: 'MDLM Ranking',
     exportedAt: new Date().toISOString(),
+    // The effective value, default included: restoring this file must give back exactly the club in use now.
+    ourClub: getOurClub(db),
     meetings: meetingBackups,
   };
 }
@@ -131,6 +134,13 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
   const transaction = db.transaction(() => {
     result.meetingsRemoved = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
     db.exec('DELETE FROM meeting');
+    // Same snapshot rule as the meetings: a backup without the field (made
+    // before issue #26) puts the default club back rather than keeping ours.
+    if (data.ourClub === undefined) {
+      clearOurClub(db);
+    } else {
+      setOurClub(db, data.ourClub);
+    }
 
     for (const meeting of data.meetings) {
       result.meetingsImported++;

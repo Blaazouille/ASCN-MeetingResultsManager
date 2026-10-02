@@ -10,7 +10,7 @@ import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
 import { computeCategoryRanking } from '../src/lib/individual-ranking';
 import { tiedRanks } from '../src/lib/rank-ties';
-import { ASCN_CLUB_NAME } from '../src/lib/utils';
+import { DEFAULT_OUR_CLUB } from '../src/lib/our-club';
 import { anonymizeSampleCsv } from '../scripts/anonymize-sample';
 
 const root = path.resolve(__dirname, '..');
@@ -40,8 +40,8 @@ describe('embedded training CSV (resources/meeting-exemple.csv)', () => {
     const realClubs = new Set(real.rows.map((row) => row.club));
     const demoClubs = new Set(demo.rows.map((row) => row.club));
 
-    expect(demoClubs).toContain(ASCN_CLUB_NAME);
-    expect([...demoClubs].filter((club) => club !== ASCN_CLUB_NAME && realClubs.has(club))).toEqual([]);
+    expect(demoClubs).toContain(DEFAULT_OUR_CLUB);
+    expect([...demoClubs].filter((club) => club !== DEFAULT_OUR_CLUB && realClubs.has(club))).toEqual([]);
     // Same number of clubs: the team ranking keeps its shape.
     expect(demoClubs.size).toBe(realClubs.size);
   });

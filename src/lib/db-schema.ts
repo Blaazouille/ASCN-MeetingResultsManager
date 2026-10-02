@@ -136,4 +136,18 @@ function migrateSchema(db: Database.Database): void {
     }
     db.pragma('user_version = 8');
   }
+  if (version < 9) {
+    // App-wide settings (issue #26: « Notre club »). A key/value table rather
+    // than a meeting column: the club is the same from one edition to the
+    // next. Kept in SQLite (not a JSON file in userData like
+    // backup-config.json) so backups carry it. Empty on creation: a missing
+    // key means "default value", so existing installs keep today's behaviour.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS app_setting (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    db.pragma('user_version = 9');
+  }
 }

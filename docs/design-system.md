@@ -57,7 +57,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 | Composant | Rôle |
 |-----------|------|
 | `Button` | Bouton d'action — variantes `primary` (une seule par écran), `secondary`, `ghost` ; tailles `md`/`lg` |
-| `ClubTag` | Étiquette « Notre club » accolée à AS Cherbourg Natation dans les classements |
+| `ClubTag` | Étiquette « Notre club » accolée au club choisi dans Paramètres (AS Cherbourg Natation par défaut) dans les classements |
 | `RankChip` | Numéro de rang, aux couleurs de la médaille pour les trois premiers (chiffres `ink`, jamais blancs) |
 | `SearchField` | Champ de recherche avec loupe, filtre à la frappe |
 | `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés) |

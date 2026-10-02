@@ -11,7 +11,8 @@ import type { ExportMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 import { PdfExportNotice } from './pdf-export-notice';
-import { ASCN_CLUB_NAME, formatPoints } from './utils';
+import { formatPoints } from './utils';
+import { isOurClub } from './our-club';
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11 },
@@ -19,7 +20,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 6 },
-  rowAscn: { backgroundColor: '#F0FAFF' },
+  rowOurClub: { backgroundColor: '#F0FAFF' },
   rank: { width: 42, fontWeight: 700 },
   club: { flex: 1, fontWeight: 600 },
   points: { width: 70, textAlign: 'right', fontWeight: 500 },
@@ -56,7 +57,7 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
             {results.map((team) => (
               <View
                 key={team.club}
-                style={team.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
+                style={isOurClub(team.club, meta.ourClub) ? [styles.row, styles.rowOurClub] : styles.row}
               >
                 <Text style={styles.rank}>{rankText(team.rank, tied.has(team.rank))}</Text>
                 <View style={styles.club}>

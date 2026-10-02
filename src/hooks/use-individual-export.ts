@@ -8,6 +8,7 @@ import { exportIndividualToPdf } from '@/lib/individual-pdf-export';
 import { exportIndividualToExcel } from '@/lib/individual-excel-export';
 import type { Meeting } from '@/lib/db';
 import type { IndividualResult } from '@/lib/individual-ranking';
+import { useOurClub } from './use-our-club';
 import { useExportStatus, type UseExportStatusResult } from './use-export-status';
 
 export interface UseIndividualExportResult extends Omit<UseExportStatusResult, 'run'> {
@@ -17,12 +18,13 @@ export interface UseIndividualExportResult extends Omit<UseExportStatusResult, '
 
 export function useIndividualExport(): UseIndividualExportResult {
   const { run, ...status } = useExportStatus();
+  const ourClub = useOurClub();
 
   return {
     ...status,
     exportPdf: (meeting, category, results) =>
-      run('pdf', () => exportIndividualToPdf(buildExportMeta(meeting), category, results)),
+      run('pdf', () => exportIndividualToPdf(buildExportMeta(meeting, ourClub), category, results)),
     exportExcel: (meeting, category, results) =>
-      run('excel', () => exportIndividualToExcel(buildExportMeta(meeting), category, results)),
+      run('excel', () => exportIndividualToExcel(buildExportMeta(meeting, ourClub), category, results)),
   };
 }

@@ -11,7 +11,9 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { ASCN_CLUB_NAME, cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
+import { cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
+import { isOurClub } from '@/lib/our-club';
+import { useOurClub } from '@/hooks/use-our-club';
 import { tiedRanks } from '@/lib/rank-ties';
 import type { Movement } from '@/lib/import-diff';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
@@ -42,7 +44,12 @@ const RIGHT_ALIGNED = new Set(['gap', 'totalPoints']);
 
 // TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
 // columns; `any` here is the library's own documented pattern for a mixed column array.
-function buildColumns(leaderPoints: number, tied: Set<number>, movements?: Map<string, Movement> | null): ColumnDef<TeamResult, any>[] {
+function buildColumns(
+  leaderPoints: number,
+  tied: Set<number>,
+  ourClub: string,
+  movements?: Map<string, Movement> | null
+): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
@@ -58,7 +65,7 @@ function buildColumns(leaderPoints: number, tied: Set<number>, movements?: Map<s
       cell: (info) => (
         <span className="flex flex-wrap items-center gap-2.5 text-base font-semibold text-ink">
           {info.getValue()}
-          {info.getValue() === ASCN_CLUB_NAME && <ClubTag />}
+          {isOurClub(info.getValue(), ourClub) && <ClubTag />}
         </span>
       ),
     }),
@@ -82,7 +89,7 @@ function buildColumns(leaderPoints: number, tied: Set<number>, movements?: Map<s
     columnHelper.accessor('totalPoints', {
       header: 'Points',
       cell: (info) => {
-        const isOwnClub = info.row.original.club === ASCN_CLUB_NAME;
+        const isOwnClub = isOurClub(info.row.original.club, ourClub);
         const width = `${Math.round(leaderRatio(info.getValue(), leaderPoints) * 100)}%`;
         return (
           <span className="flex items-center justify-end gap-3.5">
@@ -110,7 +117,11 @@ export function TeamRankingTable({ results, category, search, movements }: TeamR
   // Gaps and bars compare every club to the 1st of the whole ranking, not of the filtered view.
   const leaderPoints = results[0]?.totalPoints ?? 0;
   const tied = useMemo(() => tiedRanks(results), [results]);
-  const columns = useMemo(() => buildColumns(leaderPoints, tied, movements), [leaderPoints, tied, movements]);
+  const ourClub = useOurClub();
+  const columns = useMemo(
+    () => buildColumns(leaderPoints, tied, ourClub, movements),
+    [leaderPoints, tied, ourClub, movements]
+  );
 
   const table = useReactTable({
     data: filtered,
@@ -166,7 +177,7 @@ export function TeamRankingTable({ results, category, search, movements }: TeamR
               key={row.id}
               row={row}
               category={category}
-              isOwnClub={row.original.club === ASCN_CLUB_NAME}
+              isOwnClub={isOurClub(row.original.club, ourClub)}
               isExpanded={expanded.has(row.original.club)}
               onToggle={() => toggle(row.original.club)}
             />

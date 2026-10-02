@@ -4,7 +4,9 @@
  * Suppression casserait : l'affichage du classement individuel.
  */
 import { useMemo } from 'react';
-import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
+import { cn, formatPoints } from '@/lib/utils';
+import { isOurClub } from '@/lib/our-club';
+import { useOurClub } from '@/hooks/use-our-club';
 import { tiedRanks } from '@/lib/rank-ties';
 import { prizeLabel } from '@/lib/ui-labels';
 import { swimmerIdentity, type Movement } from '@/lib/import-diff';
@@ -35,6 +37,7 @@ export function IndividualRankingTable({ results, prizeCount, search, movements 
   }, [results, search]);
 
   const tied = useMemo(() => tiedRanks(results), [results]);
+  const ourClub = useOurClub();
 
   if (filtered.length === 0) {
     return (
@@ -58,7 +61,7 @@ export function IndividualRankingTable({ results, prizeCount, search, movements 
         </thead>
         <tbody>
           {filtered.map((r) => {
-            const isOwnClub = r.club === ASCN_CLUB_NAME;
+            const isOwnClub = isOurClub(r.club, ourClub);
             return (
               <tr
                 key={`${r.lastname}-${r.firstname}-${r.birthyear}-${r.club}`}

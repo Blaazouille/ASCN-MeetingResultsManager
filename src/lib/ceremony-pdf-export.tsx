@@ -9,7 +9,7 @@ import { gapLabel, stepContext, stepCountLabel, stepHeading, winnerLine } from '
 import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
 import { PdfExportNotice } from './pdf-export-notice';
-import { ASCN_CLUB_NAME } from './utils';
+import { isOurClub } from './our-club';
 
 // Large type on purpose: the sheet is read at arm's length, standing, by the speaker.
 const styles = StyleSheet.create({
@@ -54,11 +54,11 @@ function CeremonyPdfDocument({ meta, steps }: CeremonyPdfDocumentProps): JSX.Ele
               {step.winners.map((winner) => (
                 <View
                   key={`${winner.name}|${winner.club}`}
-                  style={winner.club === ASCN_CLUB_NAME ? [styles.winner, styles.winnerOwnClub] : styles.winner}
+                  style={isOurClub(winner.club, meta.ourClub) ? [styles.winner, styles.winnerOwnClub] : styles.winner}
                 >
                   <Text style={styles.name}>
                     {winner.name}
-                    {winner.club === ASCN_CLUB_NAME ? '  (Notre club)' : ''}
+                    {isOurClub(winner.club, meta.ourClub) ? '  (Notre club)' : ''}
                   </Text>
                   <Text style={styles.meta}>{winnerLine(winner)}</Text>
                   {winner.swimmers.length > 0 && <Text style={styles.swimmers}>{winner.swimmers.join(', ')}</Text>}

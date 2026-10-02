@@ -8,6 +8,7 @@ import { exportRankingToPdf } from '@/lib/pdf-export';
 import { exportRankingToExcel } from '@/lib/excel-export';
 import type { Meeting } from '@/lib/db';
 import type { TeamResult } from '@/lib/ranking-engine';
+import { useOurClub } from './use-our-club';
 import { useExportStatus, type UseExportStatusResult } from './use-export-status';
 
 export interface UseRankingExportResult extends Omit<UseExportStatusResult, 'run'> {
@@ -22,12 +23,13 @@ export interface UseRankingExportResult extends Omit<UseExportStatusResult, 'run
  */
 export function useRankingExport(): UseRankingExportResult {
   const { run, ...status } = useExportStatus();
+  const ourClub = useOurClub();
 
   return {
     ...status,
     exportPdf: (meeting, category, results) =>
-      run('pdf', () => exportRankingToPdf(buildExportMeta(meeting), category, results)),
+      run('pdf', () => exportRankingToPdf(buildExportMeta(meeting, ourClub), category, results)),
     exportExcel: (meeting, category, results) =>
-      run('excel', () => exportRankingToExcel(buildExportMeta(meeting), category, results)),
+      run('excel', () => exportRankingToExcel(buildExportMeta(meeting, ourClub), category, results)),
   };
 }

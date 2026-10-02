@@ -11,7 +11,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Kept as is: the demo must exercise the "Notre club" highlighting.
+// Kept as is: the app's default « Notre club » (DEFAULT_OUR_CLUB in src/lib/our-club.ts,
+// repeated here since this script can't import from src/), so the demo shows the highlighting out of the box.
 const KEPT_CLUB = 'AS CHERBOURG NATATION';
 
 const FEMALE_FIRSTNAMES = [

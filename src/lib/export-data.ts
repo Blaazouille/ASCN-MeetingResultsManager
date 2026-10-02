@@ -14,6 +14,8 @@ export interface ExportMeta {
   computedAt: string;
   /** Warning printed on every export of the training meeting, so a sample sheet can't pass for official results; null for a real meeting. */
   notice: string | null;
+  /** « Notre club » as configured in Paramètres: its rows are highlighted on paper too. */
+  ourClub: string;
 }
 
 export const DEMO_EXPORT_NOTICE = 'EXEMPLE — non officiel';
@@ -64,12 +66,17 @@ export function formatImportTimestamp(timestamp: string): string {
   return formatDateTimeFr(parseSqliteTimestamp(timestamp));
 }
 
-/** Builds the export metadata from the persisted meeting record. */
-export function buildExportMeta(meeting: Meeting): ExportMeta {
+/**
+ * Builds the export metadata from the persisted meeting record. `ourClub`
+ * travels in the metadata, which every PDF generator already receives,
+ * instead of being one more argument to each of them.
+ */
+export function buildExportMeta(meeting: Meeting, ourClub: string): ExportMeta {
   return {
     meetingName: meeting.name,
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),
     notice: meeting.isDemo ? DEMO_EXPORT_NOTICE : null,
+    ourClub,
   };
 }
 
