@@ -36,10 +36,10 @@ export function ImportGuardDialog({ warnings, onConfirm, onCancel }: ImportGuard
             </h2>
             <ul className="flex flex-col gap-1.5 text-[15px] text-ink-soft">
               {warnings.map((warning) => (
-                <li key={warning.kind}>{warning.message}</li>
+                <li key={warning.message}>{warning.message}</li>
               ))}
             </ul>
-            <p className="text-[15px] text-ink-soft">Une sauvegarde est faite avant l'import, vous pourrez la restaurer.</p>
+            <p className="text-[15px] text-ink-soft">Une sauvegarde des résultats actuels est faite avant l'import.</p>
           </div>
         </div>
 

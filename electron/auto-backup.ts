@@ -1,5 +1,5 @@
 /**
- * Responsabilité : sauvegarde automatique après import CSV avec rotation des anciens fichiers.
+ * Responsabilité : sauvegarde automatique avant et après import CSV avec rotation des anciens fichiers.
  * Appelé par : ipc-handlers.ts après insertSwimmerResults.
  * Suppression casserait : la sauvegarde automatique des données après import.
  */
@@ -69,7 +69,7 @@ export function rotateBackups(dir: string, maxBackups: number): void {
   }
 }
 
-// Called after every successful CSV import (see ipc-handlers.ts). Never
+// Called before (non-empty meeting) and after every successful CSV import (see ipc-handlers.ts). Never
 // throws: a backup failure must not block the import a poolside volunteer is
 // waiting on, so any error is swallowed and logged instead of propagated.
 export function performAutoBackup(db: Database.Database): void {

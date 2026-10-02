@@ -62,3 +62,15 @@ describe('checkImportAgainstExisting', () => {
     expect(kinds(rows('Classement Mixte', 10), rows('Classement Dames', 10))).toEqual(['missing-category']);
   });
 });
+
+describe('checkImportAgainstExisting — wrong file and blocking', () => {
+  it('reports both a shrunk category and different swimmers for a wrong file', () => {
+    expect(kinds(rows('Classement Mixte', 20), rows('Classement Mixte', 5, 100))).toEqual(['shrunk', 'different']);
+  });
+
+  it('has no blocking warning when only a category is missing', () => {
+    const existing = [...rows('Classement Mixte', 10), ...rows('Classement Dames', 5)];
+    const warnings = checkImportAgainstExisting(existing, rows('Classement Mixte', 10).map((r) => ({ ...r, points: 1 })));
+    expect(warnings.some((w) => w.blocking)).toBe(false);
+  });
+});

@@ -73,9 +73,19 @@ export default function ImportPage(): JSX.Element {
       const parsed = await handleFileAccepted(file);
       if (!parsed || meetingId === null) return;
       // Checked before any write: nothing touches the database until the volunteer confirms.
-      const existing = await window.electronAPI.getSwimmerResults(meetingId);
-      const warnings = checkImportAgainstExisting(existing, parsed.rows, meeting?.lastImportedAt ?? null);
+      // isPersisting covers the check too, so the card never shows "importé" before the decision.
+      setIsPersisting(true);
+      let warnings: ImportWarning[];
+      try {
+        const existing = await window.electronAPI.getSwimmerResults(meetingId);
+        warnings = checkImportAgainstExisting(existing, parsed.rows, meeting?.lastImportedAt ?? null);
+      } catch (err) {
+        setPersistError(err instanceof Error ? err.message : String(err));
+        setIsPersisting(false);
+        return;
+      }
       if (warnings.some((warning) => warning.blocking)) {
+        setIsPersisting(false);
         setPending({ parsed, warnings });
         return;
       }
