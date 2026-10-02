@@ -3,7 +3,7 @@
  * Appelé par : App.tsx (route "import").
  * Suppression casserait : l'import de nouveaux fichiers CSV.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
 import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '@/lib/import-check';
 import { summarizeImportChanges } from '@/lib/import-diff';
+import { importCardState } from '@/lib/import-card-state';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
 import type { ImportOutcome } from '@/hooks/use-import';
@@ -26,11 +27,9 @@ const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
-  const { result, fileName, error, errorId, outcome, setOutcome, pending, setPending, handleFileAccepted, handleFileRejected, reset: resetImport } =
-    importState;
+  const { result, fileName, error, errorId, outcome, setOutcome, pending, setPending, handleFileAccepted, handleFileRejected } = importState;
+  const { isPersisting, setIsPersisting, persistError, setPersistError, reset: resetImport } = importState;
   const { refresh } = meetingState;
-  const [persistError, setPersistError] = useState<string | null>(null);
-  const [isPersisting, setIsPersisting] = useState(false);
   const navigate = useNavigate();
   const resultRef = useRef<HTMLElement>(null);
   const browseRef = useRef<HTMLButtonElement>(null);
@@ -77,7 +76,7 @@ export default function ImportPage(): JSX.Element {
       setOutcome({ changes, notices: found });
       setIsPersisting(false);
     },
-    [meetingId, meeting, refresh, setOutcome]
+    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError]
   );
 
   const handleAccepted = useCallback(
@@ -108,7 +107,7 @@ export default function ImportPage(): JSX.Element {
       }
       await persist(parsed, warnings);
     },
-    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome, setPending]
+    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome, setPending, setIsPersisting, setPersistError]
   );
 
   const confirmPending = (): void => {
@@ -140,10 +139,16 @@ export default function ImportPage(): JSX.Element {
 
   // hasResult drives the card's visibility and the "résultats déjà importés" banner;
   // it stays true across the whole save window so the two don't appear together.
-  const hasResult = result !== null && persistError === null && pending === null;
-  // isDone only turns true once the save has genuinely finished — used to gate the
-  // success (green/check) treatment so a volunteer can't mistake "still saving" for "done".
-  const isDone = hasResult && !isPersisting;
+  // isDone gates the green check: only a finished save, never a file merely read.
+  const card = importCardState({
+    hasFile: result !== null,
+    isPending: pending !== null,
+    hasPersistError: persistError !== null,
+    isPersisting,
+    hasOutcome: outcome !== null,
+  });
+  const hasResult = card !== 'hidden';
+  const isDone = card === 'done';
 
   return (
     <div className="flex flex-col gap-6">
@@ -155,7 +160,8 @@ export default function ImportPage(): JSX.Element {
 
       {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
-      {hasResult && (
+      {/* result is re-checked only so TypeScript narrows it: hasResult already implies it. */}
+      {hasResult && result && (
         <section ref={resultRef} tabIndex={-1} aria-label="Résultat de l'import" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-8 py-7 shadow-card">
           <div className="flex flex-wrap items-center gap-5">
             <span

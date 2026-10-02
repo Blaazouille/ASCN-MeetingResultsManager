@@ -35,6 +35,12 @@ export interface UseImportResult {
   setOutcome: (outcome: ImportOutcome | null) => void;
   pending: PendingImport | null;
   setPending: (pending: PendingImport | null) => void;
+  /** The pre-write check or the save is running; also blocks a second drop, even after leaving and returning to the screen. */
+  isPersisting: boolean;
+  setIsPersisting: (isPersisting: boolean) => void;
+  /** A failed save, kept so returning to the screen still shows it instead of a success card. */
+  persistError: string | null;
+  setPersistError: (message: string | null) => void;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
   reset: () => void;
@@ -48,6 +54,8 @@ export function useImport(): UseImportResult {
   const [errorId, setErrorId] = useState(0);
   const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
   const [pending, setPending] = useState<PendingImport | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
+  const [persistError, setPersistError] = useState<string | null>(null);
   const setError = useCallback((message: string | null): void => {
     setErrorMessage(message);
     if (message !== null) setErrorId((id) => id + 1);
@@ -78,6 +86,8 @@ export function useImport(): UseImportResult {
     setFileName(null);
     setOutcome(null);
     setPending(null);
+    setIsPersisting(false);
+    setPersistError(null);
     setError(null);
   }, [setError]);
 
@@ -90,6 +100,10 @@ export function useImport(): UseImportResult {
     setOutcome,
     pending,
     setPending,
+    isPersisting,
+    setIsPersisting,
+    persistError,
+    setPersistError,
     handleFileAccepted,
     handleFileRejected,
     reset,
