@@ -74,3 +74,15 @@ describe('checkImportAgainstExisting — wrong file and blocking', () => {
     expect(warnings.some((w) => w.blocking)).toBe(false);
   });
 });
+
+describe('checkImportAgainstExisting — duplicate lines in a file', () => {
+  it('still sees the same file as identical when it repeats a swimmer line', () => {
+    const existing = rows('Classement Mixte', 5);
+    expect(kinds(existing, [...existing, existing[0]!])).toEqual(['identical']);
+  });
+
+  it('does not call a file identical when a swimmer is missing, even if another line is repeated', () => {
+    const existing = rows('Classement Mixte', 5);
+    expect(kinds(existing, [...existing.slice(0, 4), existing[0]!])).not.toContain('identical');
+  });
+});

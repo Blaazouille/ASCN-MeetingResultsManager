@@ -26,6 +26,7 @@ export function ImportGuardDialog({ warnings, onConfirm, onCancel }: ImportGuard
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="import-guard-title"
+        aria-describedby="import-guard-details"
         className="flex w-full max-w-lg flex-col gap-5 rounded-xl bg-surface-raised p-6 shadow-raised"
       >
         <div className="flex items-start gap-3">
@@ -34,12 +35,12 @@ export function ImportGuardDialog({ warnings, onConfirm, onCancel }: ImportGuard
             <h2 id="import-guard-title" className="font-display text-2xl font-bold text-ink">
               Ce fichier est-il le bon&nbsp;?
             </h2>
-            <ul className="flex flex-col gap-1.5 text-[15px] text-ink-soft">
+            <ul id="import-guard-details" className="flex flex-col gap-1.5 text-[15px] text-ink-soft">
               {warnings.map((warning) => (
                 <li key={warning.message}>{warning.message}</li>
               ))}
             </ul>
-            <p className="text-[15px] text-ink-soft">Les résultats actuels figurent dans la dernière sauvegarde automatique.</p>
+            <p className="text-[15px] text-ink-soft">Si la dernière sauvegarde automatique a réussi, elle contient les résultats actuels.</p>
           </div>
         </div>
 

@@ -170,3 +170,15 @@ describe('countRowsByCategory', () => {
     );
   });
 });
+
+describe('parseCsv without usable rows', () => {
+  it('rejects a header-only file instead of importing nothing', () => {
+    const csv = 'name;place;lastname;firstname;birthyear;nation;club;points;comment\n';
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
+  });
+
+  it('rejects a file whose rows all lack points', () => {
+    const csv = ['name;place;lastname;firstname;birthyear;nation;club;points;comment', 'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;;'].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
+  });
+});

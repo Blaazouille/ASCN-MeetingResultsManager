@@ -45,8 +45,10 @@ export function checkImportAgainstExisting(
 ): ImportWarning[] {
   if (existing.length === 0 || incoming.length === 0) return [];
 
+  // Compared as sets: the database keeps one row per swimmer and category, so duplicate lines in a file must not count.
   const existingFull = new Set(existing.map(fullKey));
-  if (existing.length === incoming.length && incoming.every((row) => existingFull.has(fullKey(row)))) {
+  const incomingFull = new Set(incoming.map(fullKey));
+  if (existingFull.size === incomingFull.size && [...incomingFull].every((key) => existingFull.has(key))) {
     const when = lastImportedAt === null ? '' : ` (${formatImportTimestamp(lastImportedAt)})`;
     return [{ kind: 'identical', blocking: true, message: `Ce fichier est identique au dernier import${when}. Rien ne changera.` }];
   }
@@ -62,7 +64,7 @@ export function checkImportAgainstExisting(
       warnings.push({
         kind: 'missing-category',
         blocking: false,
-        message: `Le classement ${label} n'est plus dans ce fichier : il sera conservé tel quel.`,
+        message: `Le classement ${label} n'est plus dans ce fichier : il est conservé tel quel.`,
       });
     } else if (now < count * (1 - SHRINK_THRESHOLD)) {
       warnings.push({
@@ -81,7 +83,7 @@ export function checkImportAgainstExisting(
     warnings.push({
       kind: 'different',
       blocking: true,
-      message: 'La plupart des nageurs de ce fichier sont différents de ceux déjà importés. S\'agit-il bien du même meeting ?',
+      message: 'La plupart des nageurs de ce fichier sont différents de ceux déjà importés. S\'agit-il bien du même meeting ?',
     });
   }
 

@@ -258,6 +258,11 @@ export function parseCsv(
     });
   });
 
+  // A header-only file, or one whose points column is missing, yields no row: importing it would change nothing yet look like a success.
+  if (rows.length === 0) {
+    throw new Error('Aucune ligne exploitable dans ce fichier. Est-ce bien un export de cotations extraNat ?');
+  }
+
   return {
     rows,
     categories,

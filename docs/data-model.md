@@ -181,7 +181,7 @@ La configuration est stockée dans un fichier JSON distinct, en dehors de SQLite
 ```typescript
 interface BackupConfig {
   backupDir: string;            // Chemin absolu du dossier de sauvegarde
-  maxBackups: number;           // Nombre maximal de fichiers conservés (par défaut 5)
+  maxBackups: number;           // Nombre maximal de fichiers conservés (par défaut 5, minimum 3)
 }
 ```
 

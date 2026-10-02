@@ -72,7 +72,7 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 ### Sauvegardes automatiques
 
 - Dossier de sauvegarde configurable (bouton parcourir), par défaut `Documents/MDLM Ranking/Sauvegardes` — un emplacement que le bénévole sait déjà retrouver, contrairement au dossier de données d'Electron. Ce choix est stocké dans `backup-config.json` sous `app.getPath('userData')`.
-- Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
-- Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur — tout défaut de sauvegarde est journalisé mais l'import continue.
+- Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5, minimum 3 : une valeur plus basse est relevée à 3) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
+- Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur : l'import continue et un échec de sauvegarde est signalé dans l'encart « À savoir » de l'écran Import.
 
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.

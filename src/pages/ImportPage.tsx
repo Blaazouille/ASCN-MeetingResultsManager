@@ -45,7 +45,7 @@ export default function ImportPage(): JSX.Element {
       const found = warnings.map((warning) => warning.message);
       try {
         const { backupError } = await window.electronAPI.importCsv(meetingId, parsed.rows);
-        if (backupError) found.push(`La sauvegarde automatique a échoué (${backupError}). Vérifiez le dossier dans les Paramètres.`);
+        if (backupError) found.push(`La sauvegarde automatique a échoué. Vérifiez le dossier de sauvegarde dans les Paramètres.`);
       } catch (err) {
         setPersistError(err instanceof Error ? err.message : String(err));
         setIsPersisting(false);
@@ -78,6 +78,8 @@ export default function ImportPage(): JSX.Element {
 
   const handleAccepted = useCallback(
     async (file: File) => {
+      // A second drop while a save is running would race it and mix up the notices.
+      if (isPersisting) return;
       setPersistError(null);
       setChanges(null);
       setPending(null);
@@ -103,7 +105,7 @@ export default function ImportPage(): JSX.Element {
       }
       await persist(parsed, warnings);
     },
-    [handleFileAccepted, meetingId, meeting, persist]
+    [handleFileAccepted, meetingId, meeting, persist, isPersisting]
   );
 
   const confirmPending = (): void => {
