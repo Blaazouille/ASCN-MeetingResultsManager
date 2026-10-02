@@ -1,5 +1,17 @@
 # Algorithmes
 
+## Lecture du fichier CSV : lignes écartées
+
+Implémenté dans `src/lib/csv-parser.ts` (`parseCsv`) et `src/lib/csv-cells.ts`. Chaque cas est signalé avec son numéro de ligne dans le fichier (ligne 1 = en-tête).
+
+| Cellule | Contenu | Effet |
+|---|---|---|
+| `points` | vide | Ligne ignorée, comptée dans `ignoredRowCount` (« Lignes sans points » dans « À savoir ») |
+| `points` | sans aucun chiffre (« N/A ») | **Import bloqué** : « Ligne N : points illisibles… ». Les points sont la donnée du classement : une cellule illisible signale un fichier qui n'est pas l'export attendu. |
+| `place`, `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne ignorée, comptée dans `invalidRowCount`, avertissement qui nomme le nageur |
+
+Pourquoi écarter la ligne plutôt que bloquer l'import pour `place` / `birthyear` : au bord du bassin, le bénévole ne peut pas corriger le fichier, et bloquer tout l'import pour une ligne le laisserait sans aucun classement. Garder la ligne n'est pas possible non plus : la valeur serait enregistrée à `NULL`, qui échappe à la contrainte `UNIQUE` et dupliquerait le nageur à chaque réimport. La ligne écartée est donc annoncée dans l'encart « À savoir » de l'écran Import, le détail (ligne, nageur, valeur lue) dans les avertissements. Un fichier sans colonne `place` ou `birthyear` n'a aucune ligne valide : il est refusé (« Aucune ligne exploitable… »).
+
 ## Classement par équipes
 
 Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).

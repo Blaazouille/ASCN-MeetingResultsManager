@@ -4,6 +4,7 @@
  * Suppression casserait : l'import de fichiers CSV.
  */
 import Papa from 'papaparse';
+import { parsePoints, parseWholeNumber } from './csv-cells';
 
 export interface CsvParseOptions {
   /** Character encoding used to decode the raw bytes. Default: 'auto'. */
@@ -45,6 +46,8 @@ export interface CsvParseResult {
   ignoredRowCount: number;
   /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
   duplicateRowCount: number;
+  /** Lines left out because their place or birth year is not a whole number — they never reach the database. */
+  invalidRowCount: number;
 }
 
 export interface SwimmerRowsSummary {
@@ -102,19 +105,6 @@ const REQUIRED_COLUMNS = [
 
 const PLAUSIBLE_POINTS_MIN = 0;
 const PLAUSIBLE_POINTS_MAX = 1500;
-
-/**
- * Extracts the numeric value out of a points cell formatted as "1274 Pts".
- * Throws if no numeric value can be found — an unparseable points cell
- * means the source file does not match the expected FFN extraNat format.
- */
-export function parsePoints(raw: string): number {
-  const match = raw.match(/(\d+(?:[.,]\d+)?)/);
-  if (!match) {
-    throw new Error(`Cannot parse points: "${raw}"`);
-  }
-  return parseFloat(match[1]!.replace(',', '.'));
-}
 
 /**
  * Decodes raw CSV bytes to text, auto-detecting the encoding when requested.
@@ -189,6 +179,7 @@ export function parseCsv(
   const rows: RawSwimmerRow[] = [];
   let ignoredRowCount = 0;
   let duplicateRowCount = 0;
+  let invalidRowCount = 0;
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
@@ -201,7 +192,6 @@ export function parseCsv(
     const club = raw.club ?? '';
     const lastname = raw.lastname ?? '';
     const firstname = raw.firstname ?? '';
-    const birthyear = Number.parseInt(raw.birthyear ?? '', 10);
     const pointsRaw = raw.points ?? '';
 
     if (!name.trim()) {
@@ -217,6 +207,23 @@ export function parseCsv(
     }
 
     const points = parsePoints(pointsRaw);
+    // Points are what the ranking is computed from: a non-numeric points cell
+    // means the file is not the expected export, so the import stops here.
+    if (points === null) {
+      throw new Error(`Ligne ${rowNumber} : points illisibles (« ${pointsRaw} »). Est-ce bien un export de cotations extraNat ?`);
+    }
+    // An unreadable place or birth year would be stored as NULL, which escapes
+    // the UNIQUE constraint and duplicates the swimmer on every re-import. The
+    // line is left out (and counted, shown under « À savoir ») rather than
+    // blocking the whole import: see docs/algorithms.md.
+    const place = parseWholeNumber(raw.place ?? '');
+    const birthyear = parseWholeNumber(raw.birthyear ?? '');
+    if (place === null || birthyear === null) {
+      const [label, value] = place === null ? ['place', raw.place ?? ''] : ['année de naissance', raw.birthyear ?? ''];
+      warnings.push(`Ligne ${rowNumber} : ${label} illisible (« ${value} ») pour « ${firstname} ${lastname} » (ligne ignorée)`);
+      invalidRowCount += 1;
+      return;
+    }
     if (points < PLAUSIBLE_POINTS_MIN || points > PLAUSIBLE_POINTS_MAX) {
       warnings.push(`Ligne ${rowNumber} : nombre de points inhabituel (${points})`);
     }
@@ -247,7 +254,7 @@ export function parseCsv(
 
     rows.push({
       name,
-      place: Number.parseInt(raw.place ?? '', 10),
+      place,
       lastname,
       firstname,
       birthyear,
@@ -273,5 +280,6 @@ export function parseCsv(
     warnings,
     ignoredRowCount,
     duplicateRowCount,
+    invalidRowCount,
   };
 }

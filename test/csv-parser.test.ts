@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { countRowsByCategory, parseCsv, parsePoints, summarizeSwimmerRows } from '../src/lib/csv-parser';
+import { countRowsByCategory, parseCsv, summarizeSwimmerRows } from '../src/lib/csv-parser';
 
 const FIXTURE_PATH = path.join(__dirname, 'fixtures/sample.csv');
 
@@ -9,22 +9,6 @@ function loadFixture() {
   const buffer = readFileSync(FIXTURE_PATH);
   return parseCsv(new Uint8Array(buffer));
 }
-
-describe('parsePoints', () => {
-  it('extracts an integer value from "N Pts"', () => {
-    expect(parsePoints('1274 Pts')).toBe(1274);
-    expect(parsePoints('46 Pts')).toBe(46);
-  });
-
-  it('extracts a decimal value using either comma or dot', () => {
-    expect(parsePoints('12,5 Pts')).toBe(12.5);
-    expect(parsePoints('12.5 Pts')).toBe(12.5);
-  });
-
-  it('throws when no numeric value is present', () => {
-    expect(() => parsePoints('N/A')).toThrow(/Cannot parse points/);
-  });
-});
 
 describe('parseCsv — real FFN extraNat fixture (Latin-1, semicolon)', () => {
   const result = loadFixture();
@@ -79,6 +63,10 @@ describe('parseCsv — real FFN extraNat fixture (Latin-1, semicolon)', () => {
   it('produces no warnings on the clean reference file', () => {
     expect(result.warnings).toEqual([]);
   });
+
+  it('leaves no row out of the reference file', () => {
+    expect([result.ignoredRowCount, result.invalidRowCount, result.duplicateRowCount]).toEqual([0, 0, 0]);
+  });
 });
 
 describe('parseCsv — encoding and validation edge cases', () => {
@@ -122,6 +110,42 @@ describe('parseCsv — encoding and validation edge cases', () => {
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
     expect(result.warnings.some((w) => w.includes('apparaît deux fois'))).toBe(false);
+  });
+
+  it('stops the import on unreadable points, naming the line in French', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;2;MARTIN;Bob;1999;FRA;CN TEST;N/A;',
+    ].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow(/^Ligne 3 : points illisibles \(« N\/A »\)/);
+  });
+
+  it('leaves out, warns about and counts rows whose place or birth year is not a whole number', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;2;MARTIN;Bob;19XX;FRA;CN TEST;90 Pts;',
+      'Classement Mixte;;DURAND;Eve;2001;FRA;CN TEST;80 Pts;',
+      'Classement Mixte;4;PETIT;Tom;1990.5;FRA;CN TEST;70 Pts;',
+    ].join('\n');
+    const result = parseCsv(new TextEncoder().encode(csv));
+    expect(result.rows.map((row) => row.lastname)).toEqual(['DUPONT']);
+    expect(result.invalidRowCount).toBe(3);
+    expect(result.ignoredRowCount).toBe(0);
+    expect(result.warnings).toEqual([
+      'Ligne 3 : année de naissance illisible (« 19XX ») pour « Bob MARTIN » (ligne ignorée)',
+      'Ligne 4 : place illisible («  ») pour « Eve DURAND » (ligne ignorée)',
+      'Ligne 5 : année de naissance illisible (« 1990.5 ») pour « Tom PETIT » (ligne ignorée)',
+    ]);
+  });
+
+  it('rejects a file without a place column instead of importing swimmers without a place', () => {
+    const csv = [
+      'name;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+    ].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
   });
 
   it('flags points outside the plausible FFN range', () => {
