@@ -7,12 +7,16 @@ import { describe, expect, it } from 'vitest';
 import {
   birthLabel,
   categoryShortLabel,
+  clubCountLabel,
   countedSummary,
   formatGap,
   isDeleteConfirmed,
+  lastImportLabel,
   leaderRatio,
+  meetingStatsLabel,
   placeLabel,
   resultCountLabel,
+  swimmerCountLabel,
 } from '../src/lib/ui-labels';
 
 const NBSP = ' ';
@@ -112,5 +116,41 @@ describe('isDeleteConfirmed', () => {
   it('rejects an empty entry, even for an empty meeting name', () => {
     expect(isDeleteConfirmed('', 'Meeting de la Mer')).toBe(false);
     expect(isDeleteConfirmed('  ', '')).toBe(false);
+  });
+});
+
+describe('clubCountLabel', () => {
+  it('uses the singular for 0 and 1 (French rule), the plural from 2', () => {
+    expect(clubCountLabel(0)).toBe('0 club');
+    expect(clubCountLabel(1)).toBe('1 club');
+    expect(clubCountLabel(38)).toBe('38 clubs');
+  });
+});
+
+describe('swimmerCountLabel', () => {
+  it('uses the singular for 0 and 1, the plural from 2', () => {
+    expect(swimmerCountLabel(0)).toBe('0 nageur');
+    expect(swimmerCountLabel(1)).toBe('1 nageur');
+    expect(swimmerCountLabel(412)).toBe('412 nageurs');
+  });
+
+  it('separates thousands with a non-breaking space', () => {
+    expect(swimmerCountLabel(1234)).toBe(`1${NBSP}234 nageurs`);
+  });
+});
+
+describe('meetingStatsLabel', () => {
+  it('joins clubs and swimmers', () => {
+    expect(meetingStatsLabel(38, 412)).toBe('38 clubs · 412 nageurs');
+  });
+
+  it('handles singulars', () => {
+    expect(meetingStatsLabel(1, 1)).toBe('1 club · 1 nageur');
+  });
+});
+
+describe('lastImportLabel', () => {
+  it('prefixes the formatted date', () => {
+    expect(lastImportLabel('27 sept. 2026 à 14 h 32')).toBe('Dernier import le 27 sept. 2026 à 14 h 32');
   });
 });

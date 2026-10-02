@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import { createDatabase } from '../src/lib/db-schema';
-import { createMeeting, getAllMeetings } from '../src/lib/db';
+import { createMeeting, getAllMeetings, insertSwimmerResults } from '../src/lib/db';
 import {
   exportDatabase,
   validateBackup,
@@ -235,5 +235,60 @@ describe('restoreDatabase', () => {
     expect(() => restoreDatabase(targetDb, backup)).toThrow();
     const check = targetDb.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number };
     expect(check.count).toBe(0);
+  });
+});
+
+describe('lastImportedAt in backups', () => {
+  function importedDb(): Database.Database {
+    const db = freshDb();
+    const meeting = createMeeting(db, { name: 'Importé' });
+    insertSwimmerResults(db, meeting.id, [
+      { name: 'Classement Mixte', place: 1, lastname: 'DUPONT', firstname: 'Jean', birthyear: 1990, nation: 'FRA', club: 'CN TEST', points: 800, comment: '' },
+    ]);
+    db.prepare("UPDATE meeting SET last_imported_at = '2026-09-27 12:30:00' WHERE id = ?").run(meeting.id);
+    return db;
+  }
+
+  it('exports the import date', () => {
+    expect(exportDatabase(importedDb()).meetings[0]!.lastImportedAt).toBe('2026-09-27 12:30:00');
+  });
+
+  it('exports null for a meeting never imported', () => {
+    const db = freshDb();
+    createMeeting(db, { name: 'Vide' });
+
+    expect(exportDatabase(db).meetings[0]!.lastImportedAt).toBeNull();
+  });
+
+  it('survives a backup → restore round-trip', () => {
+    const target = freshDb();
+
+    restoreDatabase(target, validateBackup(exportDatabase(importedDb())));
+
+    expect(getAllMeetings(target)[0]!.lastImportedAt).toBe('2026-09-27 12:30:00');
+  });
+
+  it('restores an older backup that has no lastImportedAt as "never imported"', () => {
+    const backup = exportDatabase(importedDb());
+    delete (backup.meetings[0] as { lastImportedAt?: string | null })!.lastImportedAt;
+    const target = freshDb();
+
+    restoreDatabase(target, validateBackup(JSON.parse(JSON.stringify(backup))));
+
+    expect(getAllMeetings(target)[0]!.lastImportedAt).toBeNull();
+  });
+
+  it('rejects a lastImportedAt that is neither a string nor null', () => {
+    const backup = JSON.parse(JSON.stringify(exportDatabase(importedDb()))) as { meetings: Array<Record<string, unknown>> };
+    backup.meetings[0]!.lastImportedAt = 42;
+
+    expect(() => validateBackup(backup)).toThrow('lastImportedAt');
+  });
+
+  it('rejects a lastImportedAt string that is not a SQLite timestamp', () => {
+    const backup = JSON.parse(JSON.stringify(exportDatabase(importedDb()))) as { meetings: Array<Record<string, unknown>> };
+    backup.meetings[0]!.lastImportedAt = 'hier';
+
+    expect(() => validateBackup(backup)).toThrow('lastImportedAt');
   });
 });

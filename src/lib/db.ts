@@ -17,6 +17,12 @@ export interface Meeting {
   activeCategories: string[] | null;
   /** Number of swimmer_result rows (one per swimmer per category); 0 = nothing imported yet. */
   resultCount: number;
+  /** SQLite UTC timestamp of the last CSV import; null = never imported. */
+  lastImportedAt: string | null;
+  /** Distinct clubs across the meeting's imported results. */
+  clubCount: number;
+  /** Distinct swimmers (a swimmer listed in several categories counts once). */
+  swimmerCount: number;
 }
 
 export interface MeetingInput {
@@ -35,6 +41,9 @@ interface MeetingRow {
   min_swimmers: number;
   active_categories: string | null;
   result_count: number;
+  last_imported_at: string | null;
+  club_count: number;
+  swimmer_count: number;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -47,13 +56,26 @@ function rowToMeeting(row: MeetingRow): Meeting {
     minSwimmers: row.min_swimmers,
     activeCategories: row.active_categories ? (JSON.parse(row.active_categories) as string[]) : null,
     resultCount: row.result_count,
+    lastImportedAt: row.last_imported_at,
+    clubCount: row.club_count,
+    swimmerCount: row.swimmer_count,
   };
 }
 
-// Every read of a meeting carries its result count, so Accueil and the sidebar
-// can tell "à importer" from "importé" without loading the rows themselves.
-const SELECT_MEETING =
-  'SELECT m.*, (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count FROM meeting m';
+// Every read of a meeting carries its counts, so Accueil and the sidebar can
+// tell "à importer" from "importé" and show clubs/swimmers without loading the
+// rows themselves. A swimmer has one row per category, so swimmer_count
+// counts distinct identities: COUNT(DISTINCT a, b) isn't valid SQLite, hence
+// the concatenation (birthyear can be NULL, hence the IFNULL). The identity
+// (lastname|firstname|birthyear|club) and the blank-club rule must stay in sync
+// with summarizeSwimmerRows in csv-parser.ts, or Accueil and Import disagree.
+const SELECT_MEETING = `
+  SELECT m.*,
+    (SELECT COUNT(*) FROM swimmer_result s WHERE s.meeting_id = m.id) AS result_count,
+    (SELECT COUNT(DISTINCT NULLIF(s.club, '')) FROM swimmer_result s WHERE s.meeting_id = m.id) AS club_count,
+    (SELECT COUNT(DISTINCT s.lastname || '|' || s.firstname || '|' || IFNULL(s.birthyear, '') || '|' || s.club)
+       FROM swimmer_result s WHERE s.meeting_id = m.id) AS swimmer_count
+  FROM meeting m`;
 
 export function getAllMeetings(db: Database.Database): Meeting[] {
   const rows = db.prepare(`${SELECT_MEETING} ORDER BY m.id DESC`).all() as MeetingRow[];
@@ -145,6 +167,11 @@ function swimmerKey(row: { category: string; lastname: string; firstname: string
  * partial re-import never touches categories it didn't mention.
  */
 export function insertSwimmerResults(db: Database.Database, meetingId: number, rows: RawSwimmerRow[]): void {
+  // An empty import (header-only or wrong file) changes nothing: it must not
+  // stamp a "last import" date that never really happened.
+  if (rows.length === 0) {
+    return;
+  }
   const stmt = db.prepare(`
     INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
     VALUES (@meetingId, @category, @rank, @lastname, @firstname, @birthyear, @nation, @club, @points, @rawLine)
@@ -156,6 +183,7 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
     'SELECT id, category, lastname, firstname, birthyear, club FROM swimmer_result WHERE meeting_id = ? AND category = ?'
   );
   const deleteById = db.prepare('DELETE FROM swimmer_result WHERE id = ?');
+  const stampImport = db.prepare("UPDATE meeting SET last_imported_at = datetime('now') WHERE id = ?");
 
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
     for (const row of rowsToInsert) {
@@ -203,6 +231,8 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
         }
       }
     }
+    // Inside the transaction: a failed import rolls the date back with the rows.
+    stampImport.run(meetingId);
   });
   insertAll(rows);
 }

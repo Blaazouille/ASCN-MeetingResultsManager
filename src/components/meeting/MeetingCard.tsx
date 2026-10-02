@@ -1,12 +1,12 @@
 /**
- * Responsabilité : ligne résumant un meeting (nom, date de création, nombre de résultats, pastille « À importer ») sur l'Accueil, avec ouverture et suppression.
+ * Responsabilité : ligne résumant un meeting (nom, création, clubs, nageurs, dernier import, pastille « À importer ») sur l'Accueil, avec ouverture et suppression.
  * Appelé par : MeetingList.tsx.
  * Suppression casserait : l'affichage de la liste des meetings.
  */
 import { ChevronRight, Trash2 } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
-import { formatMeetingCreatedAt } from '@/lib/export-data';
-import { resultCountLabel } from '@/lib/ui-labels';
+import { formatMeetingCreatedAt, formatMeetingImportedAt } from '@/lib/export-data';
+import { lastImportLabel, meetingStatsLabel } from '@/lib/ui-labels';
 import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
 
 export interface MeetingCardProps {
@@ -16,6 +16,10 @@ export interface MeetingCardProps {
 }
 
 export function MeetingCard({ meeting, onOpen, onDelete }: MeetingCardProps): JSX.Element {
+  const hasResults = meeting.resultCount > 0;
+  // Null for a meeting imported before the date was tracked: show no line rather than a wrong one.
+  const importedAt = formatMeetingImportedAt(meeting);
+
   // Two sibling buttons rather than a button inside a button (invalid HTML, and
   // the trash click would also open the meeting).
   return (
@@ -28,10 +32,14 @@ export function MeetingCard({ meeting, onOpen, onDelete }: MeetingCardProps): JS
         <span className="flex flex-1 flex-col gap-0.5">
           <span className="text-[17px] font-semibold text-ink">{meeting.name}</span>
           <span className="text-sm text-ink-muted">
-            Créé le {formatMeetingCreatedAt(meeting)} · {resultCountLabel(meeting.resultCount)}
+            Créé le {formatMeetingCreatedAt(meeting)}
+            {hasResults && ` · ${meetingStatsLabel(meeting.clubCount, meeting.swimmerCount)}`}
           </span>
+          {hasResults && importedAt && (
+            <span className="text-[13px] text-ink-muted">{lastImportLabel(importedAt)}</span>
+          )}
         </span>
-        {meeting.resultCount === 0 && <ImportPendingBadge />}
+        {!hasResults && <ImportPendingBadge />}
         <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" aria-hidden />
       </button>
       <button

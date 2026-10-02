@@ -1,11 +1,12 @@
 /**
- * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (pastille « À importer », résultats, accès direct).
+ * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (pastille « À importer », clubs, nageurs, dernier import, accès direct).
  * Appelé par : HomePage.tsx.
  * Suppression casserait : l'accès en un clic au meeting du jour.
  */
 import { ArrowRight } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
-import { resultCountLabel } from '@/lib/ui-labels';
+import { formatMeetingImportedAt } from '@/lib/export-data';
+import { lastImportLabel, meetingStatsLabel } from '@/lib/ui-labels';
 import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
 
 export interface ResumeMeetingCardProps {
@@ -16,6 +17,7 @@ export interface ResumeMeetingCardProps {
 
 export function ResumeMeetingCard({ meeting, onOpenRanking, onImport }: ResumeMeetingCardProps): JSX.Element {
   const hasResults = meeting.resultCount > 0;
+  const importedAt = formatMeetingImportedAt(meeting);
 
   return (
     <section
@@ -25,9 +27,10 @@ export function ResumeMeetingCard({ meeting, onOpenRanking, onImport }: ResumeMe
       <div className="flex flex-col gap-2.5">
         <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-on-marine-muted">Reprendre</span>
         <span className="font-display text-4xl font-bold leading-none">{meeting.name}</span>
-        <div className="flex items-center gap-2.5 text-[15px] text-on-marine-subtle">
-          {meeting.resultCount === 0 && <ImportPendingBadge />}
-          <span>{resultCountLabel(meeting.resultCount)}</span>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px] text-on-marine-subtle">
+          {!hasResults && <ImportPendingBadge />}
+          {hasResults && <span>{meetingStatsLabel(meeting.clubCount, meeting.swimmerCount)}</span>}
+          {hasResults && importedAt && <span>· {lastImportLabel(importedAt)}</span>}
         </div>
       </div>
       <div className="flex flex-wrap gap-3">

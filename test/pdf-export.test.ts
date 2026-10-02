@@ -17,6 +17,9 @@ const TEST_MEETING = {
   minSwimmers: 0,
   activeCategories: null,
   resultCount: 0,
+  lastImportedAt: null,
+  clubCount: 0,
+  swimmerCount: 0,
 };
 
 function loadRows() {

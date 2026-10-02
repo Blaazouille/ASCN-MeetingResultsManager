@@ -45,6 +45,26 @@ export function resultCountLabel(count: number): string {
   return count === 1 ? '1 résultat importé' : `${formatPoints(count)} résultats importés`;
 }
 
+/** "38 clubs" — French treats 0 as singular, so the plural starts at 2. */
+export function clubCountLabel(count: number): string {
+  return count < 2 ? `${count} club` : `${formatPoints(count)} clubs`;
+}
+
+/** "412 nageurs" — counts people, not rows (see Meeting.swimmerCount). */
+export function swimmerCountLabel(count: number): string {
+  return count < 2 ? `${count} nageur` : `${formatPoints(count)} nageurs`;
+}
+
+/** "38 clubs · 412 nageurs": the one-line size of an imported meeting, shared by both Accueil cards. */
+export function meetingStatsLabel(clubCount: number, swimmerCount: number): string {
+  return `${clubCountLabel(clubCount)} · ${swimmerCountLabel(swimmerCount)}`;
+}
+
+/** "Dernier import le 27 sept. 2026 à 14 h 32": takes the already-formatted date from formatMeetingImportedAt. */
+export function lastImportLabel(formattedDate: string): string {
+  return `Dernier import le ${formattedDate}`;
+}
+
 /** "Classement Mixte" → "Mixte": the prefix repeats on every tab and adds nothing. */
 export function categoryShortLabel(category: string): string {
   return category.replace(/^Classement\s+/i, '');
