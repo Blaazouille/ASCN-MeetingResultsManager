@@ -50,11 +50,21 @@ BackupData (JSON : version, appName, exportedAt, meetings[])
 Fichier .json sur disque
     ↓
 validateBackup() [src/lib/backup-validation.ts]
+    ↓  (confirmation)
+restoreWithSafetyCopy() [electron/pre-restore-backup.ts]
+    ├─ exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
+    │   (échec → restauration annulée, message en français, base intacte)
     ↓
 restoreDatabase() [src/lib/backup.ts]
     ↓
 SQLite (remplacement complet — tous les meetings existants sont supprimés avant l'insertion des meetings du fichier)
 ```
+
+### Copie de sécurité avant restauration
+
+Une restauration supprime tous les meetings, y compris ceux absents du fichier (et leurs `import_snapshot` en cascade). Avant de l'exécuter, le handler `backup:confirm-import` appelle `restoreWithSafetyCopy` (`electron/pre-restore-backup.ts`) : la base actuelle est écrite via `exportDatabase` dans `mdlm-pre-restore-<horodatage>.json`, dans le dossier de sauvegarde configuré (`backupDir`, créé si besoin). Si la lecture de la config ou l'écriture échoue, une erreur en français est levée avant tout appel à `restoreDatabase` : la base n'est pas modifiée. En cas de succès, le chemin de la copie (`safetyCopyPath`) est renvoyé au renderer, qui l'affiche. Le module n'importe pas `electron` (le dossier est fourni par un callback) pour rester testable sous Vitest.
+
+Ces copies ne font **pas** partie de la rotation : `rotateBackups` ne supprime que les fichiers `mdlm-auto-backup-*`. Une restauration est rare et c'est la seule façon de revenir en arrière après un mauvais fichier ; quelques imports CSV ne doivent pas la faire disparaître. Le bénévole les supprime lui-même s'il le souhaite.
 
 ### Sauvegardes automatiques
 
@@ -68,7 +78,7 @@ Canaux IPC de `electron/ipc-channels.ts` :
 
 - `backup:export` — exporte la base entière en JSON
 - `backup:import` — valide un fichier JSON importé
-- `backup:confirm-import` — enregistre l'import après confirmation de l'utilisateur
+- `backup:confirm-import` — écrit la copie de sécurité `mdlm-pre-restore-*.json`, puis restaure ; renvoie `{ result, safetyCopyPath }`
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
@@ -98,6 +108,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── ipc-handlers.ts            # Handlers filesystem + SQLite
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
 │   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
+│   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
 │   └── auto-updater.ts            # Vérification et téléchargement des mises à jour
 ├── src/
 │   ├── main.tsx                   # Point d'entrée React
