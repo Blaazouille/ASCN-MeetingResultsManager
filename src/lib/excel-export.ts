@@ -1,13 +1,13 @@
 /**
  * Responsabilité : génère et télécharge le classeur Excel du classement par équipes.
- * Appelé par : use-print-export.ts (bouton "Export Excel" de RankingPage).
+ * Appelé par : use-ranking-export.ts (bouton "Export Excel" de RankingPage).
  * Suppression casserait : l'export Excel du classement.
  */
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
-import type { PrintMeta } from './export-data';
-import { slugifyCategory } from './export-data';
+import type { ExportMeta } from './export-data';
+import { excelSheetName, slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
 const COLUMN_HEADERS = ['Rang', 'Club', 'Points', 'Nageurs retenus'];
@@ -17,7 +17,7 @@ function formatSwimmerList(team: TeamResult): string {
 }
 
 export async function buildRankingWorkbookBuffer(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<ArrayBuffer> {
@@ -25,14 +25,7 @@ export async function buildRankingWorkbookBuffer(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetName =
-    category
-      .replace(/^Classement\s+/i, '')
-      .replace(/[\\/?*:[\]]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 31) || 'Classement';
-  const sheet = workbook.addWorksheet(sheetName);
+  const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
     { header: COLUMN_HEADERS[0], key: 'rank', width: 8 },
@@ -60,7 +53,7 @@ export async function buildRankingWorkbookBuffer(
 
 /** Builds the ranking workbook and triggers a browser download. */
 export async function exportRankingToExcel(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<void> {

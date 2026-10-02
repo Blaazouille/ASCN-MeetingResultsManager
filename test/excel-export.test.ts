@@ -4,7 +4,7 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { parseCsv } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
-import { buildPrintMeta } from '../src/lib/export-data';
+import { buildExportMeta } from '../src/lib/export-data';
 import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
@@ -32,7 +32,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('produces a workbook with a sheet listing all 38 clubs, including ASCN', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta(TEST_MEETING);
+    const meta = buildExportMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement Mixte', results);
 
@@ -51,7 +51,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('records the podium points at the right rows', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta(TEST_MEETING);
+    const meta = buildExportMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement Mixte', results);
     const workbook = new ExcelJS.Workbook();
@@ -67,7 +67,7 @@ describe('buildRankingWorkbookBuffer', () => {
   it('strips characters Excel forbids in sheet names', async () => {
     const rows = loadRows();
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-    const meta = buildPrintMeta(TEST_MEETING);
+    const meta = buildExportMeta(TEST_MEETING);
 
     const buffer = await buildRankingWorkbookBuffer(meta, 'Classement 100m [Dames]', results);
     const workbook = new ExcelJS.Workbook();
@@ -86,7 +86,7 @@ describe('buildRankingWorkbookBuffer ties', () => {
     });
     const results = computeTeamRanking([row('A', 100), row('B', 100), row('C', 50)], { category: 'Classement Mixte', topN: 5 });
 
-    const buffer = await buildRankingWorkbookBuffer(buildPrintMeta(TEST_MEETING), 'Classement Mixte', results);
+    const buffer = await buildRankingWorkbookBuffer(buildExportMeta(TEST_MEETING), 'Classement Mixte', results);
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
     const sheet = workbook.worksheets[0]!;
