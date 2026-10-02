@@ -76,7 +76,13 @@ export function initAutoUpdater(onUpdateDownloaded: () => void): void {
   ipcMain.handle(IpcChannels.quitAndInstallUpdate, () => {
     autoUpdater.quitAndInstall();
   });
-  ipcMain.handle(IpcChannels.getUpdateStatus, (): UpdateStatus | null => loadUpdateStatus());
+  // Pendant une vérification, le fichier contient encore l'ancien résultat :
+  // on renvoie celui de la vérification en cours pour que Paramètres n'affiche
+  // jamais un statut périmé (ex. « À jour » alors qu'un téléchargement s'achève).
+  ipcMain.handle(
+    IpcChannels.getUpdateStatus,
+    (): Promise<UpdateStatus> | UpdateStatus | null => inFlightCheck ?? loadUpdateStatus()
+  );
   ipcMain.handle(IpcChannels.checkForUpdatesNow, (): Promise<UpdateStatus> => checkOnce());
 
   setTimeout(() => {

@@ -53,12 +53,18 @@ describe('vérification des mises à jour', () => {
     const downloadPromise = new Promise<void>((resolve) => {
       finishDownload = resolve;
     });
-    checkForUpdates.mockResolvedValue({ isUpdateAvailable: true, downloadPromise });
+    const checked = Promise.resolve({ isUpdateAvailable: true, downloadPromise });
+    checkForUpdates.mockReturnValue(checked);
     const pending = checkNow();
-    await Promise.resolve();
+    // runCheck awaited `checked` first, so once it has resolved here the check
+    // is done and runCheck is blocked on the unfinished download.
+    await checked;
     expect(loadUpdateStatus()).toBeNull();
+    // Paramètres opened meanwhile gets the in-progress check, not the stale file.
+    const shown = handlers.get(IpcChannels.getUpdateStatus)!() as Promise<unknown>;
     finishDownload();
     await expect(pending).resolves.toMatchObject({ outcome: 'downloaded' });
+    await expect(shown).resolves.toMatchObject({ outcome: 'downloaded' });
   });
 
   it('records and logs an offline failure instead of swallowing it', async () => {

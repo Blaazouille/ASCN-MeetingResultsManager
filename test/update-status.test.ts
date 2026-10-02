@@ -87,10 +87,6 @@ describe('parseUpdateStatus', () => {
 });
 
 describe('formatLastCheck', () => {
-  it('says "Jamais" before the first check', () => {
-    expect(formatLastCheck(null)).toBe('Jamais');
-  });
-
   it('formats the check instant as a French date and local time', () => {
     // 10:30 UTC stays on the 2nd for local timezones from UTC-10 to UTC+13.
     const local = new Date(at);

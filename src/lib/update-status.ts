@@ -70,7 +70,7 @@ export function updateStatusLabel(status: UpdateStatus | null): string {
   }
 }
 
-/** "2 oct. 2026 à 14 h 05", or "Jamais" before the first check. */
-export function formatLastCheck(status: UpdateStatus | null): string {
-  return status === null ? 'Jamais' : formatDateTimeFr(new Date(status.checkedAt));
+/** "2 oct. 2026 à 14 h 05". */
+export function formatLastCheck(status: UpdateStatus): string {
+  return formatDateTimeFr(new Date(status.checkedAt));
 }

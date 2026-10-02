@@ -18,11 +18,17 @@ export function useUpdateStatus(): UseUpdateStatusResult {
 
   useEffect(() => {
     const load = (): void => {
-      void window.electronAPI.getUpdateStatus().then(setStatus);
+      // getUpdateStatus waits for a check already in progress (startup check or
+      // a click elsewhere), so "Vérification en cours…" is shown meanwhile.
+      setIsChecking(true);
+      void window.electronAPI
+        .getUpdateStatus()
+        .then(setStatus)
+        .finally(() => setIsChecking(false));
     };
     load();
-    // The startup check can finish while Paramètres is already open: reload
-    // when a download completes so the section doesn't stay on a stale status.
+    // Paramètres opened in the first 5 s, before the startup check starts, read
+    // the previous result: reload when that check ends with a download.
     return window.electronAPI.onUpdateDownloaded(load);
   }, []);
 

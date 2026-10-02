@@ -23,8 +23,13 @@ export function UpdateSection(): JSX.Element {
       <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-[15px]">
         <dt className="font-semibold text-ink">Version installée</dt>
         <dd className="text-ink tabular-nums">{version ?? '…'}</dd>
-        <dt className="font-semibold text-ink">Dernière vérification</dt>
-        <dd className="text-ink">{formatLastCheck(status)}</dd>
+        {/* Before the first check, the status line alone says "Pas encore vérifié". */}
+        {status !== null && (
+          <>
+            <dt className="font-semibold text-ink">Dernière vérification</dt>
+            <dd className="text-ink">{formatLastCheck(status)}</dd>
+          </>
+        )}
         <dt className="font-semibold text-ink">Statut</dt>
         <dd
           role="status"

@@ -34,8 +34,8 @@ export const IpcChannels = {
   backupChooseDir: 'backup:choose-dir',
   updateDownloaded: 'update:downloaded',
   quitAndInstallUpdate: 'update:quitAndInstall',
-  // Last check result shown in Paramètres, and the « Vérifier maintenant » button
-  // (resolves once the check — and any download — is over). See auto-updater.ts.
+  // Last check result shown in Paramètres (waits for a check in progress), and the
+  // « Vérifier maintenant » button (resolves once the check — and any download — is over). See auto-updater.ts.
   getUpdateStatus: 'update:getStatus',
   checkForUpdatesNow: 'update:checkNow',
 

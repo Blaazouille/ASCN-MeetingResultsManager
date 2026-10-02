@@ -79,7 +79,7 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 
 ### Mises à jour
 
-- Version installée, date et heure de la dernière vérification (« Jamais » avant la première), et statut en français simple : « À jour », « Mise à jour prête — redémarrez l'application », « Impossible de vérifier (pas de connexion ?) » quand le poste est hors ligne, ou « La mise à jour a échoué. Réessayez plus tard. » pour un autre échec (release cassée, téléchargement interrompu), suivi d'une ligne « Détail : » avec le message technique court.
+- Version installée, date et heure de la dernière vérification (ligne masquée avant la première vérification, le statut indiquant alors « Pas encore vérifié »), et statut en français simple : « À jour », « Mise à jour prête — redémarrez l'application », « Impossible de vérifier (pas de connexion ?) » quand le poste est hors ligne, ou « La mise à jour a échoué. Réessayez plus tard. » pour un autre échec (release cassée, téléchargement interrompu), suivi d'une ligne « Détail : » avec le message technique court.
 - Bouton « Vérifier maintenant » : affiche « Vérification en cours… » jusqu'à la fin de la vérification et de l'éventuel téléchargement, puis le nouveau statut.
 - Hors ligne au démarrage, rien ne s'affiche ailleurs : pas de toast d'erreur, seulement ce statut. Le toast « Une mise à jour est prête. » reste réservé au téléchargement réussi.
 - Chaque vérification est aussi consignée dans `update-log.txt` (200 dernières lignes) sous le dossier de données de l'application, pour diagnostiquer un échec à distance.
