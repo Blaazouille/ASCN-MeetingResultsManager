@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
-import { checkImportAgainstExisting } from '../src/lib/import-check';
+import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '../src/lib/import-check';
 
 function rows(category: string, count: number, offset = 0): RawSwimmerRow[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -24,9 +24,9 @@ describe('checkImportAgainstExisting', () => {
     expect(kinds([], rows('Classement Mixte', 10))).toEqual([]);
   });
 
-  it('stays silent on a normal correction of the same file', () => {
+  it('stays silent on a correction that changes points without removing anyone', () => {
     const existing = rows('Classement Mixte', 10);
-    const incoming = rows('Classement Mixte', 9).map((r) => ({ ...r, points: r.points + 5 }));
+    const incoming = rows('Classement Mixte', 10).map((r) => ({ ...r, points: r.points + 5 }));
     expect(kinds(existing, incoming)).toEqual([]);
   });
 
@@ -43,12 +43,12 @@ describe('checkImportAgainstExisting', () => {
     expect(warning!.message).toContain('52 nageurs en Mixte, contre 211');
   });
 
-  it('accepts a drop of exactly 20 %', () => {
-    expect(kinds(rows('Classement Mixte', 10), rows('Classement Mixte', 8))).toEqual([]);
+  it('does not block a drop of exactly 20 %, only announces it', () => {
+    expect(kinds(rows('Classement Mixte', 10), rows('Classement Mixte', 8))).toEqual(['removed']);
   });
 
   it('flags a file whose swimmers are mostly different', () => {
-    expect(kinds(rows('Classement Mixte', 10), rows('Classement Mixte', 10, 100))).toEqual(['different']);
+    expect(kinds(rows('Classement Mixte', 10), rows('Classement Mixte', 10, 100))).toEqual(['removed', 'different']);
   });
 
   it('reports a missing category as non-blocking info', () => {
@@ -65,13 +65,52 @@ describe('checkImportAgainstExisting', () => {
 
 describe('checkImportAgainstExisting — wrong file and blocking', () => {
   it('reports both a shrunk category and different swimmers for a wrong file', () => {
-    expect(kinds(rows('Classement Mixte', 20), rows('Classement Mixte', 5, 100))).toEqual(['shrunk', 'different']);
+    expect(kinds(rows('Classement Mixte', 20), rows('Classement Mixte', 5, 100))).toEqual(['shrunk', 'removed', 'different']);
   });
 
   it('has no blocking warning when only a category is missing', () => {
     const existing = [...rows('Classement Mixte', 10), ...rows('Classement Dames', 5)];
     const warnings = checkImportAgainstExisting(existing, rows('Classement Mixte', 10).map((r) => ({ ...r, points: 1 })));
     expect(warnings.some((w) => w.blocking)).toBe(false);
+  });
+});
+
+describe('checkImportAgainstExisting — swimmers removed by the import', () => {
+  it('announces, without blocking, the swimmers a 19 % drop will remove', () => {
+    const warnings = checkImportAgainstExisting(rows('Classement Mixte', 100), rows('Classement Mixte', 81));
+    expect(warnings).toEqual([
+      { kind: 'removed', blocking: false, message: '19 nageurs absents du nouveau fichier seront retirés du classement Mixte.' },
+    ]);
+  });
+
+  it('uses the singular for a single removed swimmer', () => {
+    const [warning] = checkImportAgainstExisting(rows('Classement Mixte', 10), rows('Classement Mixte', 9));
+    expect(warning!.message).toBe('1 nageur absent du nouveau fichier sera retiré du classement Mixte.');
+  });
+
+  it('counts removed swimmers per category', () => {
+    const existing = [...rows('Classement Mixte', 10), ...rows('Classement Dames', 5)];
+    const incoming = [...rows('Classement Mixte', 8), ...rows('Classement Dames', 4)];
+    const messages = checkImportAgainstExisting(existing, incoming).map((w) => w.message);
+    expect(messages).toEqual([
+      '2 nageurs absents du nouveau fichier seront retirés du classement Mixte.',
+      '1 nageur absent du nouveau fichier sera retiré du classement Dames.',
+    ]);
+  });
+
+  it('counts a swimmer whose identity changed (another club) as removed, since the database deletes the old row', () => {
+    const existing = rows('Classement Mixte', 10);
+    const incoming = existing.map((r, i) => (i === 0 ? { ...r, club: 'AUTRE CLUB' } : r));
+    expect(kinds(existing, incoming)).toEqual(['removed']);
+  });
+
+  it('does not announce removals for a category absent from the file, which is kept', () => {
+    const existing = [...rows('Classement Mixte', 10), ...rows('Classement Dames', 5)];
+    expect(kinds(existing, rows('Classement Mixte', 10).map((r) => ({ ...r, points: 1 })))).toEqual(['missing-category']);
+  });
+
+  it('does not announce removals when swimmers are only added', () => {
+    expect(kinds(rows('Classement Mixte', 10), rows('Classement Mixte', 12))).toEqual([]);
   });
 });
 
@@ -84,5 +123,27 @@ describe('checkImportAgainstExisting — duplicate lines in a file', () => {
   it('does not call a file identical when a swimmer is missing, even if another line is repeated', () => {
     const existing = rows('Classement Mixte', 5);
     expect(kinds(existing, [...existing.slice(0, 4), existing[0]!])).not.toContain('identical');
+  });
+});
+
+describe('importConfirmation and noticesAfterWrite', () => {
+  const warning = (kind: ImportWarning['kind'], blocking: boolean): ImportWarning => ({ kind, blocking, message: kind });
+
+  it('asks nothing when no warning needs an answer', () => {
+    expect(importConfirmation([])).toBeNull();
+    expect(importConfirmation([warning('missing-category', false)])).toBeNull();
+  });
+
+  it('opens the inline notice when swimmers will be removed and nothing looks suspicious', () => {
+    expect(importConfirmation([warning('removed', false), warning('missing-category', false)])).toBe('removals');
+  });
+
+  it('opens the guard modal as soon as one warning is blocking, even with removals', () => {
+    expect(importConfirmation([warning('removed', false), warning('shrunk', true)])).toBe('guard');
+  });
+
+  it('keeps only the info still true after the write for « À savoir »', () => {
+    const all = [warning('shrunk', true), warning('removed', false), warning('missing-category', false)];
+    expect(noticesAfterWrite(all).map((w) => w.kind)).toEqual(['missing-category']);
   });
 });
