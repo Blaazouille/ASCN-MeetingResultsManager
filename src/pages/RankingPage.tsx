@@ -9,7 +9,7 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
-import { usePrintExport } from '@/hooks/use-print-export';
+import { useRankingExport } from '@/hooks/use-ranking-export';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { rankMovements } from '@/lib/import-diff';
@@ -35,7 +35,7 @@ export default function RankingPage(): JSX.Element {
     initialTopN: meetingState.currentMeeting?.defaultTopN,
     minSwimmers: meetingState.currentMeeting?.minSwimmers,
   });
-  const { isExporting, error, exportPdf, exportExcel } = usePrintExport();
+  const { isExporting, error, exportPdf, exportExcel } = useRankingExport();
   const previousRows = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
   // Same category, top N and threshold as the displayed ranking, or the arrows would compare different things.
   const movements = useMemo(

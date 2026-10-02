@@ -10,7 +10,6 @@ import {
   getAllMeetings,
   getSwimmerResults,
   insertSwimmerResults,
-  saveTeamRanking,
   updateMeeting,
 } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
@@ -223,21 +222,6 @@ describe('swimmer results persistence', () => {
     insertSwimmerResults(db, meetingA.id, sampleRows());
 
     expect(getSwimmerResults(db, meetingB.id)).toEqual([]);
-  });
-});
-
-describe('team ranking persistence', () => {
-  it('saves a computed ranking and replaces it on recompute', () => {
-    const db = createDatabase(':memory:');
-    const meeting = createMeeting(db, { name: 'Test' });
-    insertSwimmerResults(db, meeting.id, sampleRows());
-
-    const rows = getSwimmerResults(db, meeting.id, 'Classement Mixte');
-    const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
-
-    expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
-    // Recomputing and saving again must not throw a UNIQUE constraint error.
-    expect(() => saveTeamRanking(db, meeting.id, 'Classement Mixte', 5, results)).not.toThrow();
   });
 });
 

@@ -1,11 +1,12 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
+import { categoryShortLabel } from './ui-labels';
 
-export interface PrintMeta {
+export interface ExportMeta {
   meetingName: string;
   /** Timestamp of computation, formatted fr-FR date + time. */
   computedAt: string;
@@ -54,8 +55,8 @@ export function formatImportTimestamp(timestamp: string): string {
   return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
 
-/** Builds the print/export metadata from the persisted meeting record. */
-export function buildPrintMeta(meeting: Meeting): PrintMeta {
+/** Builds the export metadata from the persisted meeting record. */
+export function buildExportMeta(meeting: Meeting): ExportMeta {
   return {
     meetingName: meeting.name,
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),
@@ -74,4 +75,29 @@ export function slugifyCategory(category: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Excel sheet name for a category: "Classement Mixte" -> "Mixte". Excel rejects
+ * names containing \ / ? * : [ ] or longer than 31 characters and fails the
+ * whole export, so those characters become spaces and the name is cut.
+ */
+export function excelSheetName(category: string): string {
+  return (
+    categoryShortLabel(category)
+      .replace(/[\\/?*:[\]]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 31) || 'Classement'
+  );
+}
+
+/**
+ * Download filename of an individual ranking export, e.g.
+ * "classement-individuel-dames-2026-11-16.pdf". The "Classement" prefix of the
+ * category is dropped because the file name already starts with it.
+ */
+export function individualExportFileName(category: string, extension: 'pdf' | 'xlsx', date: Date = new Date()): string {
+  const day = date.toISOString().slice(0, 10);
+  return `classement-individuel-${slugifyCategory(categoryShortLabel(category))}-${day}.${extension}`;
 }

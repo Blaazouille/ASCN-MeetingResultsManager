@@ -30,18 +30,14 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 **Mouvements après un réimport** : `insertSwimmerResults` lit les lignes existantes avant toute écriture et, dans la même transaction, les range dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import qui a changé quelque chose). Un import qui laisse toutes les lignes identiques (même fichier redéposé) garde l'instantané en place, sinon flèches et résumé compareraient l'état actuel avec lui-même. Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
 
-Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie.
-
-**Canaux déclarés mais jamais appelés par le renderer** (dette connue, à trancher dans une issue séparée — règle « pas de code mort ») :
-- `ranking:compute` / `ranking:save` : le premier calcule et persiste (`saveTeamRanking`), le second est un no-op. Les handlers existent et `saveTeamRanking` est testé (`test/db.test.ts`), mais aucun écran ne les invoque.
-- `export:pdf` / `export:excel` : handlers qui lèvent « not implemented ». Les exports passent en réalité par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`).
+Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
 ## Sauvegarde et restauration (Phase 9)
 
 ### Flux de sauvegarde et restauration
 
 ```
-SQLite (meeting, swimmer_result, team_ranking)
+SQLite (meeting, swimmer_result)
     ↓
 exportDatabase() [src/lib/backup.ts]
     ↓
@@ -50,11 +46,21 @@ BackupData (JSON : version, appName, exportedAt, meetings[])
 Fichier .json sur disque
     ↓
 validateBackup() [src/lib/backup-validation.ts]
+    ↓  (confirmation)
+restoreWithSafetyCopy() [electron/pre-restore-backup.ts]
+    ├─ si la base contient des meetings : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
+    │   (échec → restauration annulée, message en français, base intacte)
     ↓
 restoreDatabase() [src/lib/backup.ts]
     ↓
 SQLite (remplacement complet — tous les meetings existants sont supprimés avant l'insertion des meetings du fichier)
 ```
+
+### Copie de sécurité avant restauration
+
+Une restauration supprime tous les meetings, y compris ceux absents du fichier (et leurs `import_snapshot` en cascade). Avant de l'exécuter, le handler `backup:confirm-import` appelle `restoreWithSafetyCopy` (`electron/pre-restore-backup.ts`) : la base actuelle est écrite via `exportDatabase` dans `mdlm-pre-restore-<horodatage>.json`, dans le dossier de sauvegarde configuré (`backupDir`, créé si besoin). Si la lecture de la config ou l'écriture échoue, une erreur en français est levée avant tout appel à `restoreDatabase` : la base n'est pas modifiée. En cas de succès, le chemin de la copie (`safetyCopyPath`) est renvoyé au renderer, qui l'affiche. Si la base ne contient aucun meeting (installation neuve, reprise après sinistre), il n'y a rien à protéger : aucune copie n'est faite, le dossier n'est même pas lu, et `safetyCopyPath` vaut `null`. Sinon, un `backup-config.json` pointant vers un dossier absent ou corrompu empêcherait justement la restauration dont on a besoin. Le module n'importe pas `electron` (le dossier est fourni par un callback) pour rester testable sous Vitest.
+
+Ces copies ne font **pas** partie de la rotation : `rotateBackups` ne supprime que les fichiers `mdlm-auto-backup-*`. Une restauration est rare et c'est la seule façon de revenir en arrière après un mauvais fichier ; quelques imports CSV ne doivent pas la faire disparaître. Le bénévole les supprime lui-même s'il le souhaite.
 
 ### Sauvegardes automatiques
 
@@ -62,13 +68,15 @@ Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après 
 
 La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans un fichier JSON distinct (`backup-config.json`) sous `app.getPath('userData')`, en dehors de SQLite. Cela garantit que la config survit à une restauration complète de la base (la restauration ne touche que les tables SQLite, pas le système de fichiers Electron).
 
+**Compatibilité des fichiers** : le champ `teamRankings` des sauvegardes n'est plus lu (classements recalculés, voir plus haut). Une ancienne sauvegarde qui en contient se restaure normalement, le champ est ignoré. Les nouvelles sauvegardes l'écrivent toujours, vide (`[]`), parce que les versions précédentes de l'app exigent ce tableau : elles peuvent ainsi relire une sauvegarde faite par cette version.
+
 ### Canaux IPC pour backup/restore
 
 Canaux IPC de `electron/ipc-channels.ts` :
 
 - `backup:export` — exporte la base entière en JSON
 - `backup:import` — valide un fichier JSON importé
-- `backup:confirm-import` — enregistre l'import après confirmation de l'utilisateur
+- `backup:confirm-import` — écrit la copie de sécurité `mdlm-pre-restore-*.json` (si la base contient des meetings), puis restaure ; renvoie `{ result, safetyCopyPath }` (`null` sans copie)
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
@@ -98,6 +106,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── ipc-handlers.ts            # Handlers filesystem + SQLite
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
 │   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
+│   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
 │   └── auto-updater.ts            # Vérification et téléchargement des mises à jour
 ├── src/
 │   ├── main.tsx                   # Point d'entrée React
@@ -121,7 +130,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
-│   │   ├── focus-trap.ts          # Calcul du focus suivant dans une modale
+│   │   ├── focus-trap.ts          # Focus des modales : Tab suivant, retour au déclencheur
 │   │   ├── ui-labels.ts           # Libellés et valeurs d'affichage dérivés des données
 │   │   └── utils.ts               # Helpers (formatPoints, cn, etc.)
 │   ├── hooks/
@@ -130,7 +139,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-previous-rows.ts   # Résultats d'avant le dernier import (instantané), pour les flèches de mouvement
 │   │   ├── use-import.ts          # Import CSV (parse, aperçu, persistance)
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
-│   │   ├── use-print-export.ts    # Exports PDF/Excel du classement par équipes (nom hérité, voir note)
+│   │   ├── use-ranking-export.ts  # Exports PDF/Excel du classement par équipes
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
@@ -160,5 +169,3 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
     ├── algorithms.md
     └── archive/                   # Specs et plans des phases terminées (historique figé, ne pas mettre à jour)
 ```
-
-**Nommage hérité** : `use-print-export.ts` (`usePrintExport`, `buildPrintMeta` dans `export-data.ts`) garde le mot « print » bien que l'impression ait été retirée en Phase 6. Il pilote en réalité les exports PDF/Excel ; le renommage est volontairement laissé hors de la remise à plat de la documentation.
