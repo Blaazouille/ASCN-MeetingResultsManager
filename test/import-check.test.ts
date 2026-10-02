@@ -114,6 +114,42 @@ describe('checkImportAgainstExisting — swimmers removed by the import', () => 
   });
 });
 
+describe('checkImportAgainstExisting — swimmers in the file but left out for their birth year', () => {
+  const existing = rows('Classement Mixte', 10);
+  // NOM9 is absent from the file; NOM8 is in it, with an unreadable birth year.
+  const incoming = rows('Classement Mixte', 8);
+  const leftOut = { firstname: 'Prénom', lastname: 'NOM8', club: 'CLUB', categories: ['Classement Mixte'] };
+
+  it('does not call a swimmer whose line is unreadable « absent du nouveau fichier »', () => {
+    const messages = checkImportAgainstExisting(existing, incoming, null, [leftOut]).map((w) => w.message);
+    expect(messages).toEqual([
+      '1 nageur absent du nouveau fichier sera retiré du classement Mixte.',
+      '1 nageur non importé (année de naissance vide ou illisible) sera retiré du classement Mixte.',
+    ]);
+  });
+
+  it('keeps the same non-blocking removal kind, so the inline notice still asks before the write', () => {
+    const warnings = checkImportAgainstExisting(existing, incoming, null, [leftOut]);
+    expect(warnings.map((w) => [w.kind, w.blocking])).toEqual([['removed', false], ['removed', false]]);
+  });
+
+  it('uses the plural for several unreadable swimmers', () => {
+    const both = [leftOut, { ...leftOut, lastname: 'NOM9' }];
+    const messages = checkImportAgainstExisting(existing, incoming, null, both).map((w) => w.message);
+    expect(messages).toEqual(['2 nageurs non importés (année de naissance vide ou illisible) seront retirés du classement Mixte.']);
+  });
+
+  it('matches the category: a swimmer left out of Dames only is still absent from Mixte', () => {
+    const messages = checkImportAgainstExisting(existing, incoming, null, [{ ...leftOut, categories: ['Classement Dames'] }]).map((w) => w.message);
+    expect(messages).toEqual(['2 nageurs absents du nouveau fichier seront retirés du classement Mixte.']);
+  });
+
+  it('matches the club: a namesake from another club does not explain the removal', () => {
+    const messages = checkImportAgainstExisting(existing, incoming, null, [{ ...leftOut, club: 'AUTRE CLUB' }]).map((w) => w.message);
+    expect(messages).toEqual(['2 nageurs absents du nouveau fichier seront retirés du classement Mixte.']);
+  });
+});
+
 describe('checkImportAgainstExisting — duplicate lines in a file', () => {
   it('still sees the same file as identical when it repeats a swimmer line', () => {
     const existing = rows('Classement Mixte', 5);

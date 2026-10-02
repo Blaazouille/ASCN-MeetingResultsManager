@@ -3,7 +3,7 @@
  * Appelé par : ImportPage.tsx.
  * Suppression casserait : les alertes avant import (mauvais fichier, export partiel, fichier identique, nageurs retirés) — un import écraserait les résultats sans prévenir.
  */
-import type { RawSwimmerRow } from './csv-parser';
+import type { ExcludedSwimmer, RawSwimmerRow } from './csv-parser';
 import { formatImportTimestamp } from './export-data';
 import { categoryShortLabel, swimmerCountLabel } from './ui-labels';
 
@@ -37,11 +37,14 @@ function countByCategory(rows: RawSwimmerRow[]): Map<string, number> {
  * Warnings to show before an import replaces `existing` with `incoming`.
  * No existing results = first import: nothing to compare, no warning.
  * `lastImportedAt` (SQLite timestamp) only feeds the "identical" message.
+ * `excluded` (the file's swimmers left out for their birth year) only tells apart, among the swimmers
+ * about to be removed, those that are in the file but could not be read.
  */
 export function checkImportAgainstExisting(
   existing: RawSwimmerRow[],
   incoming: RawSwimmerRow[],
-  lastImportedAt: string | null = null
+  lastImportedAt: string | null = null,
+  excluded: ExcludedSwimmer[] = []
 ): ImportWarning[] {
   if (existing.length === 0 || incoming.length === 0) return [];
 
@@ -79,14 +82,27 @@ export function checkImportAgainstExisting(
   // SHRINK_THRESHOLD (a few withdrawals) would otherwise only show up in the summary, after the fact.
   // Not blocking: a corrected FFN export routinely drops a withdrawn swimmer.
   const incomingKeys = new Set(incoming.map(rowKey));
-  const removed = countByCategory(existing.filter((row) => after.has(row.name) && !incomingKeys.has(rowKey(row))));
-  for (const [category, count] of removed) {
-    const verb = count < 2 ? 'absent du nouveau fichier sera retiré' : 'absents du nouveau fichier seront retirés';
-    warnings.push({
-      kind: 'removed',
-      blocking: false,
-      message: `${swimmerCountLabel(count)} ${verb} du classement ${categoryShortLabel(category)}.`,
-    });
+  const gone = existing.filter((row) => after.has(row.name) && !incomingKeys.has(rowKey(row)));
+  // Matched without the birth year: the file's one is precisely what could not be read.
+  const leftOutKeys = new Set(excluded.flatMap((s) => s.categories.map((category) => `${category}|${s.lastname}|${s.firstname}|${s.club}`)));
+  const isLeftOut = (row: RawSwimmerRow): boolean => leftOutKeys.has(`${row.name}|${row.lastname}|${row.firstname}|${row.club}`);
+  // Told apart because « absent du nouveau fichier » would be false for a swimmer whose line is there but unreadable.
+  const reasons = [
+    { rows: gone.filter((row) => !isLeftOut(row)), one: 'absent du nouveau fichier sera retiré', several: 'absents du nouveau fichier seront retirés' },
+    {
+      rows: gone.filter(isLeftOut),
+      one: 'non importé (année de naissance vide ou illisible) sera retiré',
+      several: 'non importés (année de naissance vide ou illisible) seront retirés',
+    },
+  ];
+  for (const { rows, one, several } of reasons) {
+    for (const [category, count] of countByCategory(rows)) {
+      warnings.push({
+        kind: 'removed',
+        blocking: false,
+        message: `${swimmerCountLabel(count)} ${count < 2 ? one : several} du classement ${categoryShortLabel(category)}.`,
+      });
+    }
   }
 
   // Only categories present on both sides: a file bringing a new category says nothing about the others.

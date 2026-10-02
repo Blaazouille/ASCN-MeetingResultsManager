@@ -1,6 +1,6 @@
 /**
  * Responsabilité : ligne d'avertissement (« EXEMPLE — non officiel ») en tête des PDF du meeting d'entraînement.
- * Appelé par : pdf-export.tsx, individual-pdf-export.tsx, ceremony-pdf-export.tsx.
+ * Appelé par : pdf-export.tsx, individual-pdf-export.tsx, ceremony-pdf-export.tsx, palmares-pdf-export.tsx.
  * Suppression casserait : la mention qui empêche un PDF d'exemple de passer pour des résultats officiels.
  */
 import { StyleSheet, Text } from '@react-pdf/renderer';

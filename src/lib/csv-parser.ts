@@ -46,8 +46,20 @@ export interface CsvParseResult {
   ignoredRowCount: number;
   /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
   duplicateRowCount: number;
-  /** "Prénom NOM" of the swimmers left out because their birth year is empty or not a whole number (they never reach the database), each named once even if left out of several categories. */
-  excludedSwimmers: string[];
+  /** Swimmers left out because their birth year is empty or not a whole number (those lines never reach the database), each listed once with every category they were left out of. */
+  excludedSwimmers: ExcludedSwimmer[];
+}
+
+/**
+ * A swimmer left out of one or more categories. Identified by name and club, not name alone:
+ * two namesakes from different clubs are two swimmers. The categories are kept because the
+ * same swimmer can be left out of one category and imported in another.
+ */
+export interface ExcludedSwimmer {
+  firstname: string;
+  lastname: string;
+  club: string;
+  categories: string[];
 }
 
 export interface SwimmerRowsSummary {
@@ -136,6 +148,22 @@ function toUint8Array(input: ArrayBuffer | Uint8Array): Uint8Array {
 }
 
 /**
+ * Why a file gave no row, in the volunteer's words: a bare « aucune ligne exploitable » leaves them
+ * guessing whether the file is empty, cut short or of the wrong kind. A missing column comes first
+ * because it explains every line at once.
+ */
+export function noUsableRowCause(missingColumns: readonly string[], hadLinesWithoutPoints: boolean, hadUnreadableBirthYears: boolean): string {
+  if (missingColumns.length > 0) {
+    const plural = missingColumns.length > 1 ? 's' : '';
+    return `colonne${plural} absente${plural} : ${missingColumns.join(', ')}`;
+  }
+  if (hadLinesWithoutPoints && hadUnreadableBirthYears) return 'chaque ligne a des points manquants ou une année de naissance vide ou illisible';
+  if (hadUnreadableBirthYears) return 'aucune année de naissance lisible';
+  if (hadLinesWithoutPoints) return 'aucune ligne avec des points';
+  return 'le fichier ne contient que la ligne des titres de colonnes';
+}
+
+/**
  * Parses raw FFN extraNat CSV bytes into structured swimmer rows.
  * Accepts raw bytes (not a pre-decoded string) because encoding detection
  * needs to happen on the byte stream itself.
@@ -177,7 +205,7 @@ export function parseCsv(
   const rows: RawSwimmerRow[] = [];
   let ignoredRowCount = 0;
   let duplicateRowCount = 0;
-  const excludedSwimmers: string[] = [];
+  const excludedSwimmers: ExcludedSwimmer[] = [];
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
@@ -188,7 +216,10 @@ export function parseCsv(
       return;
     }
     if (reading.kind === 'no-birthyear') {
-      if (!excludedSwimmers.includes(reading.swimmer)) excludedSwimmers.push(reading.swimmer);
+      const { category, firstname, lastname, club } = reading.line;
+      const known = excludedSwimmers.find((s) => s.firstname === firstname && s.lastname === lastname && s.club === club);
+      if (!known) excludedSwimmers.push({ firstname, lastname, club, categories: [category] });
+      else if (!known.categories.includes(category)) known.categories.push(category);
       return;
     }
     const { row } = reading;
@@ -223,8 +254,8 @@ export function parseCsv(
 
   // A header-only file, or one missing the points or birthyear column, yields no row: importing it would change nothing yet look like a success.
   if (rows.length === 0) {
-    const cause = missingColumns.length > 0 ? ` (colonne${missingColumns.length > 1 ? 's' : ''} absente${missingColumns.length > 1 ? 's' : ''} : ${missingColumns.join(', ')})` : '';
-    throw new Error(`Aucune ligne exploitable dans ce fichier${cause}. Est-ce bien un export de cotations extraNat ?`);
+    const cause = noUsableRowCause(missingColumns, ignoredRowCount > 0, excludedSwimmers.length > 0);
+    throw new Error(`Aucune ligne exploitable dans ce fichier (${cause}). Est-ce bien un export de cotations extraNat ?`);
   }
 
   return {

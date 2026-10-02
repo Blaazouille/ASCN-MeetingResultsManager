@@ -9,11 +9,19 @@ import type { RawSwimmerRow } from './csv-parser';
 const PLAUSIBLE_POINTS_MIN = 0;
 const PLAUSIBLE_POINTS_MAX = 1500;
 
+/** A line left out for its birth year: who and in which category, so the swimmer can be told apart from one absent from the file. */
+export interface ExcludedLine {
+  category: string;
+  firstname: string;
+  lastname: string;
+  club: string;
+}
+
 /** What became of one line: kept as a row, ignored (no points), or left out (unreadable birth year, swimmer named). */
 export type SwimmerRowReading =
   | { kind: 'row'; row: RawSwimmerRow }
   | { kind: 'no-points' }
-  | { kind: 'no-birthyear'; swimmer: string };
+  | { kind: 'no-birthyear'; line: ExcludedLine };
 
 /**
  * Reads one parsed CSV line, pushing its warnings into `warnings` (shared
@@ -61,7 +69,7 @@ export function readSwimmerRow(
   if (birthyear === null) {
     const swimmer = `${firstname} ${lastname}`;
     warnings.push(`Ligne ${rowNumber} : année de naissance ${describeCellProblem(raw.birthyear)} pour « ${swimmer} » (nageur non importé)`);
-    return { kind: 'no-birthyear', swimmer };
+    return { kind: 'no-birthyear', line: { category: name, firstname, lastname, club } };
   }
   // The place is displayed information only, outside any key: an unreadable
   // one is stored empty and the swimmer's points still count.

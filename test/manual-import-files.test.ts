@@ -6,7 +6,11 @@ import { checkImportAgainstExisting } from '../src/lib/import-check';
 // Keeps test/manual-import/PLAN.md honest: each file must trigger what the plan says it does.
 const load = (name: string) => parseCsv(readFileSync(`test/manual-import/${name}`));
 const baseline = load('01-baseline.csv').rows;
-const kinds = (name: string): string[] => checkImportAgainstExisting(baseline, load(name).rows).map((w) => w.kind);
+const check = (name: string) => {
+  const file = load(name);
+  return checkImportAgainstExisting(baseline, file.rows, null, file.excludedSwimmers);
+};
+const kinds = (name: string): string[] => check(name).map((w) => w.kind);
 
 describe('manual import files', () => {
   it.each([
@@ -22,8 +26,11 @@ describe('manual import files', () => {
     expect(kinds(name)).toEqual(expected);
   });
 
-  it.each(['08-header-only.csv', '09-no-points-column.csv'])('%s is rejected as having no usable row', (name) => {
-    expect(() => load(name)).toThrow('Aucune ligne exploitable');
+  it.each([
+    ['08-header-only.csv', 'Aucune ligne exploitable dans ce fichier (le fichier ne contient que la ligne des titres de colonnes)'],
+    ['09-no-points-column.csv', 'Aucune ligne exploitable dans ce fichier (colonne absente : points)'],
+  ])('%s is rejected as having no usable row, saying why', (name, message) => {
+    expect(() => load(name)).toThrow(message);
   });
 
   it('10-ignored-and-duplicates.csv reports 3 ignored and 2 duplicate rows', () => {
@@ -33,9 +40,17 @@ describe('manual import files', () => {
 
   it('12-unreadable-cells.csv leaves out the 2 swimmers without a readable birth year and keeps the one without a place', () => {
     const result = load('12-unreadable-cells.csv');
-    expect(result.excludedSwimmers).toEqual(['Pascale CREANCE', 'Patrick SCHWING']);
+    expect(result.excludedSwimmers.map((s) => `${s.firstname} ${s.lastname}`)).toEqual(['Pascale CREANCE', 'Patrick SCHWING']);
     const coussieu = result.rows.find((row) => row.lastname === 'COUSSIEU' && row.name === 'Classement Dames');
     expect([coussieu?.place, coussieu?.points]).toEqual([null, 1168]);
+  });
+
+  it('12-unreadable-cells.csv announces its 2 unreadable swimmers as not imported, not as absent from the file', () => {
+    expect(check('12-unreadable-cells.csv').map((w) => w.message)).toEqual([
+      '1 nageur non importé (année de naissance vide ou illisible) sera retiré du classement Dames.',
+      '1 nageur non importé (année de naissance vide ou illisible) sera retiré du classement Messieurs.',
+      '2 nageurs non importés (année de naissance vide ou illisible) seront retirés du classement Mixte.',
+    ]);
   });
 
   it('13-unreadable-points.csv is rejected, naming the line', () => {

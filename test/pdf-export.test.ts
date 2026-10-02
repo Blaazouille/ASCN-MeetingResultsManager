@@ -4,8 +4,8 @@ import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
 import { buildExportMeta } from '../src/lib/export-data';
-import { buildRankingPdfBlob } from '../src/lib/pdf-export';
 import { DEFAULT_OUR_CLUB } from '../src/lib/our-club';
+import { buildRankingPdfBlob } from '../src/lib/pdf-export';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
@@ -35,7 +35,7 @@ describe('buildRankingPdfBlob', () => {
     const results = computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 });
     const meta = buildExportMeta(TEST_MEETING, DEFAULT_OUR_CLUB);
 
-    const blob = await buildRankingPdfBlob(meta, 'Classement Mixte', results);
+    const blob = await buildRankingPdfBlob(meta, [{ category: 'Classement Mixte', results }]);
 
     expect(blob.type).toBe('application/pdf');
     expect(blob.size).toBeGreaterThan(0);
@@ -43,7 +43,7 @@ describe('buildRankingPdfBlob', () => {
 
   it('resolves without throwing when there are no results', async () => {
     const meta = buildExportMeta(TEST_MEETING, DEFAULT_OUR_CLUB);
-    const blob = await buildRankingPdfBlob(meta, 'Classement Mixte', []);
+    const blob = await buildRankingPdfBlob(meta, [{ category: 'Classement Mixte', results: [] }]);
     expect(blob.size).toBeGreaterThan(0);
   });
 });
