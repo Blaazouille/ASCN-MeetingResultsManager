@@ -73,7 +73,9 @@ export function useMeeting(): UseMeetingResult {
       setError(null);
       return meeting;
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      // A fixed sentence: Electron prefixes errors crossing IPC with "Error
+      // invoking remote method…", which a volunteer should never read.
+      setError("Le meeting d'exemple n'a pas pu être créé. Réinstallez l'application si le problème persiste.");
       throw err;
     }
   }, []);

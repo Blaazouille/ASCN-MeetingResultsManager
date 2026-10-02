@@ -13,6 +13,7 @@ import { StatTile } from '@/components/import/StatTile';
 import { ImportGuardDialog } from '@/components/import/ImportGuardDialog';
 import { ImportRemovalNotice } from '@/components/import/ImportRemovalNotice';
 import { ImportChanges } from '@/components/import/ImportChanges';
+import { DemoImportWarning } from '@/components/import/DemoImportWarning';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
 import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '@/lib/import-check';
@@ -160,6 +161,8 @@ export default function ImportPage(): JSX.Element {
         title="Importer les résultats"
         subtitle="Fichier CSV de cotations exporté depuis extraNat (FFN)."
       />
+
+      {meeting.isDemo && <DemoImportWarning />}
 
       {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 

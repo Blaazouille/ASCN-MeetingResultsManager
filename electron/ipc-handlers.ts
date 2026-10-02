@@ -25,9 +25,15 @@ import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfi
 import { restoreWithSafetyCopy } from './pre-restore-backup';
 
 // Embedded in the package (see "files" in package.json's build config): the
-// training meeting works offline. APP_ROOT is set by main.ts.
+// training meeting works offline. APP_ROOT is set by main.ts. Missing only if
+// the installation is damaged: say so in French rather than with a raw ENOENT.
 function readDemoCsv(): Buffer {
-  return readFileSync(path.join(process.env.APP_ROOT ?? '', 'resources', 'meeting-exemple.csv'));
+  try {
+    return readFileSync(path.join(process.env.APP_ROOT ?? '', 'resources', 'meeting-exemple.csv'));
+  } catch (error) {
+    console.error('Demo CSV unreadable:', error);
+    throw new Error("Le fichier du meeting d'exemple est introuvable. Réinstallez l'application pour le retrouver.");
+  }
 }
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */

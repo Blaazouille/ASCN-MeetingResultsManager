@@ -75,7 +75,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 
 ## Structure du projet
 
-L'arborescence complète (une seule, maintenue à jour par un test) est dans `docs/architecture.md`. En bref : `electron/` (main, preload, IPC, sauvegarde auto, mises à jour), `src/lib/` (logique pure : parseur, moteurs de classement, exports, base), `src/hooks/`, `src/components/`, `src/pages/`, `test/`, `docs/`.
+L'arborescence complète (une seule, maintenue à jour par un test) est dans `docs/architecture.md`. En bref : `electron/` (main, preload, IPC, sauvegarde auto, mises à jour), `src/lib/` (logique pure : parseur, moteurs de classement, exports, base), `src/hooks/`, `src/components/`, `src/pages/`, `test/`, `docs/`, `scripts/` (outils de dev, ex. `anonymize-sample.ts` qui génère le CSV du meeting d'entraînement), `resources/` (icône, CSV d'exemple embarqué).
 
 ## Conventions de code
 
