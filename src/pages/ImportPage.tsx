@@ -15,22 +15,20 @@ import { ImportChanges } from '@/components/import/ImportChanges';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
 import { checkImportAgainstExisting, type ImportWarning } from '@/lib/import-check';
-import { summarizeImportChanges, type ImportChanges as ImportChangesData } from '@/lib/import-diff';
+import { summarizeImportChanges } from '@/lib/import-diff';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
+import type { ImportOutcome } from '@/hooks/use-import';
 
 // The parser's encoding ids, as a volunteer would read them.
 const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
-  const { result, fileName, error, errorId, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
+  const { result, fileName, error, errorId, outcome, setOutcome, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
   const { refresh } = meetingState;
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
-  const [changes, setChanges] = useState<{ since: string | null; summary: ImportChangesData } | null>(null);
-  // Things the volunteer should know after a save that went through (non-blocking warnings, failed backup, skipped rows).
-  const [notices, setNotices] = useState<string[]>([]);
   const [pending, setPending] = useState<{ parsed: CsvParseResult; warnings: ImportWarning[] } | null>(null);
   const navigate = useNavigate();
 
@@ -52,6 +50,7 @@ export default function ImportPage(): JSX.Element {
         return;
       }
       // The data is saved from here on: a failure below must not read as a failed import.
+      let changes: ImportOutcome['changes'] = null;
       try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
         await refresh();
@@ -65,15 +64,15 @@ export default function ImportPage(): JSX.Element {
             topN: meeting.defaultTopN,
             minSwimmers: meeting.minSwimmers,
           });
-          setChanges({ since: snapshot.importedAt, summary });
+          changes = { since: snapshot.importedAt, summary };
         }
       } catch {
         found.push("Les résultats sont enregistrés, mais le résumé des changements n'a pas pu être calculé.");
       }
-      setNotices(found);
+      setOutcome({ changes, notices: found });
       setIsPersisting(false);
     },
-    [meetingId, meeting, refresh]
+    [meetingId, meeting, refresh, setOutcome]
   );
 
   const handleAccepted = useCallback(
@@ -81,9 +80,8 @@ export default function ImportPage(): JSX.Element {
       // A second drop while a save is running would race it and mix up the notices.
       if (isPersisting) return;
       setPersistError(null);
-      setChanges(null);
+      setOutcome(null);
       setPending(null);
-      setNotices([]);
       const parsed = await handleFileAccepted(file);
       if (!parsed || meetingId === null) return;
       // Checked before any write: nothing touches the database until the volunteer confirms.
@@ -105,7 +103,7 @@ export default function ImportPage(): JSX.Element {
       }
       await persist(parsed, warnings);
     },
-    [handleFileAccepted, meetingId, meeting, persist, isPersisting]
+    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome]
   );
 
   const confirmPending = (): void => {
@@ -169,7 +167,7 @@ export default function ImportPage(): JSX.Element {
             </Button>
           </div>
 
-          {isDone && changes && <ImportChanges since={changes.since} changes={changes.summary} />}
+          {isDone && outcome?.changes && <ImportChanges since={outcome.changes.since} changes={outcome.changes.summary} />}
 
           <div className="grid grid-cols-3 gap-4">
             <StatTile value={result.swimmerCount} label="nageurs" />
@@ -183,11 +181,11 @@ export default function ImportPage(): JSX.Element {
             </StatTile>
           </div>
 
-          {isDone && (notices.length > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
+          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
             <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
               <p className="font-semibold">À savoir</p>
               <ul className="list-disc space-y-1 pl-5">
-                {notices.map((notice) => (
+                {outcome?.notices.map((notice) => (
                   <li key={notice}>{notice}</li>
                 ))}
                 {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}

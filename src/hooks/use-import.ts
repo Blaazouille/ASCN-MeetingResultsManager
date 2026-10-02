@@ -5,6 +5,15 @@
  */
 import { useCallback, useState } from 'react';
 import { parseCsv, type CsvParseResult } from '@/lib/csv-parser';
+import type { ImportChanges } from '@/lib/import-diff';
+
+/** What the volunteer is told after a save, kept here (not in the page) so it survives leaving and returning to the Import screen. */
+export interface ImportOutcome {
+  /** Comparison with the previous import; null at a meeting's first import. */
+  changes: { since: string | null; summary: ImportChanges } | null;
+  /** Non-blocking warnings, a failed backup, a recap that could not be computed. */
+  notices: string[];
+}
 
 export interface UseImportResult {
   result: CsvParseResult | null;
@@ -12,6 +21,8 @@ export interface UseImportResult {
   error: string | null;
   /** Bumped on every error, even a repeated message, so the drop zone shakes again on each failed drop. */
   errorId: number;
+  outcome: ImportOutcome | null;
+  setOutcome: (outcome: ImportOutcome | null) => void;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
   reset: () => void;
@@ -23,6 +34,7 @@ export function useImport(): UseImportResult {
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setErrorMessage] = useState<string | null>(null);
   const [errorId, setErrorId] = useState(0);
+  const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
   const setError = useCallback((message: string | null): void => {
     setErrorMessage(message);
     if (message !== null) setErrorId((id) => id + 1);
@@ -51,8 +63,9 @@ export function useImport(): UseImportResult {
   const reset = useCallback((): void => {
     setResult(null);
     setFileName(null);
+    setOutcome(null);
     setError(null);
-  }, []);
+  }, [setError]);
 
-  return { result, fileName, error, errorId, handleFileAccepted, handleFileRejected, reset };
+  return { result, fileName, error, errorId, outcome, setOutcome, handleFileAccepted, handleFileRejected, reset };
 }

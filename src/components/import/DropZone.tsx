@@ -110,67 +110,73 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, erro
   );
 
   return (
-    <div
-      ref={zoneRef}
-      role="button"
-      tabIndex={0}
-      aria-busy={state === 'processing'}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onClick={handleBrowseClick}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          handleBrowseClick();
-        }
-      }}
-      className={cn(
-        'flex rounded-xl border-2 border-dashed bg-surface-raised transition-colors',
-        compact ? 'items-center gap-5 px-8 py-6' : 'flex-col items-center justify-center gap-4 px-8 py-14 text-center',
-        state === 'dragover' && 'border-bassin-strong bg-bassin-soft',
-        state !== 'dragover' && (error ? 'border-error bg-error-light' : 'border-line-strong'),
-        state === 'processing' ? 'cursor-wait' : 'cursor-pointer',
-        className
-      )}
-    >
-      <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={handleInputChange} />
+    <>
+      {/* Live region outside the role="button" zone: a button's children are presentational, so an alert inside it may never be announced. */}
+      <p role="alert" className="sr-only">
+        {error}
+      </p>
+      <div
+        ref={zoneRef}
+        role="button"
+        tabIndex={0}
+        aria-busy={state === 'processing'}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={handleBrowseClick}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            handleBrowseClick();
+          }
+        }}
+        className={cn(
+          'flex rounded-xl border-2 border-dashed bg-surface-raised transition-colors',
+          compact ? 'items-center gap-5 px-8 py-6' : 'flex-col items-center justify-center gap-4 px-8 py-14 text-center',
+          state === 'dragover' && 'border-bassin-strong bg-bassin-soft',
+          state !== 'dragover' && (error ? 'border-error bg-error-light' : 'border-line-strong'),
+          state === 'processing' ? 'cursor-wait' : 'cursor-pointer',
+          className
+        )}
+      >
+        <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={handleInputChange} />
 
-      {state === 'processing' ? (
-        <>
-          <Loader2 className="h-10 w-10 animate-spin text-bassin-strong" aria-hidden />
-          <p className="text-base font-semibold text-ink">Analyse du fichier…</p>
-        </>
-      ) : (
-        <>
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-bassin-soft">
-            <FileUp className="h-6 w-6 text-bassin-strong" aria-hidden />
-          </span>
-          <span className={cn('flex flex-col gap-0.5', compact && 'flex-1')}>
-            {error && (
-              <span role="alert" className="flex items-start gap-2 pb-1 text-[17px] font-bold text-error">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-                {error}
+        {state === 'processing' ? (
+          <>
+            <Loader2 className="h-10 w-10 animate-spin text-bassin-strong" aria-hidden />
+            <p className="text-base font-semibold text-ink">Analyse du fichier…</p>
+          </>
+        ) : (
+          <>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-bassin-soft">
+              <FileUp className="h-6 w-6 text-bassin-strong" aria-hidden />
+            </span>
+            <span className={cn('flex flex-col gap-0.5', compact && 'flex-1')}>
+              {error && (
+                <span aria-hidden className="flex items-start gap-2 pb-1 text-[17px] font-bold text-error">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                  {error}
+                </span>
+              )}
+              <span className="text-[17px] font-semibold text-ink">
+                {compact ? 'Nouvelle version du fichier ?' : 'Déposez le fichier CSV extraNat ici'}
               </span>
-            )}
-            <span className="text-[17px] font-semibold text-ink">
-              {compact ? 'Nouvelle version du fichier ?' : 'Déposez le fichier CSV extraNat ici'}
+              <span className="text-[15px] text-ink-muted">
+                {compact
+                  ? 'Glissez-la ici : les résultats de ce meeting seront mis à jour, sans doublons.'
+                  : "ou choisissez-le sur l'ordinateur."}
+              </span>
             </span>
-            <span className="text-[15px] text-ink-muted">
-              {compact
-                ? 'Glissez-la ici : les résultats de ce meeting seront mis à jour, sans doublons.'
-                : "ou choisissez-le sur l'ordinateur."}
-            </span>
-          </span>
-          <Button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleBrowseClick();
-            }}
-          >
-            Parcourir…
-          </Button>
-        </>
-      )}
-    </div>
+            <Button
+              onClick={(event) => {
+                event.stopPropagation();
+                handleBrowseClick();
+              }}
+            >
+              Parcourir…
+            </Button>
+          </>
+        )}
+      </div>
+    </>
   );
 }
