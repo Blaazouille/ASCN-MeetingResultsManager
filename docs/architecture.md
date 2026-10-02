@@ -52,7 +52,7 @@ Fichier .json sur disque
 validateBackup() [src/lib/backup-validation.ts]
     ↓  (confirmation)
 restoreWithSafetyCopy() [electron/pre-restore-backup.ts]
-    ├─ exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
+    ├─ si la base contient des meetings : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
     │   (échec → restauration annulée, message en français, base intacte)
     ↓
 restoreDatabase() [src/lib/backup.ts]
@@ -62,7 +62,7 @@ SQLite (remplacement complet — tous les meetings existants sont supprimés ava
 
 ### Copie de sécurité avant restauration
 
-Une restauration supprime tous les meetings, y compris ceux absents du fichier (et leurs `import_snapshot` en cascade). Avant de l'exécuter, le handler `backup:confirm-import` appelle `restoreWithSafetyCopy` (`electron/pre-restore-backup.ts`) : la base actuelle est écrite via `exportDatabase` dans `mdlm-pre-restore-<horodatage>.json`, dans le dossier de sauvegarde configuré (`backupDir`, créé si besoin). Si la lecture de la config ou l'écriture échoue, une erreur en français est levée avant tout appel à `restoreDatabase` : la base n'est pas modifiée. En cas de succès, le chemin de la copie (`safetyCopyPath`) est renvoyé au renderer, qui l'affiche. Le module n'importe pas `electron` (le dossier est fourni par un callback) pour rester testable sous Vitest.
+Une restauration supprime tous les meetings, y compris ceux absents du fichier (et leurs `import_snapshot` en cascade). Avant de l'exécuter, le handler `backup:confirm-import` appelle `restoreWithSafetyCopy` (`electron/pre-restore-backup.ts`) : la base actuelle est écrite via `exportDatabase` dans `mdlm-pre-restore-<horodatage>.json`, dans le dossier de sauvegarde configuré (`backupDir`, créé si besoin). Si la lecture de la config ou l'écriture échoue, une erreur en français est levée avant tout appel à `restoreDatabase` : la base n'est pas modifiée. En cas de succès, le chemin de la copie (`safetyCopyPath`) est renvoyé au renderer, qui l'affiche. Si la base ne contient aucun meeting (installation neuve, reprise après sinistre), il n'y a rien à protéger : aucune copie n'est faite, le dossier n'est même pas lu, et `safetyCopyPath` vaut `null`. Sinon, un `backup-config.json` pointant vers un dossier absent ou corrompu empêcherait justement la restauration dont on a besoin. Le module n'importe pas `electron` (le dossier est fourni par un callback) pour rester testable sous Vitest.
 
 Ces copies ne font **pas** partie de la rotation : `rotateBackups` ne supprime que les fichiers `mdlm-auto-backup-*`. Une restauration est rare et c'est la seule façon de revenir en arrière après un mauvais fichier ; quelques imports CSV ne doivent pas la faire disparaître. Le bénévole les supprime lui-même s'il le souhaite.
 
@@ -78,7 +78,7 @@ Canaux IPC de `electron/ipc-channels.ts` :
 
 - `backup:export` — exporte la base entière en JSON
 - `backup:import` — valide un fichier JSON importé
-- `backup:confirm-import` — écrit la copie de sécurité `mdlm-pre-restore-*.json`, puis restaure ; renvoie `{ result, safetyCopyPath }`
+- `backup:confirm-import` — écrit la copie de sécurité `mdlm-pre-restore-*.json` (si la base contient des meetings), puis restaure ; renvoie `{ result, safetyCopyPath }` (`null` sans copie)
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique

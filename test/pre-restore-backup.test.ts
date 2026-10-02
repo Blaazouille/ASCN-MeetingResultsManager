@@ -55,9 +55,9 @@ describe('restoreWithSafetyCopy', () => {
 
     const { result, safetyCopyPath } = restoreWithSafetyCopy(db, incomingBackup, () => backupDir);
 
-    expect(path.dirname(safetyCopyPath)).toBe(backupDir);
-    expect(path.basename(safetyCopyPath)).toMatch(/^mdlm-pre-restore-.+\.json$/);
-    const copy = validateBackup(JSON.parse(readFileSync(safetyCopyPath, 'utf-8')));
+    expect(path.dirname(safetyCopyPath!)).toBe(backupDir);
+    expect(path.basename(safetyCopyPath!)).toMatch(/^mdlm-pre-restore-.+\.json$/);
+    const copy = validateBackup(JSON.parse(readFileSync(safetyCopyPath!, 'utf-8')));
     expect(copy.meetings.map((m) => m.name)).toEqual(['Meeting actuel']);
 
     expect(result.meetingsRemoved).toBe(1);
@@ -70,14 +70,14 @@ describe('restoreWithSafetyCopy', () => {
 
     const { safetyCopyPath } = restoreWithSafetyCopy(db, incomingBackup, () => backupDir);
 
-    expect(existsSync(safetyCopyPath)).toBe(true);
+    expect(existsSync(safetyCopyPath!)).toBe(true);
   });
 
   it('lets the volunteer undo the restore by restoring the safety copy', () => {
     const db = dbWithMeeting('Meeting actuel');
     const { safetyCopyPath } = restoreWithSafetyCopy(db, incomingBackup, () => backupDir);
 
-    const copy = validateBackup(JSON.parse(readFileSync(safetyCopyPath, 'utf-8')));
+    const copy = validateBackup(JSON.parse(readFileSync(safetyCopyPath!, 'utf-8')));
     restoreWithSafetyCopy(db, copy, () => backupDir);
 
     expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting actuel']);
@@ -104,6 +104,21 @@ describe('restoreWithSafetyCopy', () => {
       })
     ).toThrow(/Restauration annulée.*backup-config\.json illisible/);
     expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting actuel']);
+  });
+
+  it('restores an empty database without requiring a safety copy, even if the backup folder is unusable', () => {
+    // Fresh install or recovery after a crash: nothing to protect, and a broken
+    // backup-config.json must not stand in the way of getting the data back.
+    const db = createDatabase(':memory:');
+
+    const { result, safetyCopyPath } = restoreWithSafetyCopy(db, incomingBackup, () => {
+      throw new Error('backup-config.json illisible');
+    });
+
+    expect(safetyCopyPath).toBeNull();
+    expect(result.meetingsImported).toBe(1);
+    expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting du fichier']);
+    expect(readdirSync(root)).toEqual([]);
   });
 
   it('never overwrites an earlier safety copy', () => {

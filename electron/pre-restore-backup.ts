@@ -12,17 +12,18 @@ import { exportDatabase, formatBackupTimestamp, restoreDatabase, type BackupData
 // rotateBackups only matches that prefix, so these copies are never rotated
 // out. A restore is rare and destructive, and the copy taken just before it
 // is the only way back — losing it to a few CSV imports would defeat it.
-export const PRE_RESTORE_PREFIX = 'mdlm-pre-restore-';
+const PRE_RESTORE_PREFIX = 'mdlm-pre-restore-';
 
 export interface SafeRestoreResult {
   result: RestoreResult;
-  /** Absolute path of the copy of the database as it was just before the restore. */
-  safetyCopyPath: string;
+  /** Absolute path of the copy of the database as it was just before the restore; null when the database was empty (nothing to protect). */
+  safetyCopyPath: string | null;
 }
 
 /**
  * Writes the current database to `<backupDir>/mdlm-pre-restore-<timestamp>.json`,
- * then restores `data`. If the copy cannot be written (folder missing or
+ * then restores `data`. The copy is skipped when the database holds no
+ * meeting. If the copy cannot be written (folder missing or
  * read-only, corrupted backup-config.json, disk full…) it throws a French
  * message for the volunteer and the database is left untouched.
  *
@@ -35,6 +36,14 @@ export function restoreWithSafetyCopy(
   data: BackupData,
   resolveBackupDir: () => string
 ): SafeRestoreResult {
+  // An empty database (fresh install, recovery after a crash) has nothing to
+  // lose, and it is exactly when restoring matters most: requiring the copy
+  // there would let a missing or corrupted backup folder block the recovery.
+  const meetingCount = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
+  if (meetingCount === 0) {
+    return { result: restoreDatabase(db, data), safetyCopyPath: null };
+  }
+
   let safetyCopyPath: string;
   try {
     const backupDir = resolveBackupDir();

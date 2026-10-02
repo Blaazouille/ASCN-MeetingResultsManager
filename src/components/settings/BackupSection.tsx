@@ -12,7 +12,7 @@ type BackupState =
   | { step: 'busy' }
   | { step: 'export-success'; path: string }
   | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number }
-  | { step: 'import-success'; meetingsRemoved: number; meetingsImported: number; swimmersImported: number; safetyCopyPath: string }
+  | { step: 'import-success'; meetingsRemoved: number; meetingsImported: number; swimmersImported: number; safetyCopyPath: string | null }
   | { step: 'error'; error: string };
 
 export interface BackupSectionProps {
@@ -49,8 +49,8 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
   async function handleConfirm(): Promise<void> {
     setState({ step: 'busy' });
     const result = await window.electronAPI.confirmImport();
-    if (result.success && result.result && result.safetyCopyPath) {
-      setState({ step: 'import-success', ...result.result, safetyCopyPath: result.safetyCopyPath });
+    if (result.success && result.result) {
+      setState({ step: 'import-success', ...result.result, safetyCopyPath: result.safetyCopyPath ?? null });
       // Refresh the renderer's meeting list after the restore actually wrote
       // to the DB, so restored meetings show up without an app restart.
       await onRestored?.();
@@ -100,9 +100,11 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
               ` — les ${state.currentMeetingCount} meeting(s) actuellement présents seront supprimés`}
             .
           </p>
-          <p className="text-sm text-ink">
-            Une copie de la base actuelle sera d'abord enregistrée dans le dossier de sauvegarde.
-          </p>
+          {state.currentMeetingCount > 0 && (
+            <p className="text-sm text-ink">
+              Une copie de la base actuelle sera d'abord enregistrée dans le dossier de sauvegarde.
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
@@ -131,11 +133,14 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
             Base restaurée{' '}: {state.meetingsImported} meeting(s), {state.swimmersImported} nageur(s)
             {state.meetingsRemoved > 0 && ` (${state.meetingsRemoved} ancien(s) meeting(s) remplacé(s))`}.
           </p>
-          {/* Tells the volunteer where the way back is, in case the wrong file was restored. */}
-          <p className="text-sm text-ink-muted">
-            Copie de la base d'avant la restauration{' '}: {state.safetyCopyPath}. Pour revenir en arrière,
-            importez ce fichier.
-          </p>
+          {/* Tells the volunteer where the way back is, in case the wrong file was
+              restored. No path when the database was empty: nothing was copied. */}
+          {state.safetyCopyPath && (
+            <p className="text-sm text-ink-muted">
+              Copie de la base d'avant la restauration{' '}: {state.safetyCopyPath}. Pour revenir en arrière,
+              importez ce fichier.
+            </p>
+          )}
         </div>
       )}
 
