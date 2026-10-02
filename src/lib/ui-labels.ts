@@ -87,6 +87,6 @@ export function rankText(rank: number, tied: boolean): string {
 
 /** Banner text for a tie on a podium place or prize, e.g. "Égalité pour la 3e place en Mixte : à départager". */
 export function tieAlertLabel(ranks: number[], category: string): string {
-  const places = ranks.length === 1 ? `la ${placeLabel(ranks[0]!)}` : `les places ${ranks.join(' et ')}`;
+  const places = ranks.length === 1 ? `la ${placeLabel(ranks[0]!)}` : `les places ${[ranks.slice(0, -1).join(', '), ranks.at(-1)].join(' et ')}`;
   return `Égalité pour ${places} en ${categoryShortLabel(category)} : à départager`;
 }
