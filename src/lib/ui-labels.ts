@@ -92,9 +92,9 @@ export function tieAlertLabel(ranks: number[], category: string): string {
   return `Égalité pour ${places} en ${categoryShortLabel(category)} : à départager`;
 }
 
-/** "↑2", "↓1" or "nouveau": the arrow and the number carry the meaning, colour only backs them up. */
+/** "↑2", "↓1" or "+" (new entry): the arrow and the number carry the meaning, colour only backs them up. */
 export function movementText(movement: Movement): string {
-  if (movement === 'new') return 'nouveau';
+  if (movement === 'new') return '+';
   return movement > 0 ? `↑${movement}` : `↓${-movement}`;
 }
 

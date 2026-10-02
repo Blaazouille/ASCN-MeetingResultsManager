@@ -22,6 +22,12 @@ describe('rankMovements', () => {
     );
   });
 
+  it('drops the « new » marks when most of the ranking is new', () => {
+    const previous = [{ id: 'a', rank: 1 }];
+    const current = [{ id: 'a', rank: 1 }, { id: 'b', rank: 2 }, { id: 'c', rank: 3 }];
+    expect(rankMovements(previous, current, key).size).toBe(0);
+  });
+
   it('is empty when nothing moved', () => {
     const ranking = [{ id: 'a', rank: 1 }, { id: 'b', rank: 2 }];
     expect(rankMovements(ranking, ranking, key).size).toBe(0);

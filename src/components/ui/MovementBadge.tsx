@@ -1,5 +1,5 @@
 /**
- * Responsabilité : indicateur discret de mouvement de rang (↑2, ↓1, « nouveau ») depuis le dernier import.
+ * Responsabilité : indicateur discret de mouvement de rang (↑2, ↓1, « + » pour une entrée nouvelle) depuis le dernier import.
  * Appelé par : TeamRankingTable.tsx, IndividualRankingTable.tsx.
  * Suppression casserait : les flèches de mouvement des classements.
  */
@@ -14,12 +14,18 @@ export interface MovementBadgeProps {
 
 export function MovementBadge({ movement }: MovementBadgeProps): JSX.Element | null {
   if (movement === undefined) return null;
+  const label = movementAriaLabel(movement);
   return (
     <span
-      aria-label={movementAriaLabel(movement)}
+      title={label}
+      aria-label={label}
       className={cn(
         'whitespace-nowrap text-sm font-bold tabular-nums',
-        movement === 'new' ? 'text-ink-muted' : movement > 0 ? 'text-success' : 'text-corail-strong'
+        movement === 'new'
+          ? 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-bassin-soft text-bassin-strong'
+          : movement > 0
+            ? 'text-success'
+            : 'text-corail-strong'
       )}
     >
       {movementText(movement)}

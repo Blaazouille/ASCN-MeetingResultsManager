@@ -160,10 +160,10 @@ describe('lastImportLabel', () => {
 });
 
 describe('movement labels', () => {
-  it('shows arrow and number, or « nouveau »', () => {
+  it('shows arrow and number, or « + » for a new entry', () => {
     expect(movementText(2)).toBe('↑2');
     expect(movementText(-1)).toBe('↓1');
-    expect(movementText('new')).toBe('nouveau');
+    expect(movementText('new')).toBe('+');
   });
 
   it('speaks them in full French', () => {

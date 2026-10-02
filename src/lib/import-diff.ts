@@ -14,7 +14,11 @@ export function swimmerIdentity(row: Pick<RawSwimmerRow, 'lastname' | 'firstname
   return `${row.lastname}|${row.firstname}|${row.birthyear}|${row.club}`;
 }
 
-/** Movement of each entry of `current` against `previous`, keyed by `key`; entries that kept their rank are left out. */
+/**
+ * Movement of each entry of `current` against `previous`, keyed by `key`; entries that kept their rank are left out.
+ * When more than half of `current` is new (a first import in a category, a big file added), the « new » marks
+ * are dropped: they would sit on most rows and tell nothing.
+ */
 export function rankMovements<T extends { rank: number }>(
   previous: T[],
   current: T[],
@@ -28,6 +32,12 @@ export function rankMovements<T extends { rank: number }>(
       movements.set(key(item), 'new');
     } else if (before !== item.rank) {
       movements.set(key(item), before - item.rank);
+    }
+  }
+  const newCount = [...movements.values()].filter((movement) => movement === 'new').length;
+  if (newCount * 2 > current.length) {
+    for (const [id, movement] of movements) {
+      if (movement === 'new') movements.delete(id);
     }
   }
   return movements;
