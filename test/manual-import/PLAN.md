@@ -50,8 +50,8 @@ Pour chacun, vérifier :
 | K | Faire les scénarios A, C, D, I : compter les fichiers du dossier de sauvegarde. | 1 fichier par import réussi, aucun pour un import annulé ou refusé (B, E, F, G, H, J). Aucune sauvegarde faite avant l'import : le dernier fichier contient l'état du dernier import. |
 | L | Paramètres : taper `1` dans « Nombre de sauvegardes automatiques conservées ». | La valeur remonte à 3. Enregistrer fonctionne, relancer l'app : 3 affiché. |
 | M | Avec 3 conservées, faire 4 imports réussis. | Il reste 3 fichiers, les plus anciens sont supprimés. |
-| N | Refuser l'écriture dans le dossier (PowerShell, adapter le chemin) : `icacls "$HOME\Documents\MDLM Ranking\Sauvegardes" /deny "$($env:USERNAME):(OI)(CI)W"`, puis importer `03-corrected.csv`. | L'import réussit (carte verte) **et** l'encart « À savoir » affiche « La sauvegarde automatique a échoué. Vérifiez le dossier de sauvegarde dans les Paramètres. » Aucun nouveau fichier dans le dossier. |
-| O | Annuler l'interdiction : `icacls "$HOME\Documents\MDLM Ranking\Sauvegardes" /remove:d $env:USERNAME`, puis importer un fichier. | Plus d'avertissement, le fichier de sauvegarde est créé. |
+| N | Refuser l'écriture dans le dossier (PowerShell ; `GetFolderPath` suit la redirection éventuelle du dossier Documents, par exemple vers un autre disque) : `icacls "$([Environment]::GetFolderPath('MyDocuments'))\MDLM Ranking\Sauvegardes" /deny "$($env:USERNAME):(OI)(CI)W"`, puis importer `03-corrected.csv`. | L'import réussit (carte verte) **et** l'encart « À savoir » affiche « La sauvegarde automatique a échoué. Vérifiez le dossier de sauvegarde dans les Paramètres. » Aucun nouveau fichier dans le dossier. |
+| O | Annuler l'interdiction : `icacls "$([Environment]::GetFolderPath('MyDocuments'))\MDLM Ranking\Sauvegardes" /remove:d $env:USERNAME`, puis importer un fichier. | Plus d'avertissement, le fichier de sauvegarde est créé. |
 | P | Restaurer une sauvegarde (Paramètres → Restaurer) créée à l'étape K, après le scénario C. | Les résultats reviennent à l'état de cette sauvegarde. |
 
 ## À cocher avant la fusion
