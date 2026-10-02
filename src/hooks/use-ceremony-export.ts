@@ -1,35 +1,23 @@
 /**
- * Responsabilité : orchestre l'impression du déroulé de cérémonie en PDF (état en cours, erreur).
+ * Responsabilité : orchestre l'impression du déroulé de cérémonie en PDF (état en cours, succès, erreur).
  * Appelé par : CeremonyPage.tsx (bouton « Imprimer le déroulé »).
  * Suppression casserait : la fiche de proclamation PDF.
  */
-import { useState } from 'react';
 import { buildExportMeta } from '@/lib/export-data';
 import { exportCeremonyToPdf } from '@/lib/ceremony-pdf-export';
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import type { Meeting } from '@/lib/db';
+import { useExportStatus, type UseExportStatusResult } from './use-export-status';
 
-export interface UseCeremonyExportResult {
-  isExporting: boolean;
-  error: string | null;
+export interface UseCeremonyExportResult extends Omit<UseExportStatusResult, 'run'> {
   exportPdf: (meeting: Meeting, steps: CeremonyStep[]) => Promise<void>;
 }
 
 export function useCeremonyExport(): UseCeremonyExportResult {
-  const [isExporting, setIsExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { run, ...status } = useExportStatus();
 
-  async function exportPdf(meeting: Meeting, steps: CeremonyStep[]): Promise<void> {
-    setIsExporting(true);
-    setError(null);
-    try {
-      await exportCeremonyToPdf(buildExportMeta(meeting), steps);
-    } catch {
-      setError("Échec de l'impression du déroulé. Vous pouvez réessayer.");
-    } finally {
-      setIsExporting(false);
-    }
-  }
-
-  return { isExporting, error, exportPdf };
+  return {
+    ...status,
+    exportPdf: (meeting, steps) => run('pdf', () => exportCeremonyToPdf(buildExportMeta(meeting), steps)),
+  };
 }

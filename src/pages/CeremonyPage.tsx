@@ -13,6 +13,7 @@ import { useCeremonyExport } from '@/hooks/use-ceremony-export';
 import { Button } from '@/components/ui/Button';
 import { CeremonyPreparation } from '@/components/ceremony/CeremonyPreparation';
 import { CeremonyRun } from '@/components/ceremony/CeremonyRun';
+import { ExportFeedback } from '@/components/ranking/ExportFeedback';
 import { LeaveCeremonyDialog } from '@/components/ceremony/LeaveCeremonyDialog';
 
 export default function CeremonyPage(): JSX.Element {
@@ -20,7 +21,7 @@ export default function CeremonyPage(): JSX.Element {
   const meeting = meetingState.currentMeeting;
   const { rows, isLoading, error } = useMeetingRows(meeting?.id ?? null);
   const ceremony = useCeremony(meeting, rows);
-  const { isExporting, error: exportError, exportPdf } = useCeremonyExport();
+  const { isExporting, error: exportError, notice: exportNotice, exportPdf } = useCeremonyExport();
 
   if (!meeting) return <Navigate to="/" replace />;
   if (isLoading) return <p className="text-[15px] text-ink-muted">Chargement…</p>;
@@ -60,7 +61,7 @@ export default function CeremonyPage(): JSX.Element {
           </>
         }
       />
-      {exportError && <p className="text-sm text-error">{exportError}</p>}
+      <ExportFeedback error={exportError} notice={exportNotice} />
       {run === null ? (
         <CeremonyPreparation
           plan={ceremony.plan}
