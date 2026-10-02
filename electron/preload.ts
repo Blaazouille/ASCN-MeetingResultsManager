@@ -10,6 +10,7 @@ import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import type { ImportSnapshot } from '../src/lib/import-snapshot';
 import type { RestoreResult } from '../src/lib/backup';
 import type { BackupConfig } from './auto-backup';
+import type { UpdateStatus } from '../src/lib/update-status';
 
 interface FileFilter {
   name: string;
@@ -62,6 +63,8 @@ const electronAPI = {
     return () => ipcRenderer.removeListener(IpcChannels.updateDownloaded, listener);
   },
   quitAndInstallUpdate: (): Promise<void> => ipcRenderer.invoke(IpcChannels.quitAndInstallUpdate),
+  getUpdateStatus: (): Promise<UpdateStatus | null> => ipcRenderer.invoke(IpcChannels.getUpdateStatus),
+  checkForUpdatesNow: (): Promise<UpdateStatus> => ipcRenderer.invoke(IpcChannels.checkForUpdatesNow),
 
   getAppVersion: (): Promise<string> => ipcRenderer.invoke(IpcChannels.getAppVersion),
 };

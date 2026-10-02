@@ -28,7 +28,7 @@ Le parseur CSV (`src/lib/csv-parser.ts`) et le moteur de calcul (`src/lib/rankin
 
 Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/lib/db.ts`) et enregistre les handlers IPC (`electron/ipc-handlers.ts`). Le **renderer** (React) n'accède jamais directement à SQLite : il passe par l'API exposée dans `electron/preload.ts` via `contextBridge`, sur la fenêtre globale `window.electronAPI`. Les noms de canaux sont centralisés dans `electron/ipc-channels.ts` pour éviter toute divergence entre les deux côtés du bridge.
 
-**Mouvements après un réimport** : `insertSwimmerResults` range, dans la même transaction et avant toute écriture, les lignes existantes dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import). Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
+**Mouvements après un réimport** : `insertSwimmerResults` lit les lignes existantes avant toute écriture et, dans la même transaction, les range dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import qui a changé quelque chose). Un import qui laisse toutes les lignes identiques (même fichier redéposé) garde l'instantané en place, sinon flèches et résumé compareraient l'état actuel avec lui-même. Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
@@ -92,7 +92,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 - **Garde-fous Conventional Commits** (condition dont dépend le calcul de version) : `commitlint` (hook Husky `commit-msg`, config `commitlint.config.js`) bloque localement tout commit non conforme ; `.github/workflows/commitlint-pr.yml` vérifie en CI le **titre de chaque PR**, car les PR sont fusionnées en squash et c'est ce titre qui devient le commit lu par `release-please` sur `main`.
 - **Build & publication** : un seul workflow, `.github/workflows/release-please.yml`, à deux jobs. Le job `release-please` crée ou met à jour la PR de release ; quand une release vient d'être créée (sortie `release_created`), le job `build-windows` (Node 24) se place sur le tag, construit l'installeur (`npm run build:win -- --publish never`) et attache `.exe`, `latest.yml` et `.blockmap` à cette release. Les deux étapes sont dans le même workflow parce qu'une release publiée avec le `GITHUB_TOKEN` par défaut ne déclenche aucun autre workflow : un workflow séparé `on: release` ne se lancerait jamais.
 - **Installeur** : NSIS personnalisé (`build.nsis` dans `package.json`) — choix du dossier d'installation, raccourci bureau, pas de mode one-click. Le fichier s'appelle `MDLM-Ranking-Setup-<version>.exe` (`artifactName`), sans espace : `electron-builder` écrit dans `latest.yml` un nom où les espaces deviennent des tirets, alors que GitHub remplace les espaces par des points dans le nom des fichiers attachés à une release. Avec des espaces, le fichier désigné par `latest.yml` n'existerait donc jamais sur la release et chaque téléchargement de mise à jour échouerait. Pas de signature de code (déploiement à un seul poste non technique) ; l'avertissement SmartScreen est accepté.
-- **Auto-updater in-app** : `electron/auto-updater.ts` (`electron-updater`) vérifie les mises à jour une fois au démarrage, télécharge silencieusement, et notifie le renderer via le canal IPC `update:downloaded` (main → renderer). Le composant `UpdateToast` (`src/components/layout/UpdateToast.tsx`, monté dans `AppShell`) propose "Redémarrer maintenant" — le renderer invoque alors le canal `update:quitAndInstall` (renderer → main), qui appelle `autoUpdater.quitAndInstall()` — ou "Plus tard" : dans ce cas, `autoInstallOnAppQuit` installe la mise à jour à la prochaine fermeture naturelle de l'app. Les échecs de vérification (hors ligne, etc.) sont absorbés silencieusement.
+- **Auto-updater in-app** : `electron/auto-updater.ts` (`electron-updater`) vérifie les mises à jour une fois au démarrage, télécharge silencieusement, et notifie le renderer via le canal IPC `update:downloaded` (main → renderer). Le composant `UpdateToast` (`src/components/layout/UpdateToast.tsx`, monté dans `AppShell`) propose "Redémarrer maintenant" — le renderer invoque alors le canal `update:quitAndInstall` (renderer → main), qui appelle `autoUpdater.quitAndInstall()` — ou "Plus tard" : dans ce cas, `autoInstallOnAppQuit` installe la mise à jour à la prochaine fermeture naturelle de l'app.
+- **Suivi des vérifications** : chaque vérification (au démarrage, 5 s après l'ouverture, ou à la demande depuis Paramètres) se termine par un statut `UpdateStatus` — `up-to-date`, `downloaded` (seulement une fois le téléchargement terminé) ou `failed` avec un message court — produit par `runCheck()` dans `auto-updater.ts`, qui ne rejette jamais : un échec de vérification comme de téléchargement devient un statut `failed`. `electron/update-state.ts` écrit ce statut dans `update-status.json` et ajoute une ligne (date ISO, résultat, erreur complète aplatie, 500 caractères max) à `update-log.txt`, tous deux sous `app.getPath('userData')`. Le journal ne garde que les 200 dernières lignes (`src/lib/update-log.ts`) : une ligne par lancement couvre plusieurs saisons de meetings pour une taille maximale d'environ 100 Ko, sans rotation de fichiers. Un fichier de statut absent ou illisible vaut « jamais vérifié » (`parseUpdateStatus`), donc aucune migration n'est nécessaire. Hors ligne au démarrage, aucun toast : c'est le cas normal au bord du bassin, le statut est seulement visible dans Paramètres. Canaux IPC (renderer → main) : `update:getStatus` (dernier statut mémorisé, ou `null` ; si une vérification est en cours, attend et renvoie son résultat pour ne jamais afficher un statut périmé) et `update:checkNow` (lance une vérification, ou réutilise celle en cours, et renvoie le statut une fois la vérification et l'éventuel téléchargement terminés). Les libellés français du statut viennent de `src/lib/update-status.ts`.
 
 ## Organisation des dossiers
 
@@ -107,7 +108,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
 │   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
 │   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
-│   └── auto-updater.ts            # Vérification et téléchargement des mises à jour
+│   ├── auto-updater.ts            # Vérification et téléchargement des mises à jour
+│   └── update-state.ts            # Statut de la dernière vérification et journal borné (userData)
 ├── src/
 │   ├── main.tsx                   # Point d'entrée React
 │   ├── App.tsx                    # Routeur principal
@@ -123,6 +125,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── db.ts                  # Opérations CRUD SQLite
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
+│   │   ├── import-card-state.ts   # Carte de l'écran Import : masquée, en cours ou importé (jamais de coche sans enregistrement)
 │   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
 │   │   ├── backup.ts              # Export/restauration complète de la base en JSON
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
@@ -133,6 +136,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
 │   │   ├── focus-trap.ts          # Focus des modales : Tab suivant, retour au déclencheur
+│   │   ├── update-status.ts       # Statut de la dernière vérification de mise à jour et libellés français
+│   │   ├── update-log.ts          # Ligne du journal des mises à jour et troncature aux 200 dernières lignes
 │   │   ├── ui-labels.ts           # Libellés et valeurs d'affichage dérivés des données
 │   │   └── utils.ts               # Helpers (formatPoints, cn, etc.)
 │   ├── hooks/
@@ -145,14 +150,15 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
-│   │   └── use-auto-update.ts     # Notification de mise à jour téléchargée
+│   │   ├── use-auto-update.ts     # Notification de mise à jour téléchargée
+│   │   └── use-update-status.ts   # Section « Mises à jour » de Paramètres (statut, vérification à la demande)
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
 │   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
-│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
+│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
-│   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
+│   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection, UpdateSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage
 │   ├── styles/
