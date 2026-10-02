@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { countRowsByCategory, parseCsv, summarizeSwimmerRows } from '../src/lib/csv-parser';
+import { countRowsByCategory, noUsableRowCause, parseCsv, summarizeSwimmerRows } from '../src/lib/csv-parser';
 
 const FIXTURE_PATH = path.join(__dirname, 'fixtures/sample.csv');
 
@@ -134,7 +134,11 @@ describe('parseCsv — encoding and validation edge cases', () => {
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
     expect(result.rows.map((row) => row.lastname)).toEqual(['DUPONT']);
-    expect(result.excludedSwimmers).toEqual(['Bob MARTIN', 'Eve DURAND', 'Tom PETIT']);
+    expect(result.excludedSwimmers).toEqual([
+      { firstname: 'Bob', lastname: 'MARTIN', club: 'CN TEST', categories: ['Classement Mixte'] },
+      { firstname: 'Eve', lastname: 'DURAND', club: 'CN TEST', categories: ['Classement Mixte', 'Classement Dames'] },
+      { firstname: 'Tom', lastname: 'PETIT', club: 'CN TEST', categories: ['Classement Mixte'] },
+    ]);
     expect(result.ignoredRowCount).toBe(0);
     expect(result.warnings).toEqual([
       'Ligne 3 : année de naissance illisible (« 19XX ») pour « Bob MARTIN » (nageur non importé)',
@@ -142,6 +146,16 @@ describe('parseCsv — encoding and validation edge cases', () => {
       'Ligne 5 : année de naissance illisible (« 1990.5 ») pour « Tom PETIT » (nageur non importé)',
       'Ligne 6 : année de naissance vide pour « Eve DURAND » (nageur non importé)',
     ]);
+  });
+
+  it('lists two namesakes from different clubs as two swimmers left out', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;2;MARTIN;Bob;;FRA;CN TEST;90 Pts;',
+      'Classement Mixte;3;MARTIN;Bob;;FRA;EN CAEN;80 Pts;',
+    ].join('\n');
+    expect(parseCsv(new TextEncoder().encode(csv)).excludedSwimmers.map((s) => s.club)).toEqual(['CN TEST', 'EN CAEN']);
   });
 
   it('keeps rows with an empty or unreadable place, without a rank, and counts their points', () => {
@@ -236,6 +250,28 @@ describe('parseCsv without usable rows', () => {
 
   it('rejects a file whose rows all lack points', () => {
     const csv = ['name;place;lastname;firstname;birthyear;nation;club;points;comment', 'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;;'].join('\n');
-    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable dans ce fichier (aucune ligne avec des points)');
+  });
+
+  it('says why when every row has an unreadable birth year', () => {
+    const csv = ['name;place;lastname;firstname;birthyear;nation;club;points;comment', 'Classement Mixte;1;DUPONT;Lea;19XX;FRA;CN TEST;100 Pts;'].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable dans ce fichier (aucune année de naissance lisible)');
+  });
+});
+
+describe('noUsableRowCause', () => {
+  it('names the missing columns first, since they explain every line', () => {
+    expect(noUsableRowCause(['birthyear'], false, true)).toBe('colonne absente : birthyear');
+    expect(noUsableRowCause(['points', 'birthyear'], true, true)).toBe('colonnes absentes : points, birthyear');
+  });
+
+  it('gives the reason the lines were left out', () => {
+    expect(noUsableRowCause([], false, true)).toBe('aucune année de naissance lisible');
+    expect(noUsableRowCause([], true, false)).toBe('aucune ligne avec des points');
+    expect(noUsableRowCause([], true, true)).toBe('chaque ligne a des points manquants ou une année de naissance vide ou illisible');
+  });
+
+  it('says the file holds only the header line when there was no line at all', () => {
+    expect(noUsableRowCause([], false, false)).toBe('le fichier ne contient que la ligne des titres de colonnes');
   });
 });

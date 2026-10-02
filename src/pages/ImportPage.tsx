@@ -28,7 +28,7 @@ const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
   const { result, fileName, error, errorId, outcome, setOutcome, pending, setPending, handleFileAccepted, handleFileRejected } = importState;
-  const { isPersisting, setIsPersisting, persistError, setPersistError, reset: resetImport } = importState;
+  const { isPersisting, setIsPersisting, persistError, setPersistError, clearError, beginRun, reset: resetImport } = importState;
   const { refresh } = meetingState;
   const navigate = useNavigate();
   const resultRef = useRef<HTMLElement>(null);
@@ -43,17 +43,21 @@ export default function ImportPage(): JSX.Element {
   const persist = useCallback(
     async (parsed: CsvParseResult, warnings: ImportWarning[]): Promise<void> => {
       if (meetingId === null) return;
+      // Every state update after an await is skipped once the meeting has changed: it would describe this meeting's file on another one's screen.
+      const isCurrent = beginRun();
       setIsPersisting(true);
       const found = warnings.map((warning) => warning.message);
       try {
         const { backupError } = await window.electronAPI.importCsv(meetingId, parsed.rows);
         if (backupError) found.push(`La sauvegarde automatique a échoué. Vérifiez le dossier de sauvegarde dans les Paramètres.`);
       } catch (err) {
+        if (!isCurrent()) return;
         setPersistError(err instanceof Error ? err.message : String(err));
         setIsPersisting(false);
         return;
       }
       // The data is saved from here on: a failure below must not read as a failed import.
+      // The meetings are still reloaded when the screen has moved on, so the sidebar counts this import.
       let changes: ImportOutcome['changes'] = null;
       try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
@@ -76,16 +80,18 @@ export default function ImportPage(): JSX.Element {
       } catch {
         found.push("Les résultats sont enregistrés, mais le résumé des changements n'a pas pu être calculé.");
       }
+      if (!isCurrent()) return;
       setOutcome({ changes, notices: found });
       setIsPersisting(false);
     },
-    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError]
+    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError, beginRun]
   );
 
   const handleAccepted = useCallback(
     async (file: File) => {
       // A second drop while a save is running would race it and mix up the notices.
       if (isPersisting) return;
+      const isCurrent = beginRun();
       setPersistError(null);
       setOutcome(null);
       setPending(null);
@@ -97,12 +103,15 @@ export default function ImportPage(): JSX.Element {
       let warnings: ImportWarning[];
       try {
         const existing = await window.electronAPI.getSwimmerResults(meetingId);
-        warnings = checkImportAgainstExisting(existing, parsed.rows, meeting?.lastImportedAt ?? null);
+        warnings = checkImportAgainstExisting(existing, parsed.rows, meeting?.lastImportedAt ?? null, parsed.excludedSwimmers);
       } catch (err) {
+        if (!isCurrent()) return;
         setPersistError(err instanceof Error ? err.message : String(err));
         setIsPersisting(false);
         return;
       }
+      // Checked against the previous meeting's results: neither the question nor the save may reach the new one.
+      if (!isCurrent()) return;
       if (importConfirmation(warnings) !== null) {
         setIsPersisting(false);
         setPending({ parsed, warnings });
@@ -110,7 +119,7 @@ export default function ImportPage(): JSX.Element {
       }
       await persist(parsed, warnings);
     },
-    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome, setPending, setIsPersisting, setPersistError]
+    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome, setPending, setIsPersisting, setPersistError, beginRun]
   );
 
   const confirmPending = (): void => {
@@ -118,6 +127,8 @@ export default function ImportPage(): JSX.Element {
     const { parsed, warnings } = pending;
     if (importConfirmation(warnings) === 'removals') focusAfterNotice.current = 'result';
     setPending(null);
+    // A file refused while the question was shown is answered for: its message next to the result would read as this import's error.
+    clearError();
     void persist(parsed, noticesAfterWrite(warnings));
   };
 
