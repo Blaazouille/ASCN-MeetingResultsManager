@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
-import { computeIndividualRanking, filterByCategory } from '../src/lib/individual-ranking';
+import { computeCategoryRanking } from '../src/lib/individual-ranking';
 import { assignCompetitionRanks, findPodiumTies, tiedRanks } from '../src/lib/rank-ties';
 import { rankText, tieAlertLabel } from '../src/lib/ui-labels';
 
@@ -56,21 +56,20 @@ describe('team ranking ties', () => {
 });
 
 describe('individual ranking ties', () => {
-  it('gives equal-points swimmers the same rank, globally and per category', () => {
+  it('gives equal-points swimmers the same rank within their category', () => {
     const rows = [
       row('Classement Dames', 'A', 'a', 90),
       row('Classement Dames', 'B', 'b', 90),
       row('Classement Dames', 'C', 'c', 80),
       row('Classement Messieurs', 'D', 'd', 85),
     ];
-    const all = computeIndividualRanking(rows);
-    expect(all.map((r) => r.rank)).toEqual([1, 1, 3, 4]);
-    expect(filterByCategory(all, 'Classement Dames').map((r) => r.rank)).toEqual([1, 1, 3]);
+    expect(computeCategoryRanking(rows, 'Classement Dames').map((r) => r.rank)).toEqual([1, 1, 3]);
+    expect(computeCategoryRanking(rows, 'Classement Messieurs').map((r) => r.rank)).toEqual([1]);
   });
 
   it('shares ranks for the real ties of the fixture (Dames, 933 pts)', () => {
     const { rows } = parseCsv(new Uint8Array(readFileSync(path.join(__dirname, 'fixtures', 'sample.csv'))));
-    const dames = filterByCategory(computeIndividualRanking(rows), 'Classement Dames');
+    const dames = computeCategoryRanking(rows, 'Classement Dames');
     const at933 = dames.filter((r) => r.points === 933);
     expect(at933.length).toBeGreaterThan(1);
     expect(new Set(at933.map((r) => r.rank)).size).toBe(1);
