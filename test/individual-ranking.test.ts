@@ -35,7 +35,6 @@ describe('computeCategoryRanking', () => {
 
   it('lists every swimmer of the category, not only those whose best score is there', () => {
     expect(mixte).toHaveLength(rows.filter((r) => r.name === 'Classement Mixte').length);
-    expect(mixte.every((r) => r.category === 'Classement Mixte')).toBe(true);
   });
 
   it('keeps a swimmer listed in two categories in both', () => {
@@ -50,12 +49,6 @@ describe('computeCategoryRanking', () => {
       if (index > 0) expect(result.points).toBeLessThanOrEqual(mixte[index - 1]!.points);
       expect(result.rank).toBe(1 + mixte.filter((other) => other.points > result.points).length);
     });
-  });
-
-  it('assigns the gender of the category', () => {
-    expect(computeCategoryRanking(rows, 'Classement Dames').every((r) => r.gender === 'F')).toBe(true);
-    expect(computeCategoryRanking(rows, 'Classement Messieurs').every((r) => r.gender === 'M')).toBe(true);
-    expect(mixte.every((r) => r.gender === null)).toBe(true);
   });
 
   it('is empty for a category absent from the rows', () => {

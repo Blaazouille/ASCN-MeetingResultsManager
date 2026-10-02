@@ -52,6 +52,18 @@ describe('rotateBackups', () => {
     rotateBackups(tmpDir, 0);
     expect(readdirSync(tmpDir)).toEqual(['notes.txt']);
   });
+
+  it('never deletes the safety copies taken before a restore', () => {
+    writeFileSync(path.join(tmpDir, 'mdlm-pre-restore-2026-09-01T12-00-00-abcd.json'), '{}');
+    for (let i = 0; i < 4; i++) {
+      writeFileSync(path.join(tmpDir, `mdlm-auto-backup-2026-09-${String(10 + i).padStart(2, '0')}T12-00-00.json`), '{}');
+    }
+
+    rotateBackups(tmpDir, 3);
+
+    expect(existsSync(path.join(tmpDir, 'mdlm-pre-restore-2026-09-01T12-00-00-abcd.json'))).toBe(true);
+    expect(readdirSync(tmpDir).filter((f) => f.startsWith('mdlm-auto-backup-'))).toHaveLength(3);
+  });
 });
 
 describe('loadBackupConfig / saveBackupConfig', () => {

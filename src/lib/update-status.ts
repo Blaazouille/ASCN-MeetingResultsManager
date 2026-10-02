@@ -3,7 +3,7 @@
  * Appelé par : electron/auto-updater.ts, electron/update-state.ts, use-update-status.ts, UpdateSection.tsx.
  * Suppression casserait : la mémorisation de la dernière vérification et la section « Mises à jour » de Paramètres.
  */
-import { formatDateTimeFr } from './export-data';
+import { formatDateTimeFr } from './utils';
 
 export type UpdateCheckOutcome = 'up-to-date' | 'downloaded' | 'failed';
 

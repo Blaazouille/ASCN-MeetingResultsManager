@@ -1,11 +1,13 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx, update-status.ts.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
+import { categoryShortLabel } from './ui-labels';
+import { formatDateTimeFr } from './utils';
 
-export interface PrintMeta {
+export interface ExportMeta {
   meetingName: string;
   /** Timestamp of computation, formatted fr-FR date + time. */
   computedAt: string;
@@ -13,12 +15,6 @@ export interface PrintMeta {
 
 const CREATED_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-
-// Date and time are formatted apart and joined by hand: a single Intl call with
-// dateStyle + timeStyle yields "14:32" or "à 14:32" depending on the ICU version,
-// while the club reads "14 h 32".
-const IMPORT_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-const IMPORT_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 /**
  * Parses a SQLite `datetime('now')` timestamp ("YYYY-MM-DD HH:MM:SS", always
@@ -48,18 +44,8 @@ export function formatImportTimestamp(timestamp: string): string {
   return formatDateTimeFr(parseSqliteTimestamp(timestamp));
 }
 
-/** Any instant as "27 sept. 2026 à 14 h 32" (also used for the last update check in Paramètres). */
-export function formatDateTimeFr(at: Date): string {
-  // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
-  const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
-  const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';
-  const minutes = parts.find((p) => p.type === 'minute')?.value ?? '00';
-  // Non-breaking spaces keep "14 h 32" on one line when the card wraps.
-  return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
-}
-
-/** Builds the print/export metadata from the persisted meeting record. */
-export function buildPrintMeta(meeting: Meeting): PrintMeta {
+/** Builds the export metadata from the persisted meeting record. */
+export function buildExportMeta(meeting: Meeting): ExportMeta {
   return {
     meetingName: meeting.name,
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),
@@ -78,4 +64,29 @@ export function slugifyCategory(category: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Excel sheet name for a category: "Classement Mixte" -> "Mixte". Excel rejects
+ * names containing \ / ? * : [ ] or longer than 31 characters and fails the
+ * whole export, so those characters become spaces and the name is cut.
+ */
+export function excelSheetName(category: string): string {
+  return (
+    categoryShortLabel(category)
+      .replace(/[\\/?*:[\]]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 31) || 'Classement'
+  );
+}
+
+/**
+ * Download filename of an individual ranking export, e.g.
+ * "classement-individuel-dames-2026-11-16.pdf". The "Classement" prefix of the
+ * category is dropped because the file name already starts with it.
+ */
+export function individualExportFileName(category: string, extension: 'pdf' | 'xlsx', date: Date = new Date()): string {
+  const day = date.toISOString().slice(0, 10);
+  return `classement-individuel-${slugifyCategory(categoryShortLabel(category))}-${day}.${extension}`;
 }
