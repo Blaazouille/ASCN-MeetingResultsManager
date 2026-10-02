@@ -10,8 +10,10 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
 import { StatTile } from '@/components/import/StatTile';
+import { ImportChanges } from '@/components/import/ImportChanges';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory } from '@/lib/csv-parser';
+import { summarizeImportChanges, type ImportChanges as ImportChangesData } from '@/lib/import-diff';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +26,7 @@ export default function ImportPage(): JSX.Element {
   const { refresh } = meetingState;
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
+  const [changes, setChanges] = useState<{ since: string | null; summary: ImportChangesData } | null>(null);
   const navigate = useNavigate();
 
   const meeting = meetingState.currentMeeting;
@@ -32,6 +35,7 @@ export default function ImportPage(): JSX.Element {
   const handleAccepted = useCallback(
     async (file: File) => {
       setPersistError(null);
+      setChanges(null);
       const parsed = await handleFileAccepted(file);
       if (parsed && meetingId !== null) {
         setIsPersisting(true);
@@ -39,6 +43,18 @@ export default function ImportPage(): JSX.Element {
           await window.electronAPI.importCsv(meetingId, parsed.rows);
           // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
           await refresh();
+          // No snapshot = first import of this meeting: nothing to compare with.
+          const [snapshot, current] = await Promise.all([
+            window.electronAPI.getImportSnapshot(meetingId),
+            window.electronAPI.getSwimmerResults(meetingId),
+          ]);
+          if (snapshot && meeting) {
+            const summary = summarizeImportChanges(snapshot.rows, current, {
+              topN: meeting.defaultTopN,
+              minSwimmers: meeting.minSwimmers,
+            });
+            setChanges({ since: snapshot.importedAt, summary });
+          }
         } catch (err) {
           setPersistError(err instanceof Error ? err.message : String(err));
         } finally {
@@ -46,7 +62,7 @@ export default function ImportPage(): JSX.Element {
         }
       }
     },
-    [handleFileAccepted, meetingId, refresh]
+    [handleFileAccepted, meetingId, meeting, refresh]
   );
 
   const categoryCounts = useMemo(() => (result ? countRowsByCategory(result.rows) : []), [result]);
@@ -98,6 +114,8 @@ export default function ImportPage(): JSX.Element {
               Voir le classement
             </Button>
           </div>
+
+          {isDone && changes && <ImportChanges since={changes.since} changes={changes.summary} />}
 
           <div className="grid grid-cols-3 gap-4">
             <StatTile value={result.swimmerCount} label="nageurs" />

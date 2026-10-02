@@ -5,12 +5,11 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
-import { computeTeamRanking, type TeamResult } from '@/lib/ranking-engine';
+import { computeTeamRanking, pickDefaultCategory, type TeamResult } from '@/lib/ranking-engine';
 
 export const TOP_N_OPTIONS = [3, 5, 7, 10] as const;
 export type TopN = (typeof TOP_N_OPTIONS)[number];
 
-const DEFAULT_CATEGORY = 'Classement Mixte';
 const DEFAULT_TOP_N: TopN = 5;
 
 export interface UseRankingResult {
@@ -46,9 +45,7 @@ export function useRanking(
   categories: string[],
   options: UseRankingOptions = {}
 ): UseRankingResult {
-  const [category, setCategory] = useState<string>(
-    categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : (categories[0] ?? '')
-  );
+  const [category, setCategory] = useState<string>(pickDefaultCategory(categories));
   const initialTopN = (TOP_N_OPTIONS as readonly number[]).includes(options.initialTopN ?? -1)
     ? (options.initialTopN as TopN)
     : DEFAULT_TOP_N;
@@ -58,7 +55,7 @@ export function useRanking(
     if (categories.length === 0 || categories.includes(category)) {
       return;
     }
-    setCategory(categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : categories[0]!);
+    setCategory(pickDefaultCategory(categories));
   }, [categories, category]);
 
   // Re-adopts the meeting's default top N when it changes (e.g. switching to

@@ -115,4 +115,18 @@ function migrateSchema(db: Database.Database): void {
     }
     db.pragma('user_version = 5');
   }
+  if (version < 6) {
+    // Rows as they were before the latest import, to show what a re-import
+    // changed. One row per meeting (older snapshots add nothing the screens
+    // use); the cascade removes it with its meeting. Deliberately left out of
+    // BackupData: a restore starts with no "previous import" to compare with.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS import_snapshot (
+        meeting_id  INTEGER PRIMARY KEY REFERENCES meeting(id) ON DELETE CASCADE,
+        imported_at TEXT,
+        rows        TEXT NOT NULL
+      )
+    `);
+    db.pragma('user_version = 6');
+  }
 }

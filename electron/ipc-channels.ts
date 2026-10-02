@@ -14,6 +14,8 @@ export const IpcChannels = {
   // always come from the exact same parse).
   importCsv: 'import:csv',
   getSwimmerResults: 'import:getSwimmerResults',
+  // Rows as they were before the latest import, for the movement arrows.
+  getImportSnapshot: 'import:getSnapshot',
 
   // Computes AND persists (saveTeamRanking) in one round-trip.
   //

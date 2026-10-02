@@ -26,6 +26,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` (surtitre = nom du meeting, titre « Importer les résultats »).
 - Avant import : zone de dépôt (`DropZone`) drag & drop ou sélection, bouton « Parcourir… ». Si le meeting a déjà des résultats (nouvelle session sur un meeting existant), un rappel (`resultCountLabel`) s'affiche au-dessus.
 - Après import réussi : carte de succès (coche verte, nom du fichier), trois tuiles de statistiques (`StatTile`) — nageurs, clubs, catégories (avec puces par catégorie, `categoryShortLabel`) — et un bouton principal « Voir le classement ». La zone de dépôt se réduit alors à une version compacte horizontale (« Nouvelle version du fichier ? »).
+- Après un réimport : encart « Depuis l'import du 27 sept. 2026 à 14 h 32 » (`ImportChanges`) avec « +12 nageurs · −1 nageur · 38 résultats modifiés · 3 clubs ont changé de rang » (lien « Voir le classement » si des clubs ont bougé), ou « Aucun changement par rapport à l'import précédent. ». Les clubs sont comptés pour la catégorie Mixte (sinon la première) avec le top N du meeting. Rien au premier import d'un meeting.
 - Avertissements et détails techniques (encodage, délimiteur, nombre de lignes) repliés dans un `<details>`, fermé par défaut.
 - Persistance des lignes parsées en base via IPC (`insertSwimmerResults`).
 
@@ -34,7 +35,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` avec les exports en actions : bouton Excel (secondaire) et bouton PDF (principal).
 - Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`).
 - Podium (`PodiumCards`) : les 3 premiers clubs, ordre gauche-à-droite 1‑2‑3, carte du 1er en `marine` mise en avant, écart par rapport au leader (`formatGap`).
-- Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour AS Cherbourg Natation, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader.
+- Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour AS Cherbourg Natation, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader. Après un réimport, `MovementBadge` à côté du rang : `↑2` (`success`), `↓1` (`corail-strong`), pastille « + » pour une entrée nouvelle (infobulle « Nouveau dans le classement » ; omise quand plus de la moitié des lignes sont nouvelles) ; rien si le rang est stable ou s'il n'y a pas d'import précédent. Calculé pour la catégorie et le top N affichés ; absent des exports PDF/Excel.
 - Ligne entière cliquable pour déplier/replier le détail des nageurs (`SwimmerDetail`) ; chevron dédié, accessible au clavier (Tab), cible ≥44px.
 
 ## Individuels (`/individuels`)
@@ -42,6 +43,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de nageurs), actions Excel/PDF.
 - `FilterBar` : `CategoryTabs` (catégories actives) + `SearchField` (recherche par nom ou club, alignée à droite).
 - Classement par points des nageurs de la catégorie active (`IndividualRankingTable`, rang recalculé par catégorie) : Rang (`RankChip`, couleurs médaille pour le top 3), Nom, Année de naissance, Club (+ `ClubTag` pour ASCN), Points (`font-display`, `formatPoints`).
+- `MovementBadge` à côté du rang après un réimport (même règles que sur le Classement, par catégorie affichée ; absent des exports).
 - Pastille corail « 1er Prix » / « 2e Prix » pour les nageurs de rang 1 et 2 (ex-aequo inclus). Rang partagé : marqueur « ex. » ; bandeau corail si l'égalité touche un prix ou le podium équipes.
 - Lignes `h-14` (≥56px), en-tête `h-11`.
 

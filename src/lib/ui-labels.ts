@@ -4,6 +4,7 @@
  * Suppression casserait : les textes calculés de l'interface (« 1re place », « −477 », « À importer »…).
  */
 import type { Gender } from './individual-ranking';
+import type { ImportChanges, Movement } from './import-diff';
 import { formatPoints } from './utils';
 
 /** "1re place", "2e place"… French ordinal of a podium place. */
@@ -89,4 +90,37 @@ export function rankText(rank: number, tied: boolean): string {
 export function tieAlertLabel(ranks: number[], category: string): string {
   const places = ranks.length === 1 ? `la ${placeLabel(ranks[0]!)}` : `les places ${[ranks.slice(0, -1).join(', '), ranks.at(-1)].join(' et ')}`;
   return `Égalité pour ${places} en ${categoryShortLabel(category)} : à départager`;
+}
+
+/** "↑2", "↓1" or "+" (new entry): the arrow and the number carry the meaning, colour only backs them up. */
+export function movementText(movement: Movement): string {
+  if (movement === 'new') return '+';
+  return movement > 0 ? `↑${movement}` : `↓${-movement}`;
+}
+
+/** Spoken form of movementText, for screen readers. */
+export function movementAriaLabel(movement: Movement): string {
+  if (movement === 'new') return 'Nouveau dans le classement';
+  const places = Math.abs(movement);
+  const unit = places >= 2 ? `${places} places` : '1 place';
+  return movement > 0 ? `Gagne ${unit}` : `Perd ${unit}`;
+}
+
+/** Heading of the import summary; the previous import's time is unknown for meetings imported before it was recorded. */
+export function sinceImportLabel(formattedDate: string | null): string {
+  return formattedDate === null ? "Depuis l'import précédent" : `Depuis l'import du ${formattedDate}`;
+}
+
+/** Non-zero parts of the import summary ("+12 nageurs", "−1 nageur", "38 résultats modifiés", "3 clubs ont changé de rang"). */
+export function importChangeParts(changes: ImportChanges): string[] {
+  const parts: string[] = [];
+  if (changes.addedSwimmers > 0) parts.push(`+${swimmerCountLabel(changes.addedSwimmers)}`);
+  if (changes.removedSwimmers > 0) parts.push(`−${swimmerCountLabel(changes.removedSwimmers)}`);
+  if (changes.changedResults > 0) {
+    parts.push(`${formatPoints(changes.changedResults)} ${changes.changedResults >= 2 ? 'résultats modifiés' : 'résultat modifié'}`);
+  }
+  if (changes.clubsMoved > 0) {
+    parts.push(changes.clubsMoved >= 2 ? `${changes.clubsMoved} clubs ont changé de rang` : '1 club a changé de rang');
+  }
+  return parts;
 }

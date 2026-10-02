@@ -44,12 +44,19 @@ CREATE TABLE IF NOT EXISTS team_ranking (
   UNIQUE(meeting_id, category, club)
 );
 
+-- ajoutée en migration user_version 6 : résultats d'avant le dernier import (un seul instantané par meeting)
+CREATE TABLE IF NOT EXISTS import_snapshot (
+  meeting_id  INTEGER PRIMARY KEY REFERENCES meeting(id) ON DELETE CASCADE,
+  imported_at TEXT,                                 -- date de l'import précédent (NULL si antérieur à last_imported_at)
+  rows        TEXT NOT NULL                         -- JSON : RawSwimmerRow[]
+);
+
 CREATE INDEX IF NOT EXISTS idx_swimmer_meeting ON swimmer_result(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, category);
 CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 ```
 
-`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `5` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage ; `5` a ajouté `last_imported_at` (date du dernier import CSV, posée par `insertSwimmerResults` ; NULL jusqu'au prochain import pour les meetings existants) — chaque migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `6` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage ; `5` a ajouté `last_imported_at` (date du dernier import CSV, posée par `insertSwimmerResults` ; NULL jusqu'au prochain import pour les meetings existants) ; `6` a créé `import_snapshot` (instantané d'avant le dernier import, pour les mouvements de classement) — chaque migration vérifie la présence des colonnes avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
@@ -163,6 +170,8 @@ interface TeamRankingBackup {
 }
 ```
 
+L'instantané `import_snapshot` n'est volontairement pas sauvegardé : une restauration repart sans « import précédent » (pas de flèches tant qu'un nouvel import n'a pas eu lieu).
+
 La sauvegarde inclut les règles de calcul (`defaultTopN`, `minSwimmers`, `activeCategories`) ainsi que les classements pré-calculés (`team_ranking`), de sorte qu'une restauration reconstitue l'état complet du meeting sans recalcul.
 
 ## Configuration des sauvegardes automatiques
@@ -185,4 +194,5 @@ Raison de la séparation : la config survit à une restauration complète de la 
 - `swimmer_result.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `team_ranking.meeting_id` → `meeting.id` (`ON DELETE CASCADE`)
 - `swimmer_result` est unique par `(meeting_id, category, lastname, firstname, birthyear, club)` : un ré-import du même fichier met à jour les lignes existantes plutôt que de les dupliquer, et retire les nageurs absents du nouvel import (scopé aux catégories présentes).
+- `import_snapshot` est unique par `meeting_id` ; chaque import avec des résultats déjà présents le remplace, le premier import d'un meeting le supprime (rien à comparer).
 - `team_ranking` est unique par `(meeting_id, category, club)`.
