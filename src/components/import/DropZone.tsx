@@ -7,7 +7,9 @@ import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEv
 import { AlertTriangle, FileUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import type { FileRejectionReason } from '@/hooks/use-import';
+
+/** Why the zone refused what was dropped, before any reading. */
+export type FileRejectionReason = 'not-csv' | 'several-files';
 
 export interface DropZoneProps {
   /** Called once a .csv file has been dropped or selected and "processed". */

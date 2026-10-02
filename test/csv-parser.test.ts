@@ -66,6 +66,8 @@ describe('parseCsv — real FFN extraNat fixture (Latin-1, semicolon)', () => {
 
   it('leaves no row out of the reference file', () => {
     expect([result.ignoredRowCount, result.invalidRowCount, result.duplicateRowCount]).toEqual([0, 0, 0]);
+    expect(result.excludedSwimmers).toEqual([]);
+    expect(result.rows.every((row) => row.place !== null)).toBe(true);
   });
 });
 
@@ -121,31 +123,63 @@ describe('parseCsv — encoding and validation edge cases', () => {
     expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow(/^Ligne 3 : points illisibles \(« N\/A »\)/);
   });
 
-  it('leaves out, warns about and counts rows whose place or birth year is not a whole number', () => {
+  it('leaves out rows with an empty or unreadable birth year, naming each swimmer once', () => {
     const csv = [
       'name;place;lastname;firstname;birthyear;nation;club;points;comment',
       'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
       'Classement Mixte;2;MARTIN;Bob;19XX;FRA;CN TEST;90 Pts;',
-      'Classement Mixte;;DURAND;Eve;2001;FRA;CN TEST;80 Pts;',
+      'Classement Mixte;3;DURAND;Eve;;FRA;CN TEST;80 Pts;',
       'Classement Mixte;4;PETIT;Tom;1990.5;FRA;CN TEST;70 Pts;',
+      'Classement Dames;1;DURAND;Eve;;FRA;CN TEST;95 Pts;',
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
     expect(result.rows.map((row) => row.lastname)).toEqual(['DUPONT']);
-    expect(result.invalidRowCount).toBe(3);
+    expect(result.invalidRowCount).toBe(4);
+    expect(result.excludedSwimmers).toEqual(['Bob MARTIN', 'Eve DURAND', 'Tom PETIT']);
     expect(result.ignoredRowCount).toBe(0);
     expect(result.warnings).toEqual([
-      'Ligne 3 : année de naissance illisible (« 19XX ») pour « Bob MARTIN » (ligne ignorée)',
-      'Ligne 4 : place illisible («  ») pour « Eve DURAND » (ligne ignorée)',
-      'Ligne 5 : année de naissance illisible (« 1990.5 ») pour « Tom PETIT » (ligne ignorée)',
+      'Ligne 3 : année de naissance illisible (« 19XX ») pour « Bob MARTIN » (nageur non importé)',
+      'Ligne 4 : année de naissance vide pour « Eve DURAND » (nageur non importé)',
+      'Ligne 5 : année de naissance illisible (« 1990.5 ») pour « Tom PETIT » (nageur non importé)',
+      'Ligne 6 : année de naissance vide pour « Eve DURAND » (nageur non importé)',
     ]);
   });
 
-  it('rejects a file without a place column instead of importing swimmers without a place', () => {
+  it('keeps rows with an empty or unreadable place, without a rank, and counts their points', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;2e;MARTIN;Bob;1999;FRA;CN TEST;90 Pts;',
+    ].join('\n');
+    const result = parseCsv(new TextEncoder().encode(csv));
+    expect(result.rows.map((row) => [row.lastname, row.place, row.points])).toEqual([
+      ['DUPONT', null, 100],
+      ['MARTIN', null, 90],
+    ]);
+    expect([result.invalidRowCount, result.excludedSwimmers]).toEqual([0, []]);
+    expect(result.warnings).toEqual([
+      'Ligne 2 : place vide pour « Lea DUPONT » (points comptés quand même)',
+      'Ligne 3 : place illisible (« 2e ») pour « Bob MARTIN » (points comptés quand même)',
+    ]);
+  });
+
+  it('imports a file without a place column, warning once about the missing column', () => {
     const csv = [
       'name;lastname;firstname;birthyear;nation;club;points;comment',
       'Classement Mixte;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;MARTIN;Bob;1999;FRA;CN TEST;90 Pts;',
     ].join('\n');
-    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
+    const result = parseCsv(new TextEncoder().encode(csv));
+    expect(result.rows.map((row) => row.place)).toEqual([null, null]);
+    expect(result.warnings).toEqual(['Colonne manquante dans le fichier : « place »']);
+  });
+
+  it('names the missing birthyear column when it leaves no usable row', () => {
+    const csv = [
+      'name;place;lastname;firstname;nation;club;points;comment',
+      'Classement Mixte;1;DUPONT;Lea;FRA;CN TEST;100 Pts;',
+    ].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable dans ce fichier (colonne absente : birthyear)');
   });
 
   it('flags points outside the plausible FFN range', () => {

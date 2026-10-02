@@ -8,9 +8,14 @@ Implémenté dans `src/lib/csv-parser.ts` (`parseCsv`) et `src/lib/csv-cells.ts`
 |---|---|---|
 | `points` | vide | Ligne ignorée, comptée dans `ignoredRowCount` (« Lignes sans points » dans « À savoir ») |
 | `points` | sans aucun chiffre (« N/A ») | **Import bloqué** : « Ligne N : points illisibles… ». Les points sont la donnée du classement : une cellule illisible signale un fichier qui n'est pas l'export attendu. |
-| `place`, `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne ignorée, comptée dans `invalidRowCount`, avertissement qui nomme le nageur |
+| `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne écartée, comptée dans `invalidRowCount` ; le nageur est ajouté à `excludedSwimmers` (une seule fois même s'il est écarté de plusieurs catégories) |
+| `place` | vide ou pas un entier (« 2e ») | Ligne **gardée** avec `place: null` (rang `NULL` en base), avertissement simple ; les points comptent |
 
-Pourquoi écarter la ligne plutôt que bloquer l'import pour `place` / `birthyear` : au bord du bassin, le bénévole ne peut pas corriger le fichier, et bloquer tout l'import pour une ligne le laisserait sans aucun classement. Garder la ligne n'est pas possible non plus : la valeur serait enregistrée à `NULL`, qui échappe à la contrainte `UNIQUE` et dupliquerait le nageur à chaque réimport. La ligne écartée est donc annoncée dans l'encart « À savoir » de l'écran Import, le détail (ligne, nageur, valeur lue) dans les avertissements. Un fichier sans colonne `place` ou `birthyear` n'a aucune ligne valide : il est refusé (« Aucune ligne exploitable… »).
+Pourquoi l'année de naissance écarte la ligne : elle fait partie de l'identité du nageur, la clé `UNIQUE (meeting_id, category, lastname, firstname, birthyear, club)` de `swimmer_result`. Enregistrée à `NULL`, elle échapperait à cette clé (deux `NULL` ne sont jamais égaux en SQLite) et dupliquerait le nageur à chaque réimport. Bloquer tout l'import pour une ligne laisserait le bénévole sans aucun classement, alors qu'il ne peut pas corriger le fichier au bord du bassin. Les nageurs écartés sont donc nommés directement dans « À savoir » (« 2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement. »).
+
+Pourquoi la place ne l'écarte pas : elle ne fait partie d'aucune clé et n'est pas affichée (les rangs individuels sont recalculés à partir des points). Un rang absent est rangé après les autres à la lecture (`ORDER BY rank IS NULL, rank`).
+
+Colonnes absentes : sans colonne `place`, l'import se fait avec des rangs vides et un seul avertissement « Colonne manquante ». Sans colonne `points` ou `birthyear`, aucune ligne n'est exploitable : le fichier est refusé et l'erreur nomme la colonne (« Aucune ligne exploitable dans ce fichier (colonne absente : birthyear)… »).
 
 ## Classement par équipes
 

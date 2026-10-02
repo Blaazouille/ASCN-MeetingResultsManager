@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react';
 import { parseCsv, type CsvParseResult } from '@/lib/csv-parser';
 import type { ImportChanges } from '@/lib/import-diff';
+import type { FileRejectionReason } from '@/components/import/DropZone';
 
 /** What the volunteer is told after a save, kept here (not in the page) so it survives leaving and returning to the Import screen. */
 export interface ImportOutcome {
@@ -14,9 +15,6 @@ export interface ImportOutcome {
   /** Non-blocking warnings, a failed backup, a recap that could not be computed. */
   notices: string[];
 }
-
-/** Why the drop zone refused what was dropped, before any reading. */
-export type FileRejectionReason = 'not-csv' | 'several-files';
 
 const REJECTION_MESSAGES: Record<FileRejectionReason, string> = {
   'not-csv': 'Fichier non supporté (.csv attendu)',

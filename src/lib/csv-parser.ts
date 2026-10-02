@@ -4,7 +4,7 @@
  * Suppression casserait : l'import de fichiers CSV.
  */
 import Papa from 'papaparse';
-import { parsePoints, parseWholeNumber } from './csv-cells';
+import { describeCellProblem, parsePoints, parseWholeNumber } from './csv-cells';
 
 export interface CsvParseOptions {
   /** Character encoding used to decode the raw bytes. Default: 'auto'. */
@@ -18,8 +18,8 @@ export interface CsvParseOptions {
 export interface RawSwimmerRow {
   /** Category name, e.g. "Classement Mixte". */
   name: string;
-  /** Rank in category, as printed in the source file. */
-  place: number;
+  /** Rank in category, as printed in the source file; null when that cell is empty or unreadable. */
+  place: number | null;
   lastname: string;
   firstname: string;
   birthyear: number;
@@ -46,8 +46,10 @@ export interface CsvParseResult {
   ignoredRowCount: number;
   /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
   duplicateRowCount: number;
-  /** Lines left out because their place or birth year is not a whole number — they never reach the database. */
+  /** Lines left out because their birth year is empty or not a whole number — they never reach the database. */
   invalidRowCount: number;
+  /** "Prénom NOM" of the swimmers behind those lines, each named once even if left out of several categories. */
+  excludedSwimmers: string[];
 }
 
 export interface SwimmerRowsSummary {
@@ -162,11 +164,12 @@ export function parseCsv(
   }
 
   const headerFields = parsed.meta.fields ?? [];
-  for (const column of REQUIRED_COLUMNS) {
-    if (!headerFields.includes(column)) {
-      warnings.push(`Colonne manquante dans le fichier : « ${column} »`);
-    }
+  const missingColumns = REQUIRED_COLUMNS.filter((column) => !headerFields.includes(column));
+  for (const column of missingColumns) {
+    warnings.push(`Colonne manquante dans le fichier : « ${column} »`);
   }
+  // Without a place column every line would repeat the same warning: the one above is enough.
+  const hasPlaceColumn = headerFields.includes('place');
 
   const categories: string[] = [];
   const clubs = new Set<string>();
@@ -180,6 +183,7 @@ export function parseCsv(
   let ignoredRowCount = 0;
   let duplicateRowCount = 0;
   let invalidRowCount = 0;
+  const excludedSwimmers: string[] = [];
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
@@ -212,17 +216,23 @@ export function parseCsv(
     if (points === null) {
       throw new Error(`Ligne ${rowNumber} : points illisibles (« ${pointsRaw} »). Est-ce bien un export de cotations extraNat ?`);
     }
-    // An unreadable place or birth year would be stored as NULL, which escapes
-    // the UNIQUE constraint and duplicates the swimmer on every re-import. The
-    // line is left out (and counted, shown under « À savoir ») rather than
-    // blocking the whole import: see docs/algorithms.md.
-    const place = parseWholeNumber(raw.place ?? '');
+    // The birth year is part of the swimmer's identity, the UNIQUE key of
+    // swimmer_result: stored as NULL it would escape that key and duplicate the
+    // swimmer at every re-import. The line is left out rather than blocking the
+    // whole import, and the swimmer is named under « À savoir ».
     const birthyear = parseWholeNumber(raw.birthyear ?? '');
-    if (place === null || birthyear === null) {
-      const [label, value] = place === null ? ['place', raw.place ?? ''] : ['année de naissance', raw.birthyear ?? ''];
-      warnings.push(`Ligne ${rowNumber} : ${label} illisible (« ${value} ») pour « ${firstname} ${lastname} » (ligne ignorée)`);
+    if (birthyear === null) {
+      const swimmer = `${firstname} ${lastname}`;
+      warnings.push(`Ligne ${rowNumber} : année de naissance ${describeCellProblem(raw.birthyear)} pour « ${swimmer} » (nageur non importé)`);
       invalidRowCount += 1;
+      if (!excludedSwimmers.includes(swimmer)) excludedSwimmers.push(swimmer);
       return;
+    }
+    // The place is displayed information only, outside any key: an unreadable
+    // one is stored empty and the swimmer's points still count.
+    const place = parseWholeNumber(raw.place ?? '');
+    if (place === null && hasPlaceColumn) {
+      warnings.push(`Ligne ${rowNumber} : place ${describeCellProblem(raw.place)} pour « ${firstname} ${lastname} » (points comptés quand même)`);
     }
     if (points < PLAUSIBLE_POINTS_MIN || points > PLAUSIBLE_POINTS_MAX) {
       warnings.push(`Ligne ${rowNumber} : nombre de points inhabituel (${points})`);
@@ -265,9 +275,10 @@ export function parseCsv(
     });
   });
 
-  // A header-only file, or one whose points column is missing, yields no row: importing it would change nothing yet look like a success.
+  // A header-only file, or one missing the points or birthyear column, yields no row: importing it would change nothing yet look like a success.
   if (rows.length === 0) {
-    throw new Error('Aucune ligne exploitable dans ce fichier. Est-ce bien un export de cotations extraNat ?');
+    const cause = missingColumns.length > 0 ? ` (colonne${missingColumns.length > 1 ? 's' : ''} absente${missingColumns.length > 1 ? 's' : ''} : ${missingColumns.join(', ')})` : '';
+    throw new Error(`Aucune ligne exploitable dans ce fichier${cause}. Est-ce bien un export de cotations extraNat ?`);
   }
 
   return {
@@ -281,5 +292,6 @@ export function parseCsv(
     ignoredRowCount,
     duplicateRowCount,
     invalidRowCount,
+    excludedSwimmers,
   };
 }

@@ -124,3 +124,11 @@ export function importChangeParts(changes: ImportChanges): string[] {
   }
   return parts;
 }
+
+/** « À savoir » line naming the swimmers left out of an import for an unreadable birth year, and what it costs them. */
+export function excludedSwimmersNotice(names: string[]): string {
+  const several = names.length >= 2;
+  const what = several ? 'non importés' : 'non importé';
+  const consequence = several ? 'Leurs points ne comptent' : 'Ses points ne comptent';
+  return `${swimmerCountLabel(names.length)} ${what} (année de naissance vide ou illisible dans le fichier) : ${names.join(', ')}. ${consequence} dans aucun classement.`;
+}

@@ -9,6 +9,7 @@ import {
   categoryShortLabel,
   clubCountLabel,
   countedSummary,
+  excludedSwimmersNotice,
   importChangeParts,
   formatGap,
   isDeleteConfirmed,
@@ -191,5 +192,19 @@ describe('import summary labels', () => {
       '1 club a changé de rang',
     ]);
     expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 0, clubsMoved: 0 })).toEqual([]);
+  });
+});
+
+describe('excludedSwimmersNotice', () => {
+  it('names one swimmer left out and says their points do not count', () => {
+    expect(excludedSwimmersNotice(['Bob MARTIN'])).toBe(
+      '1 nageur non importé (année de naissance vide ou illisible dans le fichier) : Bob MARTIN. Ses points ne comptent dans aucun classement.'
+    );
+  });
+
+  it('names several swimmers left out, in plural', () => {
+    expect(excludedSwimmersNotice(['Bob MARTIN', 'Eve DURAND'])).toBe(
+      '2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement.'
+    );
   });
 });
