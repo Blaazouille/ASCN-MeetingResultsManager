@@ -142,7 +142,8 @@ export function registerIpcHandlers(db: Database.Database): void {
       pendingImport = validated;
       return {
         success: true,
-        preview: { meetingCount: validated.meetings.length, swimmerCount, currentMeetingCount },
+        // ourClub: null for a backup made before the setting existed (restoring it brings back the default club).
+        preview: { meetingCount: validated.meetings.length, swimmerCount, currentMeetingCount, ourClub: validated.ourClub ?? null },
       };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
@@ -251,5 +252,12 @@ export function registerIpcHandlers(db: Database.Database): void {
 
   ipcMain.handle(IpcChannels.getOurClub, async () => getOurClub(db));
 
-  ipcMain.handle(IpcChannels.setOurClub, async (_event, club: string) => setOurClub(db, club));
+  // The renderer is trusted but IPC carries anything: a non-string would
+  // otherwise fail inside tidyClubName with a technical English message.
+  ipcMain.handle(IpcChannels.setOurClub, async (_event, club: unknown) => {
+    if (typeof club !== 'string') {
+      throw new Error("Le nom du club n'est pas valide.");
+    }
+    return setOurClub(db, club);
+  });
 }

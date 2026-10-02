@@ -6,12 +6,13 @@
 import { useState } from 'react';
 import { Download, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { readableClubName } from '@/lib/ui-labels';
 
 type BackupState =
   | { step: 'idle' }
   | { step: 'busy' }
   | { step: 'export-success'; path: string }
-  | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number }
+  | { step: 'preview'; meetingCount: number; swimmerCount: number; currentMeetingCount: number; ourClub: string | null }
   | { step: 'import-success'; meetingsRemoved: number; meetingsImported: number; swimmersImported: number; safetyCopyPath: string | null }
   | { step: 'error'; error: string };
 
@@ -94,6 +95,8 @@ export function BackupSection({ onRestored }: BackupSectionProps): JSX.Element {
             {' '}
             (comptées par catégorie).
           </p>
+          {/* The restore also replaces the club highlighted everywhere: say which one, so a surprise shows before confirming. */}
+          {state.ourClub && <p className="text-sm text-ink">Notre club{' '}:{readableClubName(state.ourClub)}</p>}
           <p className="text-sm font-medium text-error">
             La restauration remplace toute la base actuelle par le contenu de ce fichier
             {state.currentMeetingCount > 0 &&

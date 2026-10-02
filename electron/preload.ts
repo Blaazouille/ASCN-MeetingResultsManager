@@ -46,7 +46,7 @@ const electronAPI = {
     ipcRenderer.invoke(IpcChannels.backupExport),
   importBackup: (): Promise<{
     success: boolean;
-    preview?: { meetingCount: number; swimmerCount: number; currentMeetingCount: number };
+    preview?: { meetingCount: number; swimmerCount: number; currentMeetingCount: number; ourClub: string | null };
     error?: string;
   }> => ipcRenderer.invoke(IpcChannels.backupImport),
   confirmImport: (): Promise<{ success: boolean; result?: RestoreResult; safetyCopyPath?: string | null; error?: string }> =>

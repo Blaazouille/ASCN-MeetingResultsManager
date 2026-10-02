@@ -1,6 +1,6 @@
 /**
  * Responsabilité : donne à tout composant le nom de « Notre club » configuré dans Paramètres, et le met à jour partout quand il change.
- * Appelé par : Sidebar.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx, OurClubSection.tsx, SettingsPage.tsx, ImportPage.tsx et les hooks d'export.
+ * Appelé par : RankingPage.tsx, Sidebar.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx, OurClubSection.tsx, SettingsPage.tsx, ImportPage.tsx et les hooks d'export.
  * Suppression casserait : la mise en avant du club choisi (tableaux, exports, cérémonie, barre latérale).
  */
 import { useSyncExternalStore } from 'react';
@@ -12,12 +12,23 @@ import { DEFAULT_OUR_CLUB } from '@/lib/our-club';
 // Paramètres must show everywhere at once. useSyncExternalStore is React's
 // own tool for a store that lives outside components.
 let ourClub = DEFAULT_OUR_CLUB;
-let loadStarted = false;
+// `loaded`: the stored value has been read or written once. Until then a
+// failed read is retried by the next screen that subscribes, rather than
+// leaving the default on screen for the whole session.
+let loaded = false;
+let loading = false;
+let loadFailed = false;
 const listeners = new Set<() => void>();
+
+function notify(): void {
+  listeners.forEach((listener) => listener());
+}
 
 function publish(value: string): void {
   ourClub = value;
-  listeners.forEach((listener) => listener());
+  loaded = true;
+  loadFailed = false;
+  notify();
 }
 
 /**
@@ -30,6 +41,8 @@ export async function reloadOurClub(): Promise<void> {
     publish(await window.electronAPI.getOurClub());
   } catch (error) {
     console.error('Our club setting unreadable, previous value kept:', error);
+    loadFailed = true;
+    notify();
   }
 }
 
@@ -42,9 +55,11 @@ function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   // Loaded once, by the first screen that needs it. Until then the default
   // shows, which is also the stored value on every install that never changed it.
-  if (!loadStarted) {
-    loadStarted = true;
-    void reloadOurClub();
+  if (!loaded && !loading) {
+    loading = true;
+    void reloadOurClub().finally(() => {
+      loading = false;
+    });
   }
   return () => listeners.delete(listener);
 }
@@ -52,4 +67,13 @@ function subscribe(listener: () => void): () => void {
 /** The configured « Notre club » name, as stored (compare clubs with isOurClub, never with ===). */
 export function useOurClub(): string {
   return useSyncExternalStore(subscribe, () => ourClub);
+}
+
+/**
+ * True while the stored club could never be read: the screens then show the
+ * default club, which may not be the one chosen. A later failure keeps the
+ * value already read, so it isn't reported.
+ */
+export function useOurClubUnread(): boolean {
+  return useSyncExternalStore(subscribe, () => loadFailed && !loaded);
 }

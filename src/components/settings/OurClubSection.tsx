@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Save } from 'lucide-react';
 import type { Meeting } from '@/lib/db';
 import { ourClubChoices } from '@/lib/our-club';
-import { saveOurClub, useOurClub } from '@/hooks/use-our-club';
+import { saveOurClub, useOurClub, useOurClubUnread } from '@/hooks/use-our-club';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { Button } from '@/components/ui/Button';
 
@@ -20,6 +20,7 @@ const FIELD_CLASS =
 
 export function OurClubSection({ meeting }: OurClubSectionProps): JSX.Element {
   const ourClub = useOurClub();
+  const unread = useOurClubUnread();
   // The list only makes sense once a file is imported; before that, or with no
   // meeting open, the volunteer types the name.
   const hasResults = meeting !== null && meeting.resultCount > 0;
@@ -100,6 +101,11 @@ export function OurClubSection({ meeting }: OurClubSectionProps): JSX.Element {
         </Button>
         {savedAt && <span className="text-sm text-success">Club enregistré.</span>}
       </div>
+      {unread && (
+        <p className="text-sm text-ink-muted">
+          Le club enregistré n'a pas pu être lu&nbsp;: {ourClub} est affiché par défaut. Rouvrez cet écran pour réessayer.
+        </p>
+      )}
       {error && <p role="alert" className="text-sm text-error">{error}</p>}
     </div>
   );

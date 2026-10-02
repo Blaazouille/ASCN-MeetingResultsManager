@@ -52,7 +52,7 @@ describe('our club in backups', () => {
   it('refuses a backup whose club is empty or not text', () => {
     for (const ourClub of ['', '   ', 42, null]) {
       expect(() => validateBackup({ ...writtenBackup(), ourClub })).toThrow(
-        'Format de backup invalide : ourClub doit être un nom de club non vide'
+        'Format de backup invalide : le club enregistré dans la sauvegarde est vide ou illisible'
       );
     }
   });
