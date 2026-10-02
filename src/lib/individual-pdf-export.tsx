@@ -6,8 +6,9 @@
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
-import { rankText } from './ui-labels';
-import type { PrintMeta } from './export-data';
+import { categoryShortLabel, rankText } from './ui-labels';
+import type { ExportMeta } from './export-data';
+import { individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
@@ -23,27 +24,24 @@ const styles = StyleSheet.create({
   year: { width: 46, textAlign: 'right' },
   club: { width: 150 },
   points: { width: 56, textAlign: 'right', fontWeight: 500 },
-  category: { width: 64, textAlign: 'right', color: '#5B6B7D' },
   headerCell: { fontSize: 8, textTransform: 'uppercase', color: '#5B6B7D' },
   footer: { marginTop: 24, fontSize: 9, color: '#5B6B7D', flexDirection: 'row', justifyContent: 'space-between' },
 });
 
 interface IndividualPdfDocumentProps {
-  meta: PrintMeta;
+  meta: ExportMeta;
   category: string;
   results: IndividualResult[];
 }
 
 function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumentProps): JSX.Element {
-  const showCategory = category === 'Tous';
   const tied = tiedRanks(results);
-  const subtitle = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{meta.meetingName}</Text>
-        <Text style={styles.subtitle}>Classement individuel — {subtitle}</Text>
+        <Text style={styles.subtitle}>Classement individuel — {categoryShortLabel(category)}</Text>
 
         {results.length === 0 ? (
           <Text style={{ fontSize: 11, color: '#5B6B7D', marginTop: 16 }}>Aucun résultat.</Text>
@@ -55,7 +53,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
               <Text style={[styles.headerCell, styles.year]}>Née</Text>
               <Text style={[styles.headerCell, styles.club]}>Club</Text>
               <Text style={[styles.headerCell, styles.points]}>Points</Text>
-              {showCategory && <Text style={[styles.headerCell, styles.category]}>Catégorie</Text>}
             </View>
             {results.map((r) => (
               <View
@@ -67,9 +64,6 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
                 <Text style={styles.year}>{r.birthyear}</Text>
                 <Text style={styles.club}>{r.club}</Text>
                 <Text style={styles.points}>{formatPoints(r.points)}</Text>
-                {showCategory && (
-                  <Text style={styles.category}>{r.category.replace(/^Classement\s+/i, '')}</Text>
-                )}
               </View>
             ))}
           </View>
@@ -83,13 +77,21 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
   );
 }
 
+/** Renders the PDF without downloading it, so tests can check it builds. */
+export async function buildIndividualPdfBlob(
+  meta: ExportMeta,
+  category: string,
+  results: IndividualResult[]
+): Promise<Blob> {
+  return pdf(<IndividualPdfDocument meta={meta} category={category} results={results} />).toBlob();
+}
+
+/** Builds the individual ranking PDF and triggers a browser download. */
 export async function exportIndividualToPdf(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: IndividualResult[]
 ): Promise<void> {
-  const blob = await pdf(<IndividualPdfDocument meta={meta} category={category} results={results} />).toBlob();
-  const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
-  downloadBlob(blob, `classement-individuel-${slug}-${today}.pdf`);
+  const blob = await buildIndividualPdfBlob(meta, category, results);
+  downloadBlob(blob, individualExportFileName(category, 'pdf'));
 }

@@ -55,13 +55,11 @@ Implémenté dans `src/lib/individual-ranking.ts` (`computeCategoryRanking`, `de
 
 ```
 1. Garder les lignes importées dont la catégorie est celle de l'onglet actif
-2. Détecter le genre depuis le NOM DE LA CATÉGORIE (detectGender) :
-   « dames » → F, « messieurs » → M, sinon (Mixte) → aucun genre
-3. Trier par points DESC
-4. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant)
+2. Trier par points DESC
+3. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant)
 ```
 
-Le genre n'est jamais déduit du prénom : seule la catégorie fait foi.
+`detectGender` déduit le genre du NOM DE LA CATÉGORIE (« dames » → F, « messieurs » → M, sinon (Mixte) → aucun genre) pour accorder les libellés du détail nageur et du palmarès (« Née en », « La Doyenne »). Le genre n'est jamais déduit du prénom : seule la catégorie fait foi.
 
 Chaque catégorie est classée à partir de ses propres lignes : un nageur présent en Dames et en Mixte apparaît dans les deux onglets, avec ses points de chacune. Dédoublonner entre catégories (en gardant le meilleur score) vidait l'onglet Mixte, dont les points sont plus bas que ceux de Dames et Messieurs.
 

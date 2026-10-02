@@ -3,8 +3,8 @@
  * Appelé par : DeleteMeetingDialog.tsx, ImportGuardDialog.tsx.
  * Suppression casserait : la navigation clavier des modales (Tab sortirait de la modale, le focus serait perdu à la fermeture).
  */
-import { useEffect, useRef, type RefObject } from 'react';
-import { wrapFocusIndex } from '@/lib/focus-trap';
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import { restoreFocus, wrapFocusIndex } from '@/lib/focus-trap';
 
 const FOCUSABLE =
   'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), textarea:not([disabled])';
@@ -41,12 +41,16 @@ export function useModalKeyboard(
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [containerRef, escapeEnabled]);
 
-  // Give focus back to the button that opened the modal. It may be gone by then
-  // (e.g. its meeting was just deleted), hence the isConnected check.
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    return () => {
-      if (opener?.isConnected) opener.focus();
-    };
-  }, []);
+  // The opener must be read during the first render: the modal's `autoFocus`
+  // button grabs focus in React's commit phase, before any effect (even a
+  // layout effect of this component, which runs after its children's) could
+  // read document.activeElement — it would only see « Annuler ». A lazy
+  // useState runs once, at that first render; a plain useRef initialiser would
+  // re-read the DOM on every render.
+  const [opener] = useState<HTMLElement | null>(() =>
+    document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
+  // containerRef is read at cleanup time on purpose: React has detached it (null)
+  // by then on a real close, but not during StrictMode's simulated unmount.
+  useEffect(() => () => restoreFocus(opener, containerRef.current), [opener, containerRef]);
 }
