@@ -50,6 +50,8 @@ export function BackupConfigSection(): JSX.Element {
 
   async function handleSave(): Promise<void> {
     setError(null);
+    // A failed save must not leave the previous « Configuration enregistrée. » next to the error.
+    setSavedAt(null);
     try {
       const result = await window.electronAPI.setBackupConfig({ backupDir, maxBackups });
       if (result.success) {
