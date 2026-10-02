@@ -32,6 +32,8 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
+**Pack de fin de meeting (« Tout exporter »)** : le bouton de l'écran Classement produit en une fois, dans un dossier `<nom du meeting> – <AAAA-MM-JJ>`, le PDF et l'Excel du classement par équipes, le PDF et l'Excel du classement individuel et le PDF du palmarès, pour toutes les catégories actives du meeting et le top N affiché. Les générateurs unitaires prennent une liste de sections (`ExportSection`, une par catégorie) : l'export d'une seule catégorie est une liste d'une section, le pack en passe une par catégorie active (une page PDF ou une feuille Excel chacune), donc la mise en page est la même. La liste des fichiers et le nom du dossier viennent d'une fonction pure (`planExportPack`, `src/lib/export-pack-plan.ts`). Les fichiers sont générés dans le renderer (`export-pack-files.ts`, là où tournent déjà `@react-pdf/renderer` et ExcelJS) puis leurs octets sont envoyés au main, seul à pouvoir écrire un dossier (`electron/export-pack-writer.ts`). Le dossier est créé avec `mkdir` sans `recursive` : s'il existe déjà, l'écriture passe à « (2) », « (3) »… et un pack précédent n'est jamais écrasé. Chaque fichier est généré puis écrit séparément : un échec n'empêche pas les autres, et les fichiers manquants sont listés avec leur cause. Le main ne fait pas confiance à ce qui traverse le bridge (`createExportPackSession`) : le dossier parent est celui choisi dans son propre dialogue et mémorisé côté main (le renderer n'envoie jamais de chemin, et chaque pack demande un nouveau choix), le nom du dossier repasse par `safeFolderName` (caractères interdits par Windows retirés, nom du meeting limité à 100 caractères pour rester sous MAX_PATH), seuls les cinq noms de fichiers prévus sont écrits (`isPackFileName`), avec `{ flag: 'wx' }` pour ne jamais remplacer un fichier.
+
 ## Meeting d'entraînement (issue #28)
 
 Un meeting « Entraînement » (`meeting.is_demo = 1`) permet de répéter tout le parcours avant le jour J sans toucher aux vrais meetings.
@@ -40,7 +42,7 @@ Un meeting « Entraînement » (`meeting.is_demo = 1`) permet de répéter tout 
 - **Création** : canal `meeting:createDemo` → le main lit le fichier, le parse avec `parseCsv` (le vrai parseur) et appelle `resetDemoMeeting` (`src/lib/demo-meeting.ts`), qui supprime l'ancien meeting d'entraînement et en crée un nouveau dans une seule transaction : il n'y en a jamais qu'un.
 - **Téléchargement** : canal `meeting:getDemoCsv` → octets bruts du fichier, téléchargés par le renderer (`downloadBlob`) pour s'exercer au glisser-déposer.
 - **Sauvegardes** : exclu de `exportDatabase` (donc des sauvegardes automatiques, de l'export manuel et de la copie avant restauration). Un import dans ce meeting n'écrit pas de sauvegarde automatique (`isDemoMeeting` dans le handler `import:csv`) : chaque répétition ferait sinon sortir une vraie sauvegarde de la rotation.
-- **Exports** : `buildExportMeta` renseigne `notice` (« EXEMPLE — non officiel ») pour ce meeting. Les trois PDF (équipes, individuel, déroulé de cérémonie) l'impriment au-dessus du titre via `PdfExportNotice` (`pdf-export-notice.tsx`), les deux Excel en première ligne via `addExportNotice` (`export-data.ts`). Couleur unique : `EXPORT_NOTICE_COLOR`.
+- **Exports** : `buildExportMeta` renseigne `notice` (« EXEMPLE — non officiel ») pour ce meeting. Les PDF (équipes, individuel, palmarès, déroulé de cérémonie) l'impriment au-dessus du titre de chaque page via `PdfExportNotice` (`pdf-export-notice.tsx`), les Excel en première ligne de chaque feuille via `addExportNotice` (`export-data.ts`) ; le pack « Tout exporter » réutilise ces générateurs, donc ses 5 fichiers la portent aussi. Couleur unique : `EXPORT_NOTICE_COLOR`.
 - **Écran Import** : sur ce meeting, un avertissement rappelle que les résultats ne sont ni officiels ni sauvegardés.
 
 ## Sauvegarde et restauration (Phase 9)
@@ -91,6 +93,9 @@ Canaux IPC de `electron/ipc-channels.ts` :
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
+- `export:choosePackDir` — ouvre un dialogue de choix de dossier sur `Documents/MDLM Ranking/Exports` (créé si besoin) et mémorise côté main le dossier choisi ; renvoie `{ success: true, chosen }` (`chosen` vaut `false` si le bénévole annule) ou `{ success: false, error }`
+- `export:writePack` — reçoit le nom du dossier du pack et les fichiers (aucun chemin : le parent est celui mémorisé par `export:choosePackDir`, refus si aucun n'a été choisi) ; les fichiers sont `{ fileName, data: Uint8Array }` ; crée un dossier unique et y écrit chaque fichier ; renvoie `{ success: true, folderPath, failed }` (fichiers en échec avec leur cause) ou `{ success: false, error }` si le dossier n'a pas pu être créé
+- `export:openPackFolder` — ouvre dans l'explorateur (`shell.openPath`) un dossier écrit par `export:writePack` pendant la session, et aucun autre chemin
 - `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde ; renvoie `{ success: true, path }` (`path` vaut `null` si le bénévole annule) ou `{ success: false, error }` si le dialogue échoue, pour ne pas confondre une erreur avec une annulation
 
 ## Configuration Electron
@@ -119,6 +124,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
 │   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation (sauf meeting d'entraînement)
 │   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
+│   ├── export-pack-writer.ts      # Écriture du pack « Tout exporter » (dossier unique, échec partiel)
 │   ├── auto-updater.ts            # Vérification et téléchargement des mises à jour
 │   └── update-state.ts            # Statut de la dernière vérification et journal borné (userData)
 ├── src/
@@ -154,6 +160,9 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── excel-export.ts        # Excel du classement par équipes
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
+│   │   ├── palmares-pdf-export.tsx     # PDF du palmarès des rigolos (pack « Tout exporter »)
+│   │   ├── export-pack-plan.ts    # Dossier et liste des fichiers du pack « Tout exporter » (fonction pure)
+│   │   ├── export-pack-files.ts   # Génération de chaque fichier du pack à partir des générateurs unitaires
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
 │   │   ├── export-feedback.ts     # Messages de succès et d'échec des exports PDF/Excel
 │   │   ├── backup-config-messages.ts # Messages d'erreur de la configuration des sauvegardes automatiques
@@ -174,6 +183,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-ceremony-export.ts # Impression PDF du déroulé de cérémonie
 │   │   ├── use-ceremony-shortcuts.ts # Raccourcis clavier du déroulé (← → espace), interceptés hors champs et modales
 │   │   ├── use-export-status.ts   # État commun des exports (en cours, succès, échec)
+│   │   ├── use-export-pack.ts     # « Tout exporter » : dossier, génération, écriture, ouverture
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
 │   │   ├── use-auto-update.ts     # Notification de mise à jour téléchargée
@@ -185,7 +195,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice,
 │   │   │                          # DemoImportWarning
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ComparisonUnavailableNote,
+│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection, UpdateSection

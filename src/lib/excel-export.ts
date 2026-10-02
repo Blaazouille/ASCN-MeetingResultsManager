@@ -1,12 +1,12 @@
 /**
- * Responsabilité : génère et télécharge le classeur Excel du classement par équipes.
- * Appelé par : use-ranking-export.ts (bouton "Export Excel" de RankingPage).
- * Suppression casserait : l'export Excel du classement.
+ * Responsabilité : génère et télécharge le classeur Excel du classement par équipes (une feuille par catégorie).
+ * Appelé par : use-ranking-export.ts (bouton "Export Excel" de RankingPage), export-pack-files.ts (« Tout exporter »).
+ * Suppression casserait : l'export Excel du classement et le pack de fin de meeting.
  */
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
-import type { ExportMeta } from './export-data';
+import type { ExportMeta, ExportSection } from './export-data';
 import { addExportNotice, excelSheetName, slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
@@ -16,15 +16,7 @@ function formatSwimmerList(team: TeamResult): string {
   return team.swimmers.map((swimmer) => `${swimmer.lastname} ${swimmer.firstname}`).join(', ');
 }
 
-export async function buildRankingWorkbookBuffer(
-  meta: ExportMeta,
-  category: string,
-  results: TeamResult[]
-): Promise<ArrayBuffer> {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = meta.meetingName;
-  workbook.created = new Date();
-
+function addRankingSheet(workbook: ExcelJS.Workbook, meta: ExportMeta, { category, results }: ExportSection<TeamResult>): void {
   const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
@@ -49,7 +41,16 @@ export async function buildRankingWorkbookBuffer(
   }
 
   addExportNotice(sheet, meta);
+}
 
+/** One sheet per section: the single-category export and the full-meeting pack share one layout. */
+export async function buildRankingWorkbookBuffer(meta: ExportMeta, sections: ExportSection<TeamResult>[]): Promise<ArrayBuffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = meta.meetingName;
+  workbook.created = new Date();
+  for (const section of sections) {
+    addRankingSheet(workbook, meta, section);
+  }
   return workbook.xlsx.writeBuffer();
 }
 
@@ -59,7 +60,7 @@ export async function exportRankingToExcel(
   category: string,
   results: TeamResult[]
 ): Promise<void> {
-  const buffer = await buildRankingWorkbookBuffer(meta, category, results);
+  const buffer = await buildRankingWorkbookBuffer(meta, [{ category, results }]);
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });

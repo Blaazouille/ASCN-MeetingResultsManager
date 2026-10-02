@@ -1,5 +1,5 @@
 /**
- * Responsabilité : vérifie que tout export (PDF/Excel, équipes/individuel, déroulé de cérémonie) du meeting d'entraînement porte la mention « EXEMPLE — non officiel », et aucun export d'un vrai meeting.
+ * Responsabilité : vérifie que tout export (PDF/Excel, équipes/individuel, déroulé de cérémonie, pack « Tout exporter ») du meeting d'entraînement porte la mention « EXEMPLE — non officiel », et aucun export d'un vrai meeting.
  * Appelé par : Vitest.
  * Suppression casserait : le garde-fou qui empêche une feuille d'exemple de passer pour des résultats officiels.
  */
@@ -17,6 +17,8 @@ import { buildIndividualPdfBlob } from '../src/lib/individual-pdf-export';
 import { buildIndividualWorkbookBuffer } from '../src/lib/individual-excel-export';
 import { buildCeremonyPdfBlob } from '../src/lib/ceremony-pdf-export';
 import { buildCeremonyScript } from '../src/lib/ceremony-script';
+import { buildPackFile } from '../src/lib/export-pack-files';
+import { planExportPack } from '../src/lib/export-pack-plan';
 
 const BASE_MEETING: Meeting = {
   id: 1,
@@ -86,13 +88,13 @@ describe('PDF exports of the training meeting', () => {
   it('print the notice on the team ranking, and not on a real meeting', async () => {
     const results = computeTeamRanking(ROWS, { category: CATEGORY, topN: 5 });
 
-    expect(await pdfText(await buildRankingPdfBlob(buildExportMeta(DEMO), CATEGORY, results))).toContain(DEMO_EXPORT_NOTICE);
-    expect(await pdfText(await buildRankingPdfBlob(buildExportMeta(REAL), CATEGORY, results))).not.toContain('EXEMPLE');
+    expect(await pdfText(await buildRankingPdfBlob(buildExportMeta(DEMO), [{ category: CATEGORY, results }]))).toContain(DEMO_EXPORT_NOTICE);
+    expect(await pdfText(await buildRankingPdfBlob(buildExportMeta(REAL), [{ category: CATEGORY, results }]))).not.toContain('EXEMPLE');
   });
 
   it('print the notice on the individual ranking', async () => {
     const results = computeCategoryRanking(ROWS, CATEGORY);
-    const text = await pdfText(await buildIndividualPdfBlob(buildExportMeta(DEMO), CATEGORY, results));
+    const text = await pdfText(await buildIndividualPdfBlob(buildExportMeta(DEMO), [{ category: CATEGORY, results }]));
 
     expect(text).toContain(DEMO_EXPORT_NOTICE);
   });
@@ -108,7 +110,7 @@ describe('PDF exports of the training meeting', () => {
 describe('Excel exports of the training meeting', () => {
   it('open on the notice, above the unchanged team ranking table', async () => {
     const results = computeTeamRanking(ROWS, { category: CATEGORY, topN: 5 });
-    const sheet = await firstSheet(await buildRankingWorkbookBuffer(buildExportMeta(DEMO), CATEGORY, results));
+    const sheet = await firstSheet(await buildRankingWorkbookBuffer(buildExportMeta(DEMO), [{ category: CATEGORY, results }]));
 
     expect(sheet.getRow(1).getCell(1).value).toBe(DEMO_EXPORT_NOTICE);
     expect(sheet.getRow(2).getCell(1).value).toBe('Rang');
@@ -117,7 +119,7 @@ describe('Excel exports of the training meeting', () => {
 
   it('open on the notice above the individual ranking table', async () => {
     const results = computeCategoryRanking(ROWS, CATEGORY);
-    const sheet = await firstSheet(await buildIndividualWorkbookBuffer(buildExportMeta(DEMO), CATEGORY, results));
+    const sheet = await firstSheet(await buildIndividualWorkbookBuffer(buildExportMeta(DEMO), [{ category: CATEGORY, results }]));
 
     expect(sheet.getRow(1).getCell(1).value).toBe(DEMO_EXPORT_NOTICE);
     expect(sheet.getRow(2).getCell(1).value).toBe('Rang');
@@ -126,8 +128,41 @@ describe('Excel exports of the training meeting', () => {
 
   it('carry no notice for a real meeting', async () => {
     const results = computeTeamRanking(ROWS, { category: CATEGORY, topN: 5 });
-    const sheet = await firstSheet(await buildRankingWorkbookBuffer(buildExportMeta(REAL), CATEGORY, results));
+    const sheet = await firstSheet(await buildRankingWorkbookBuffer(buildExportMeta(REAL), [{ category: CATEGORY, results }]));
 
     expect(sheet.getRow(1).getCell(1).value).toBe('Rang');
+  });
+});
+
+describe('« Tout exporter » pack of the training meeting', () => {
+  const PACK_ROWS: RawSwimmerRow[] = [
+    ...ROWS,
+    { name: 'Classement Messieurs', place: 1, lastname: 'MARTIN', firstname: 'Paul', birthyear: 1990, nation: 'FRA', club: 'CN TEST', points: 800, comment: '' },
+  ];
+  const CATEGORIES = ['Classement Dames', 'Classement Messieurs'];
+  const packInput = (meeting: Meeting) => ({ meta: buildExportMeta(meeting), rows: PACK_ROWS, categories: CATEGORIES, topN: 5, minSwimmers: 0 });
+  const files = planExportPack(DEMO.name, CATEGORIES, new Date()).files;
+  const countNotices = (text: string): number => text.split(DEMO_EXPORT_NOTICE).length - 1;
+
+  it.each(files.filter((file) => file.fileName.endsWith('.pdf')))('prints the notice on every page of $fileName', async ({ kind }) => {
+    const bytes = await buildPackFile(kind, packInput(DEMO));
+    const text = await pdfText(new Blob([bytes]));
+    // One page per category, each opening on the notice.
+    expect(countNotices(text)).toBe(CATEGORIES.length);
+  });
+
+  it.each(files.filter((file) => file.fileName.endsWith('.xlsx')))('opens every sheet of $fileName on the notice', async ({ kind }) => {
+    const workbook = new ExcelJS.Workbook();
+    const bytes = await buildPackFile(kind, packInput(DEMO));
+    await workbook.xlsx.load(Buffer.from(bytes) as unknown as Parameters<ExcelJS.Xlsx['load']>[0]);
+    expect(workbook.worksheets).toHaveLength(CATEGORIES.length);
+    for (const sheet of workbook.worksheets) {
+      expect(sheet.getRow(1).getCell(1).value).toBe(DEMO_EXPORT_NOTICE);
+    }
+  });
+
+  it('carries no notice for a real meeting', async () => {
+    const text = await pdfText(new Blob([await buildPackFile('palmares-pdf', packInput(REAL))]));
+    expect(text).not.toContain('EXEMPLE');
   });
 });
