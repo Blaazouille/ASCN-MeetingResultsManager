@@ -15,7 +15,6 @@ export interface IndividualResult {
   birthyear: number;
   club: string;
   points: number;
-  gender: Gender;
 }
 
 export function detectGender(categoryName: string): Gender {
@@ -32,7 +31,6 @@ export function detectGender(categoryName: string): Gender {
  * keeping only the best row across categories emptied the Mixte tab.
  */
 export function computeCategoryRanking(rows: RawSwimmerRow[], category: string): IndividualResult[] {
-  const gender = detectGender(category);
   const inCategory = rows.filter((row) => row.name === category).sort((a, b) => b.points - a.points);
   const ranks = assignCompetitionRanks(inCategory, (row) => row.points);
   return inCategory.map((row, index) => ({
@@ -42,6 +40,5 @@ export function computeCategoryRanking(rows: RawSwimmerRow[], category: string):
     birthyear: row.birthyear,
     club: row.club,
     points: row.points,
-    gender,
   }));
 }

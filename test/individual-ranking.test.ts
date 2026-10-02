@@ -51,12 +51,6 @@ describe('computeCategoryRanking', () => {
     });
   });
 
-  it('assigns the gender of the category', () => {
-    expect(computeCategoryRanking(rows, 'Classement Dames').every((r) => r.gender === 'F')).toBe(true);
-    expect(computeCategoryRanking(rows, 'Classement Messieurs').every((r) => r.gender === 'M')).toBe(true);
-    expect(mixte.every((r) => r.gender === null)).toBe(true);
-  });
-
   it('is empty for a category absent from the rows', () => {
     expect(computeCategoryRanking(rows, 'Classement Inconnu')).toEqual([]);
   });
