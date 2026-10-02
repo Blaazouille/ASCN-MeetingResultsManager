@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { Folder, Save } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { backupConfigErrorMessage } from '@/lib/backup-config-messages';
 
 export function BackupConfigSection(): JSX.Element {
   const [backupDir, setBackupDir] = useState('');
@@ -14,34 +15,52 @@ export function BackupConfigSection(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void window.electronAPI.getBackupConfig().then((result) => {
-      if (result.success && result.config) {
-        setBackupDir(result.config.backupDir);
-        setMaxBackups(result.config.maxBackups);
-      } else if (!result.success) {
-        // loadBackupConfig can throw on a corrupted backup-config.json; fall
-        // back to the empty/default form state and surface the error rather
-        // than leaving an unhandled rejection.
-        setError(result.error ?? 'Erreur inconnue');
-      }
-    });
+    // Two failure paths, one outcome: loadBackupConfig can throw on a corrupted
+    // backup-config.json ({ success: false }), and the IPC call itself can
+    // reject. Either way the form keeps its defaults and says why, instead of
+    // an unhandled rejection and a form that silently looks reset.
+    void window.electronAPI
+      .getBackupConfig()
+      .then((result) => {
+        if (result.success && result.config) {
+          setBackupDir(result.config.backupDir);
+          setMaxBackups(result.config.maxBackups);
+        } else if (!result.success) {
+          setError(backupConfigErrorMessage('load', result.error));
+        }
+      })
+      .catch((err: unknown) => setError(backupConfigErrorMessage('load', err)));
   }, []);
 
   async function handleChooseDir(): Promise<void> {
-    const chosen = await window.electronAPI.chooseBackupDir();
-    if (chosen) {
-      setBackupDir(chosen);
-      setSavedAt(null);
+    setError(null);
+    try {
+      const result = await window.electronAPI.chooseBackupDir();
+      if (!result.success) {
+        setError(backupConfigErrorMessage('chooseDir', result.error));
+      } else if (result.path) {
+        setBackupDir(result.path);
+        setSavedAt(null);
+      }
+      // A success with no path means the volunteer cancelled: nothing to report.
+    } catch (err) {
+      setError(backupConfigErrorMessage('chooseDir', err));
     }
   }
 
   async function handleSave(): Promise<void> {
     setError(null);
-    const result = await window.electronAPI.setBackupConfig({ backupDir, maxBackups });
-    if (result.success) {
-      setSavedAt(Date.now());
-    } else {
-      setError(result.error ?? 'Erreur inconnue');
+    // A failed save must not leave the previous « Configuration enregistrée. » next to the error.
+    setSavedAt(null);
+    try {
+      const result = await window.electronAPI.setBackupConfig({ backupDir, maxBackups });
+      if (result.success) {
+        setSavedAt(Date.now());
+      } else {
+        setError(backupConfigErrorMessage('save', result.error));
+      }
+    } catch (err) {
+      setError(backupConfigErrorMessage('save', err));
     }
   }
 
@@ -88,7 +107,7 @@ export function BackupConfigSection(): JSX.Element {
         </Button>
         {savedAt && <span className="text-sm text-success">Configuration enregistrée.</span>}
       </div>
-      {error && <p className="text-sm text-error">Erreur : {error}</p>}
+      {error && <p role="alert" className="text-sm text-error">{error}</p>}
     </div>
   );
 }

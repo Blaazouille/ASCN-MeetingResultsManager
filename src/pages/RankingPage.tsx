@@ -13,13 +13,15 @@ import { useRankingExport } from '@/hooks/use-ranking-export';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { rankMovements } from '@/lib/import-diff';
-import { computeTeamRanking, resolveActiveCategories } from '@/lib/ranking-engine';
-import { categoryShortLabel } from '@/lib/ui-labels';
+import { computeTeamRanking, countClubsBelowThreshold, resolveActiveCategories } from '@/lib/ranking-engine';
+import { categoryShortLabel, unrankedClubsLabel } from '@/lib/ui-labels';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TieBanner } from '@/components/ranking/TieBanner';
 import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
+import { ExportFeedback } from '@/components/ranking/ExportFeedback';
+import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
 
 export default function RankingPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -31,22 +33,28 @@ export default function RankingPage(): JSX.Element {
     () => resolveActiveCategories(presentCategories, meetingState.currentMeeting?.activeCategories ?? null),
     [presentCategories, meetingState.currentMeeting]
   );
+  const minSwimmers = meetingState.currentMeeting?.minSwimmers ?? 0;
   const ranking = useRanking(rows, categories, {
     initialTopN: meetingState.currentMeeting?.defaultTopN,
-    minSwimmers: meetingState.currentMeeting?.minSwimmers,
+    minSwimmers,
   });
-  const { isExporting, error, exportPdf, exportExcel } = useRankingExport();
-  const previousRows = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
+  const { isExporting, error, notice, exportPdf, exportExcel } = useRankingExport();
+  const { rows: previousRows, failed: previousRowsFailed } = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
   // Same category, top N and threshold as the displayed ranking, or the arrows would compare different things.
   const movements = useMemo(
     () =>
       previousRows &&
       rankMovements(
-        computeTeamRanking(previousRows, { category: ranking.category, topN: ranking.topN, minSwimmers: meetingState.currentMeeting?.minSwimmers }),
+        computeTeamRanking(previousRows, { category: ranking.category, topN: ranking.topN, minSwimmers }),
         ranking.teamResults,
         (team) => team.club
       ),
-    [previousRows, ranking.category, ranking.topN, ranking.teamResults, meetingState.currentMeeting?.minSwimmers]
+    [previousRows, ranking.category, ranking.topN, ranking.teamResults, minSwimmers]
+  );
+  // computeTeamRanking drops these clubs silently: say so, or a volunteer looks for a club that seems lost.
+  const unrankedCount = useMemo(
+    () => countClubsBelowThreshold(rows, ranking.category, minSwimmers),
+    [rows, ranking.category, minSwimmers]
   );
 
   const meeting = meetingState.currentMeeting;
@@ -88,7 +96,11 @@ export default function RankingPage(): JSX.Element {
         search={search}
         onSearchChange={setSearch}
       />
-      {error && <p className="text-sm text-error">{error}</p>}
+      <ExportFeedback error={error} notice={notice} />
+      {unrankedCount > 0 && (
+        <p className="text-sm text-ink-muted">{unrankedClubsLabel(unrankedCount, minSwimmers)}</p>
+      )}
+      <ComparisonUnavailableNote show={previousRowsFailed} />
       <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={ranking.category} />
       <PodiumCards results={ranking.teamResults} />
       <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} movements={movements} />

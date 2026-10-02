@@ -1,5 +1,22 @@
 # Algorithmes
 
+## Lecture du fichier CSV : lignes écartées
+
+Implémenté dans `src/lib/csv-parser.ts` (`parseCsv`), `src/lib/csv-row.ts` (`readSwimmerRow`, une ligne) et `src/lib/csv-cells.ts` (une cellule). Chaque cas est signalé avec son numéro de ligne dans le fichier (ligne 1 = en-tête).
+
+| Cellule | Contenu | Effet |
+|---|---|---|
+| `points` | vide | Ligne ignorée, comptée dans `ignoredRowCount` (« Lignes sans points » dans « À savoir ») |
+| `points` | sans aucun chiffre (« N/A ») | **Import bloqué** : « Ligne N : points illisibles… ». Les points sont la donnée du classement : une cellule illisible signale un fichier qui n'est pas l'export attendu. |
+| `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne écartée ; le nageur est ajouté à `excludedSwimmers` (une seule fois même s'il est écarté de plusieurs catégories) |
+| `place` | vide ou pas un entier (« 2e ») | Ligne **gardée** avec `place: null` (rang `NULL` en base), avertissement simple ; les points comptent |
+
+Pourquoi l'année de naissance écarte la ligne : elle fait partie de l'identité du nageur, la clé `UNIQUE (meeting_id, category, lastname, firstname, birthyear, club)` de `swimmer_result`. Enregistrée à `NULL`, elle échapperait à cette clé (deux `NULL` ne sont jamais égaux en SQLite) et dupliquerait le nageur à chaque réimport. Bloquer tout l'import pour une ligne laisserait le bénévole sans aucun classement, alors qu'il ne peut pas corriger le fichier au bord du bassin. Les nageurs écartés sont donc nommés directement dans « À savoir » (« 2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement. »).
+
+Pourquoi la place ne l'écarte pas : elle ne fait partie d'aucune clé et n'est pas affichée (les rangs individuels sont recalculés à partir des points). Un rang absent est rangé après les autres à la lecture (`ORDER BY rank IS NULL, rank`).
+
+Colonnes absentes : sans colonne `place`, l'import se fait avec des rangs vides et un seul avertissement « Colonne manquante ». Sans colonne `points` ou `birthyear`, aucune ligne n'est exploitable : le fichier est refusé et l'erreur nomme la colonne (« Aucune ligne exploitable dans ce fichier (colonne absente : birthyear)… »).
+
 ## Classement par équipes
 
 Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
@@ -7,7 +24,7 @@ Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
 ```
 1. Filtrer les lignes où name === catégorie choisie (ex: "Classement Mixte")
 2. Grouper par club
-3. Exclure les clubs avec moins de nageurs que le seuil minSwimmers configuré (défaut : pas de seuil)
+3. Exclure les clubs avec moins de nageurs que le seuil minSwimmers configuré (défaut : pas de seuil) ; l'écran Classement indique combien de clubs sont ainsi exclus (`countClubsBelowThreshold`)
 4. Pour chaque club restant :
    a. Trier les nageurs par points DESC
    b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5 (issu du top N par défaut du meeting)

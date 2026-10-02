@@ -9,6 +9,7 @@ import {
   categoryShortLabel,
   clubCountLabel,
   countedSummary,
+  excludedSwimmersNotice,
   importChangeParts,
   formatGap,
   isDeleteConfirmed,
@@ -22,6 +23,7 @@ import {
   resultCountLabel,
   sinceImportLabel,
   swimmerCountLabel,
+  unrankedClubsLabel,
 } from '../src/lib/ui-labels';
 
 const NBSP = ' ';
@@ -139,6 +141,16 @@ describe('clubCountLabel', () => {
   });
 });
 
+describe('unrankedClubsLabel', () => {
+  it('says how many clubs are left out and why, with a non-breaking space before the colon', () => {
+    expect(unrankedClubsLabel(2, 3)).toBe(`2 clubs non classés${NBSP}: moins de 3 nageurs dans la catégorie`);
+  });
+
+  it('uses the singular for a single club', () => {
+    expect(unrankedClubsLabel(1, 4)).toBe(`1 club non classé${NBSP}: moins de 4 nageurs dans la catégorie`);
+  });
+});
+
 describe('swimmerCountLabel', () => {
   it('uses the singular for 0 and 1, the plural from 2', () => {
     expect(swimmerCountLabel(0)).toBe('0 nageur');
@@ -199,5 +211,19 @@ describe('import summary labels', () => {
       '1 club a changé de rang',
     ]);
     expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 0, clubsMoved: 0 })).toEqual([]);
+  });
+});
+
+describe('excludedSwimmersNotice', () => {
+  it('names one swimmer left out and says their points do not count', () => {
+    expect(excludedSwimmersNotice(['Bob MARTIN'])).toBe(
+      '1 nageur non importé (année de naissance vide ou illisible dans le fichier) : Bob MARTIN. Ses points ne comptent dans aucun classement.'
+    );
+  });
+
+  it('names several swimmers left out, in plural', () => {
+    expect(excludedSwimmersNotice(['Bob MARTIN', 'Eve DURAND'])).toBe(
+      '2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement.'
+    );
   });
 });

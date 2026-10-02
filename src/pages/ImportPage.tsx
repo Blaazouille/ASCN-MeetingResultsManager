@@ -3,7 +3,7 @@
  * Appelé par : App.tsx (route "import").
  * Suppression casserait : l'import de nouveaux fichiers CSV.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
@@ -11,12 +11,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
 import { StatTile } from '@/components/import/StatTile';
 import { ImportGuardDialog } from '@/components/import/ImportGuardDialog';
+import { ImportRemovalNotice } from '@/components/import/ImportRemovalNotice';
 import { ImportChanges } from '@/components/import/ImportChanges';
 import { Button } from '@/components/ui/Button';
 import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
-import { checkImportAgainstExisting, type ImportWarning } from '@/lib/import-check';
+import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '@/lib/import-check';
 import { summarizeImportChanges } from '@/lib/import-diff';
-import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
+import { importCardState } from '@/lib/import-card-state';
+import { categoryShortLabel, excludedSwimmersNotice, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
 import type { ImportOutcome } from '@/hooks/use-import';
 
@@ -25,12 +27,14 @@ const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
-  const { result, fileName, error, errorId, outcome, setOutcome, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
+  const { result, fileName, error, errorId, outcome, setOutcome, pending, setPending, handleFileAccepted, handleFileRejected } = importState;
+  const { isPersisting, setIsPersisting, persistError, setPersistError, reset: resetImport } = importState;
   const { refresh } = meetingState;
-  const [persistError, setPersistError] = useState<string | null>(null);
-  const [isPersisting, setIsPersisting] = useState(false);
-  const [pending, setPending] = useState<{ parsed: CsvParseResult; warnings: ImportWarning[] } | null>(null);
   const navigate = useNavigate();
+  const resultRef = useRef<HTMLElement>(null);
+  const browseRef = useRef<HTMLButtonElement>(null);
+  // Where focus goes once the inline notice is answered (the guard modal hands it back to its opener itself).
+  const focusAfterNotice = useRef<'result' | 'browse' | null>(null);
 
   const meeting = meetingState.currentMeeting;
   const meetingId = meeting?.id ?? null;
@@ -53,7 +57,10 @@ export default function ImportPage(): JSX.Element {
       let changes: ImportOutcome['changes'] = null;
       try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
-        await refresh();
+        // refresh() reports its own failure only on Accueil, hence the notice here.
+        if (!(await refresh())) {
+          found.push("Les résultats sont enregistrés, mais la liste des meetings n'a pas pu être rechargée : la barre latérale et l'Accueil peuvent afficher l'état d'avant l'import. Redémarrez l'application si cela persiste.");
+        }
         // No snapshot = first import of this meeting: nothing to compare with.
         const [snapshot, current] = await Promise.all([
           window.electronAPI.getImportSnapshot(meetingId),
@@ -72,7 +79,7 @@ export default function ImportPage(): JSX.Element {
       setOutcome({ changes, notices: found });
       setIsPersisting(false);
     },
-    [meetingId, meeting, refresh, setOutcome]
+    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError]
   );
 
   const handleAccepted = useCallback(
@@ -96,27 +103,36 @@ export default function ImportPage(): JSX.Element {
         setIsPersisting(false);
         return;
       }
-      if (warnings.some((warning) => warning.blocking)) {
+      if (importConfirmation(warnings) !== null) {
         setIsPersisting(false);
         setPending({ parsed, warnings });
         return;
       }
       await persist(parsed, warnings);
     },
-    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome]
+    [handleFileAccepted, meetingId, meeting, persist, isPersisting, setOutcome, setPending, setIsPersisting, setPersistError]
   );
 
   const confirmPending = (): void => {
     if (!pending) return;
     const { parsed, warnings } = pending;
+    if (importConfirmation(warnings) === 'removals') focusAfterNotice.current = 'result';
     setPending(null);
-    void persist(parsed, warnings.filter((warning) => !warning.blocking));
+    void persist(parsed, noticesAfterWrite(warnings));
   };
 
   const cancelPending = (): void => {
-    setPending(null);
+    if (pending && importConfirmation(pending.warnings) === 'removals') focusAfterNotice.current = 'browse';
     resetImport();
   };
+
+  // Runs once the notice has left the page and the result card (or the full drop zone) has replaced it.
+  useEffect(() => {
+    const target = focusAfterNotice.current;
+    if (target === null || pending !== null) return;
+    focusAfterNotice.current = null;
+    (target === 'result' ? resultRef : browseRef).current?.focus();
+  }, [pending, result]);
 
   const categoryCounts = useMemo(() => (result ? countRowsByCategory(result.rows) : []), [result]);
 
@@ -126,10 +142,16 @@ export default function ImportPage(): JSX.Element {
 
   // hasResult drives the card's visibility and the "résultats déjà importés" banner;
   // it stays true across the whole save window so the two don't appear together.
-  const hasResult = result !== null && persistError === null && pending === null;
-  // isDone only turns true once the save has genuinely finished — used to gate the
-  // success (green/check) treatment so a volunteer can't mistake "still saving" for "done".
-  const isDone = hasResult && !isPersisting;
+  // isDone gates the green check: only a finished save, never a file merely read.
+  const card = importCardState({
+    hasFile: result !== null,
+    isPending: pending !== null,
+    hasPersistError: persistError !== null,
+    isPersisting,
+    hasOutcome: outcome !== null,
+  });
+  const hasResult = card !== 'hidden';
+  const isDone = card === 'done';
 
   return (
     <div className="flex flex-col gap-6">
@@ -141,8 +163,9 @@ export default function ImportPage(): JSX.Element {
 
       {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
-      {hasResult && (
-        <section aria-label="Résultat de l'import" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-8 py-7 shadow-card">
+      {/* result is re-checked only so TypeScript narrows it: hasResult already implies it. */}
+      {hasResult && result && (
+        <section ref={resultRef} tabIndex={-1} aria-label="Résultat de l'import" className="flex flex-col gap-6 rounded-xl bg-surface-raised px-8 py-7 shadow-card">
           <div className="flex flex-wrap items-center gap-5">
             <span
               className={cn(
@@ -181,7 +204,7 @@ export default function ImportPage(): JSX.Element {
             </StatTile>
           </div>
 
-          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
+          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.excludedSwimmers.length > 0 || result.duplicateRowCount > 0) && (
             <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
               <p className="font-semibold">À savoir</p>
               <ul className="list-disc space-y-1 pl-5">
@@ -189,6 +212,7 @@ export default function ImportPage(): JSX.Element {
                   <li key={notice}>{notice}</li>
                 ))}
                 {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}
+                {result.excludedSwimmers.length > 0 && <li>{excludedSwimmersNotice(result.excludedSwimmers)}</li>}
                 {result.duplicateRowCount > 0 && <li>Nageurs en double dans une catégorie (seul le dernier est gardé)&nbsp;: {result.duplicateRowCount}.</li>}
               </ul>
             </div>
@@ -223,9 +247,21 @@ export default function ImportPage(): JSX.Element {
         </p>
       )}
 
-      {pending && <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />}
+      {pending &&
+        (importConfirmation(pending.warnings) === 'guard' ? (
+          <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />
+        ) : (
+          <ImportRemovalNotice fileName={fileName} warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />
+        ))}
 
-      <DropZone compact={hasResult} error={error} errorId={errorId} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
+      <DropZone
+        compact={hasResult}
+        error={error}
+        errorId={errorId}
+        browseRef={browseRef}
+        onFileAccepted={handleAccepted}
+        onFileRejected={handleFileRejected}
+      />
     </div>
   );
 }

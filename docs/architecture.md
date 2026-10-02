@@ -28,7 +28,7 @@ Le parseur CSV (`src/lib/csv-parser.ts`) et le moteur de calcul (`src/lib/rankin
 
 Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/lib/db.ts`) et enregistre les handlers IPC (`electron/ipc-handlers.ts`). Le **renderer** (React) n'accède jamais directement à SQLite : il passe par l'API exposée dans `electron/preload.ts` via `contextBridge`, sur la fenêtre globale `window.electronAPI`. Les noms de canaux sont centralisés dans `electron/ipc-channels.ts` pour éviter toute divergence entre les deux côtés du bridge.
 
-**Mouvements après un réimport** : `insertSwimmerResults` range, dans la même transaction et avant toute écriture, les lignes existantes dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import). Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
+**Mouvements après un réimport** : `insertSwimmerResults` lit les lignes existantes avant toute écriture et, dans la même transaction, les range dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import qui a changé quelque chose). Un import qui laisse toutes les lignes identiques (même fichier redéposé) garde l'instantané en place, sinon flèches et résumé compareraient l'état actuel avec lui-même. Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
@@ -80,7 +80,7 @@ Canaux IPC de `electron/ipc-channels.ts` :
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
-- `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde
+- `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde ; renvoie `{ success: true, path }` (`path` vaut `null` si le bénévole annule) ou `{ success: false, error }` si le dialogue échoue, pour ne pas confondre une erreur avec une annulation
 
 ## Configuration Electron
 
@@ -115,6 +115,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── App.tsx                    # Routeur principal
 │   ├── lib/                       # Logique pure, indépendante de React
 │   │   ├── csv-parser.ts          # Parseur CSV FFN extraNat
+│   │   ├── csv-cells.ts           # Lecture des cellules numériques (points, place, année de naissance)
+│   │   ├── csv-row.ts             # Lecture et validation d'une ligne du CSV (gardée, ignorée ou écartée)
 │   │   ├── ranking-engine.ts      # Classement par équipes
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
@@ -130,6 +132,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── db.ts                  # Opérations CRUD SQLite
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
+│   │   ├── import-card-state.ts   # Carte de l'écran Import : masquée, en cours ou importé (jamais de coche sans enregistrement)
 │   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
 │   │   ├── backup.ts              # Export/restauration complète de la base en JSON
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
@@ -139,6 +142,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
+│   │   ├── export-feedback.ts     # Messages de succès et d'échec des exports PDF/Excel
+│   │   ├── backup-config-messages.ts # Messages d'erreur de la configuration des sauvegardes automatiques
 │   │   ├── focus-trap.ts          # Focus des modales : Tab suivant, retour au déclencheur
 │   │   ├── update-status.ts       # Statut de la dernière vérification de mise à jour et libellés français
 │   │   ├── update-log.ts          # Ligne du journal des mises à jour et troncature aux 200 dernières lignes
@@ -155,6 +160,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-ceremony.ts        # Écran Cérémonie : préparation, déroulé figé, progression, confirmation de sortie
 │   │   ├── use-ceremony-export.ts # Impression PDF du déroulé de cérémonie
 │   │   ├── use-ceremony-shortcuts.ts # Raccourcis clavier du déroulé (← → espace), interceptés hors champs et modales
+│   │   ├── use-export-status.ts   # État commun des exports (en cours, succès, échec)
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
 │   │   ├── use-auto-update.ts     # Notification de mise à jour téléchargée
@@ -162,9 +168,10 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
 │   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
-│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
+│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
+│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ComparisonUnavailableNote,
+│   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection, UpdateSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge

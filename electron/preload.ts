@@ -55,7 +55,9 @@ const electronAPI = {
     ipcRenderer.invoke(IpcChannels.backupGetConfig),
   setBackupConfig: (config: BackupConfig): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IpcChannels.backupSetConfig, config),
-  chooseBackupDir: (): Promise<string | null> => ipcRenderer.invoke(IpcChannels.backupChooseDir),
+  // path is null when the volunteer cancels the dialog; success is false only on a real failure.
+  chooseBackupDir: (): Promise<{ success: boolean; path?: string | null; error?: string }> =>
+    ipcRenderer.invoke(IpcChannels.backupChooseDir),
   // Auto-update
   onUpdateDownloaded: (callback: () => void): (() => void) => {
     const listener = (): void => callback();

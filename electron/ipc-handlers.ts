@@ -161,11 +161,11 @@ export function registerIpcHandlers(db: Database.Database): void {
   ipcMain.handle(IpcChannels.backupChooseDir, async () => {
     try {
       const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
-      return result.canceled ? null : (result.filePaths[0] ?? null);
-    } catch {
-      // Contract matches openFileDialog: string | null, no {success, error}
-      // shape, so a failure just resolves to null like a cancel.
-      return null;
+      return { success: true, path: result.canceled ? null : (result.filePaths[0] ?? null) };
+    } catch (error) {
+      // {success, error} like the other backup handlers, not a bare null: a
+      // dialog that fails to open must not look like the volunteer cancelling.
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 
