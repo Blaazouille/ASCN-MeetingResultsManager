@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCsv } from '../src/lib/csv-parser';
-import {
-  computeIndividualRanking,
-  detectGender,
-  filterByCategory,
-} from '../src/lib/individual-ranking';
+import { computeCategoryRanking, detectGender } from '../src/lib/individual-ranking';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
@@ -33,63 +29,36 @@ describe('detectGender', () => {
   });
 });
 
-describe('computeIndividualRanking', () => {
+describe('computeCategoryRanking', () => {
   const rows = loadRows();
-  const results = computeIndividualRanking(rows);
+  const mixte = computeCategoryRanking(rows, 'Classement Mixte');
 
-  it('returns results sorted by points descending', () => {
-    for (let i = 1; i < results.length; i++) {
-      expect(results[i]!.points).toBeLessThanOrEqual(results[i - 1]!.points);
-    }
+  it('lists every swimmer of the category, not only those whose best score is there', () => {
+    expect(mixte).toHaveLength(rows.filter((r) => r.name === 'Classement Mixte').length);
+    expect(mixte.every((r) => r.category === 'Classement Mixte')).toBe(true);
   });
 
-  it('ranks each swimmer 1 + the number of swimmers with strictly more points', () => {
-    results.forEach((result) => {
-      expect(result.rank).toBe(1 + results.filter((other) => other.points > result.points).length);
+  it('keeps a swimmer listed in two categories in both', () => {
+    const same = (a: { lastname: string; firstname: string; club: string }, b: typeof a): boolean =>
+      a.lastname === b.lastname && a.firstname === b.firstname && a.club === b.club;
+    const dames = computeCategoryRanking(rows, 'Classement Dames');
+    expect(dames.some((d) => mixte.some((m) => same(d, m)))).toBe(true);
+  });
+
+  it('sorts by points descending, ties sharing a rank', () => {
+    mixte.forEach((result, index) => {
+      if (index > 0) expect(result.points).toBeLessThanOrEqual(mixte[index - 1]!.points);
+      expect(result.rank).toBe(1 + mixte.filter((other) => other.points > result.points).length);
     });
   });
 
-  it('deduplicates swimmers across categories (keeps best score)', () => {
-    const keys = results.map(
-      (r) => `${r.lastname}|${r.firstname}|${r.birthyear}|${r.club}`
-    );
-    const unique = new Set(keys);
-    expect(keys.length).toBe(unique.size);
+  it('assigns the gender of the category', () => {
+    expect(computeCategoryRanking(rows, 'Classement Dames').every((r) => r.gender === 'F')).toBe(true);
+    expect(computeCategoryRanking(rows, 'Classement Messieurs').every((r) => r.gender === 'M')).toBe(true);
+    expect(mixte.every((r) => r.gender === null)).toBe(true);
   });
 
-  it('the top scorer has the highest points in the file', () => {
-    const allPoints = rows.map((r) => r.points);
-    expect(results[0]!.points).toBe(Math.max(...allPoints));
-  });
-
-  it('assigns gender based on category', () => {
-    const dames = results.filter((r) => r.gender === 'F');
-    const messieurs = results.filter((r) => r.gender === 'M');
-    expect(dames.length).toBeGreaterThan(0);
-    expect(messieurs.length).toBeGreaterThan(0);
-  });
-});
-
-describe('filterByCategory', () => {
-  const rows = loadRows();
-  const results = computeIndividualRanking(rows);
-
-  it('returns only swimmers from "Classement Dames"', () => {
-    const dames = filterByCategory(results, 'Classement Dames');
-    expect(dames.every((r) => r.category === 'Classement Dames')).toBe(true);
-    expect(dames.length).toBeGreaterThan(0);
-  });
-
-  it('returns only swimmers from "Classement Messieurs"', () => {
-    const messieurs = filterByCategory(results, 'Classement Messieurs');
-    expect(messieurs.every((r) => r.category === 'Classement Messieurs')).toBe(true);
-    expect(messieurs.length).toBeGreaterThan(0);
-  });
-
-  it('re-ranks filtered results within the category, ties sharing a rank', () => {
-    const dames = filterByCategory(results, 'Classement Dames');
-    dames.forEach((result) => {
-      expect(result.rank).toBe(1 + dames.filter((other) => other.points > result.points).length);
-    });
+  it('is empty for a category absent from the rows', () => {
+    expect(computeCategoryRanking(rows, 'Classement Inconnu')).toEqual([]);
   });
 });

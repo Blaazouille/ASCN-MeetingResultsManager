@@ -39,21 +39,19 @@ Les 38 clubs doivent correspondre exactement à `test/fixtures/expected-ranking.
 
 ## Classement individuel
 
-Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `detectGender`, `filterByCategory`).
+Implémenté dans `src/lib/individual-ranking.ts` (`computeCategoryRanking`, `detectGender`).
 
 ```
-1. Regrouper toutes les lignes importées du meeting (toutes catégories)
-2. Dédupliquer par (nom, prénom, année de naissance, club) : on garde la ligne aux points les plus élevés
-3. Détecter le genre depuis le NOM DE LA CATÉGORIE (detectGender) :
+1. Garder les lignes importées dont la catégorie est celle de l'onglet actif
+2. Détecter le genre depuis le NOM DE LA CATÉGORIE (detectGender) :
    « dames » → F, « messieurs » → M, sinon (Mixte) → aucun genre
-   Un nageur vu en Dames/Messieurs ET en Mixte garde le genre connu
-4. Trier par points DESC
-5. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant) — rang « global », toutes catégories confondues
+3. Trier par points DESC
+4. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant)
 ```
 
 Le genre n'est jamais déduit du prénom : seule la catégorie fait foi.
 
-L'écran n'affiche pas ce classement global tel quel : `filterByCategory` ne garde que les résultats dont la catégorie est celle de l'onglet actif et **recalcule le rang** (mêmes règles d'ex-aequo) sur cette sélection. Un nageur dédupliqué n'apparaît donc que dans la catégorie où il a obtenu son meilleur score.
+Chaque catégorie est classée à partir de ses propres lignes : un nageur présent en Dames et en Mixte apparaît dans les deux onglets, avec ses points de chacune. Dédoublonner entre catégories (en gardant le meilleur score) vidait l'onglet Mixte, dont les points sont plus bas que ceux de Dames et Messieurs.
 
 ### Badges de prix
 
@@ -67,7 +65,7 @@ Même logique que le classement par équipes : filtre insensible à la casse, re
 
 Implémenté dans `src/lib/fun-awards.ts` (`computeFunAwards`). Affiché par `PalmaresPage` (écran dédié `/palmares`), qui n'envoie à la fonction que les lignes de la catégorie de l'onglet actif.
 
-Les nageurs sont dédupliqués comme pour le classement individuel. Six prix, chacun omis si les données ne permettent pas de le calculer :
+Un nageur n'est compté qu'une fois (identité : nom, prénom, année de naissance, club). Six prix, chacun omis si les données ne permettent pas de le calculer :
 
 | Prix | Critère |
 |------|---------|
