@@ -101,6 +101,19 @@ describe('parseCsv — encoding and validation edge cases', () => {
     expect(result.warnings.some((w) => w.includes('apparaît deux fois'))).toBe(true);
   });
 
+  it('counts rows left out for missing points and rows repeating a swimmer', () => {
+    const csv = [
+      'name;place;lastname;firstname;birthyear;nation;club;points;comment',
+      'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;100 Pts;',
+      'Classement Mixte;2;DUPONT;Lea;1990;FRA;CN TEST;90 Pts;',
+      'Classement Mixte;3;MARTIN;Bob;1999;FRA;CN TEST;;',
+    ].join('\n');
+    const result = parseCsv(new TextEncoder().encode(csv));
+    expect(result.duplicateRowCount).toBe(1);
+    expect(result.ignoredRowCount).toBe(1);
+    expect(result.rows).toHaveLength(2);
+  });
+
   it('does not flag two different swimmers who share a name but differ in birth year and club', () => {
     const csv = [
       'name;place;lastname;firstname;birthyear;nation;club;points;comment',
@@ -155,5 +168,17 @@ describe('countRowsByCategory', () => {
         { category: 'Classement Mixte', count: 211 },
       ])
     );
+  });
+});
+
+describe('parseCsv without usable rows', () => {
+  it('rejects a header-only file instead of importing nothing', () => {
+    const csv = 'name;place;lastname;firstname;birthyear;nation;club;points;comment\n';
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
+  });
+
+  it('rejects a file whose rows all lack points', () => {
+    const csv = ['name;place;lastname;firstname;birthyear;nation;club;points;comment', 'Classement Mixte;1;DUPONT;Lea;1990;FRA;CN TEST;;'].join('\n');
+    expect(() => parseCsv(new TextEncoder().encode(csv))).toThrow('Aucune ligne exploitable');
   });
 });

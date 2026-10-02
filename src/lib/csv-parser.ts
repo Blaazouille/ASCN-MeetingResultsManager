@@ -41,6 +41,10 @@ export interface CsvParseResult {
   /** Delimiter actually used to split fields. */
   delimiter: string;
   warnings: string[];
+  /** Lines left out because their points cell was empty — they never reach the database. */
+  ignoredRowCount: number;
+  /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
+  duplicateRowCount: number;
 }
 
 export interface SwimmerRowsSummary {
@@ -183,6 +187,8 @@ export function parseCsv(
   // from `rows.length` (which counts entries, not people).
   const uniqueSwimmers = new Set<string>();
   const rows: RawSwimmerRow[] = [];
+  let ignoredRowCount = 0;
+  let duplicateRowCount = 0;
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
@@ -206,6 +212,7 @@ export function parseCsv(
     }
     if (!pointsRaw.trim()) {
       warnings.push(`Ligne ${rowNumber} : points manquants (ligne ignorée)`);
+      ignoredRowCount += 1;
       return;
     }
 
@@ -234,6 +241,7 @@ export function parseCsv(
     }
     if (seenInCategory.has(swimmerKey)) {
       warnings.push(`Ligne ${rowNumber} : « ${firstname} ${lastname} » apparaît deux fois dans « ${name} »`);
+      duplicateRowCount += 1;
     }
     seenInCategory.add(swimmerKey);
 
@@ -250,6 +258,11 @@ export function parseCsv(
     });
   });
 
+  // A header-only file, or one whose points column is missing, yields no row: importing it would change nothing yet look like a success.
+  if (rows.length === 0) {
+    throw new Error('Aucune ligne exploitable dans ce fichier. Est-ce bien un export de cotations extraNat ?');
+  }
+
   return {
     rows,
     categories,
@@ -258,5 +271,7 @@ export function parseCsv(
     encoding,
     delimiter: parsed.meta.delimiter,
     warnings,
+    ignoredRowCount,
+    duplicateRowCount,
   };
 }

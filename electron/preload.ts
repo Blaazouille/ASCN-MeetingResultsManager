@@ -26,7 +26,7 @@ const electronAPI = {
   deleteMeeting: (id: number): Promise<void> => ipcRenderer.invoke(IpcChannels.deleteMeeting, id),
 
   // Import
-  importCsv: (meetingId: number, rows: RawSwimmerRow[]): Promise<void> =>
+  importCsv: (meetingId: number, rows: RawSwimmerRow[]): Promise<{ backupError: string | null }> =>
     ipcRenderer.invoke(IpcChannels.importCsv, meetingId, rows),
   getSwimmerResults: (meetingId: number, category?: string): Promise<RawSwimmerRow[]> =>
     ipcRenderer.invoke(IpcChannels.getSwimmerResults, meetingId, category),

@@ -25,7 +25,11 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 - `PageHeader` (surtitre = nom du meeting, titre « Importer les résultats »).
 - Avant import : zone de dépôt (`DropZone`) drag & drop ou sélection, bouton « Parcourir… ». Si le meeting a déjà des résultats (nouvelle session sur un meeting existant), un rappel (`resultCountLabel`) s'affiche au-dessus.
+- Garde-fou avant écrasement : si le meeting a déjà des résultats, le fichier est comparé à la base **avant toute écriture** (`checkImportAgainstExisting`). Une alerte bloquante ouvre `ImportGuardDialog` (« Ce fichier est-il le bon ? », bouton « Annuler » par défaut, « Importer quand même ») : fichier identique au dernier import, catégorie qui perd plus de 20 % de ses nageurs, ou moins de la moitié de nageurs en commun. Une catégorie absente du fichier est signalée dans la modale mais ne la déclenche pas seule (elle est conservée). Annuler efface le fichier lu et ne touche pas la base.
+- Erreurs de fichier (non CSV, illisible, sans ligne exploitable) : affichées **dans la zone de dépôt** (`DropZone`, bordure et fond rouges, icône d'alerte, `role="alert"`) et la zone « tremble » à chaque nouvelle erreur, même si le message est identique (Web Animations API, désactivé si l'OS demande de réduire les animations).
+- Fichier sans ligne exploitable (en-tête seul, colonne `points` absente) : erreur « Aucune ligne exploitable… », rien n'est importé.
 - Après import réussi : carte de succès (coche verte, nom du fichier), trois tuiles de statistiques (`StatTile`) — nageurs, clubs, catégories (avec puces par catégorie, `categoryShortLabel`) — et un bouton principal « Voir le classement ». La zone de dépôt se réduit alors à une version compacte horizontale (« Nouvelle version du fichier ? »).
+- Encart « À savoir » (`role="status"`) sous la carte de succès : alertes non bloquantes (catégorie absente du fichier), échec de la sauvegarde automatique, lignes sans points non importées, nageurs en double dans une catégorie (seul le dernier est gardé), résumé des changements non calculable. Un échec après l'enregistrement n'est jamais présenté comme un échec d'import.
 - Après un réimport : encart « Depuis l'import du 27 sept. 2026 à 14 h 32 » (`ImportChanges`) avec « +12 nageurs · −1 nageur · 38 résultats modifiés · 3 clubs ont changé de rang » (lien « Voir le classement » si des clubs ont bougé), ou « Aucun changement par rapport à l'import précédent. ». Les clubs sont comptés pour la catégorie Mixte (sinon la première) avec le top N du meeting. Rien au premier import d'un meeting.
 - Avertissements et détails techniques (encodage, délimiteur, nombre de lignes) repliés dans un `<details>`, fermé par défaut.
 - Persistance des lignes parsées en base via IPC (`insertSwimmerResults`).
@@ -69,7 +73,7 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 ### Sauvegardes automatiques
 
 - Dossier de sauvegarde configurable (bouton parcourir), par défaut `Documents/MDLM Ranking/Sauvegardes` — un emplacement que le bénévole sait déjà retrouver, contrairement au dossier de données d'Electron. Ce choix est stocké dans `backup-config.json` sous `app.getPath('userData')`.
-- Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
-- Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur — tout défaut de sauvegarde est journalisé mais l'import continue.
+- Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5, minimum 3 : une valeur plus basse est relevée à 3) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
+- Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur : l'import continue et un échec de sauvegarde est signalé dans l'encart « À savoir » de l'écran Import.
 
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.

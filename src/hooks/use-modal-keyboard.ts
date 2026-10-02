@@ -1,6 +1,6 @@
 /**
  * Responsabilité : comportement clavier d'une modale — Échap, piège à focus (Tab), restitution du focus à la fermeture.
- * Appelé par : DeleteMeetingDialog.tsx.
+ * Appelé par : DeleteMeetingDialog.tsx, ImportGuardDialog.tsx.
  * Suppression casserait : la navigation clavier des modales (Tab sortirait de la modale, le focus serait perdu à la fermeture).
  */
 import { useEffect, useRef, type RefObject } from 'react';

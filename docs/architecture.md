@@ -58,7 +58,7 @@ SQLite (remplacement complet — tous les meetings existants sont supprimés ava
 
 ### Sauvegardes automatiques
 
-Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après chaque import CSV réussi (trigger point : fin de `insertSwimmerResults` dans `import:csv` handler). Elles ne bloquent jamais l'import — tout défaut de sauvegarde est journalisé et ignoré (`performAutoBackup` enveloppe le code dans un try/catch qui swallow les erreurs).
+Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après chaque import CSV réussi (fin de `insertSwimmerResults` dans le handler `import:csv`). `performAutoBackup` ne lève jamais mais renvoie le message d'erreur (ou `null`) : le handler `import:csv` le renvoie au renderer (`{ backupError }`), qui l'affiche dans l'encart « À savoir » ; la sauvegarde est donc attendue, plus différée. Le nombre de sauvegardes conservées est d'au moins 3 (`MIN_BACKUPS`) : un mauvais fichier réimporté plusieurs fois ne doit pas faire tourner toutes les bonnes sauvegardes. Pas de sauvegarde avant import : les résultats ne changent que par import, donc la sauvegarde du dernier import contient déjà l'état qu'un nouvel import va écraser. Elles ne bloquent jamais l'import : un échec est journalisé, renvoyé au renderer et affiché, mais l'import déjà écrit reste valide (`performAutoBackup` enveloppe le code dans un try/catch).
 
 La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans un fichier JSON distinct (`backup-config.json`) sous `app.getPath('userData')`, en dehors de SQLite. Cela garantit que la config survit à une restauration complète de la base (la restauration ne touche que les tables SQLite, pas le système de fichiers Electron).
 
@@ -111,6 +111,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
+│   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
 │   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
 │   │   ├── backup.ts              # Export/restauration complète de la base en JSON
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
@@ -137,7 +138,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
 │   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
-│   │   ├── import/                # DropZone, StatTile, ImportChanges
+│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection

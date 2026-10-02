@@ -66,17 +66,17 @@ export function BackupConfigSection(): JSX.Element {
         <input
           id="max-backups"
           type="number"
-          min={1}
+          min={3}
           value={maxBackups}
           onChange={(event) => {
-            // Clamp to a positive integer client-side: loadBackupConfig only
+            // Clamp to an integer of at least 3 (the floor saveBackupConfig enforces) client-side: loadBackupConfig only
             // self-heals non-positive/non-numeric values, not fractional ones,
             // and a fractional value would otherwise flow into rotateBackups.
-            // Number('') / Number('-') is NaN, which Math.max(1, NaN) leaves
-            // as NaN (not 1) — guard explicitly so a mid-edit empty field
+            // Number('') / Number('-') is NaN, which Math.max(3, NaN) leaves
+            // as NaN (not 3) — guard explicitly so a mid-edit empty field
             // can't be saved as NaN (JSON.stringify turns it into `null`).
             const parsed = Math.round(Number(event.target.value));
-            setMaxBackups(Number.isFinite(parsed) ? Math.max(1, parsed) : 1);
+            setMaxBackups(Number.isFinite(parsed) ? Math.max(3, parsed) : 3);
             setSavedAt(null);
           }}
           className="mt-1.5 h-11 w-32 rounded-sm border-[1.5px] border-line-strong px-3.5 text-base text-ink outline-none focus:border-bassin-strong"
