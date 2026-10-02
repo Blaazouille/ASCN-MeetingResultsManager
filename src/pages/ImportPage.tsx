@@ -10,9 +10,11 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DropZone } from '@/components/import/DropZone';
 import { StatTile } from '@/components/import/StatTile';
+import { ImportGuardDialog } from '@/components/import/ImportGuardDialog';
 import { ImportChanges } from '@/components/import/ImportChanges';
 import { Button } from '@/components/ui/Button';
-import { countRowsByCategory } from '@/lib/csv-parser';
+import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
+import { checkImportAgainstExisting, type ImportWarning } from '@/lib/import-check';
 import { summarizeImportChanges, type ImportChanges as ImportChangesData } from '@/lib/import-diff';
 import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
@@ -22,48 +24,77 @@ const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
-  const { result, fileName, error, handleFileAccepted, handleFileRejected } = importState;
+  const { result, fileName, error, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
   const { refresh } = meetingState;
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
   const [changes, setChanges] = useState<{ since: string | null; summary: ImportChangesData } | null>(null);
+  const [pending, setPending] = useState<{ parsed: CsvParseResult; warnings: ImportWarning[] } | null>(null);
   const navigate = useNavigate();
 
   const meeting = meetingState.currentMeeting;
   const meetingId = meeting?.id ?? null;
 
+  // Writes the file to the database and computes the "since last import" summary.
+  const persist = useCallback(
+    async (parsed: CsvParseResult): Promise<void> => {
+      if (meetingId === null) return;
+      setIsPersisting(true);
+      try {
+        await window.electronAPI.importCsv(meetingId, parsed.rows);
+        // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
+        await refresh();
+        // No snapshot = first import of this meeting: nothing to compare with.
+        const [snapshot, current] = await Promise.all([
+          window.electronAPI.getImportSnapshot(meetingId),
+          window.electronAPI.getSwimmerResults(meetingId),
+        ]);
+        if (snapshot && meeting) {
+          const summary = summarizeImportChanges(snapshot.rows, current, {
+            topN: meeting.defaultTopN,
+            minSwimmers: meeting.minSwimmers,
+          });
+          setChanges({ since: snapshot.importedAt, summary });
+        }
+      } catch (err) {
+        setPersistError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsPersisting(false);
+      }
+    },
+    [meetingId, meeting, refresh]
+  );
+
   const handleAccepted = useCallback(
     async (file: File) => {
       setPersistError(null);
       setChanges(null);
+      setPending(null);
       const parsed = await handleFileAccepted(file);
-      if (parsed && meetingId !== null) {
-        setIsPersisting(true);
-        try {
-          await window.electronAPI.importCsv(meetingId, parsed.rows);
-          // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
-          await refresh();
-          // No snapshot = first import of this meeting: nothing to compare with.
-          const [snapshot, current] = await Promise.all([
-            window.electronAPI.getImportSnapshot(meetingId),
-            window.electronAPI.getSwimmerResults(meetingId),
-          ]);
-          if (snapshot && meeting) {
-            const summary = summarizeImportChanges(snapshot.rows, current, {
-              topN: meeting.defaultTopN,
-              minSwimmers: meeting.minSwimmers,
-            });
-            setChanges({ since: snapshot.importedAt, summary });
-          }
-        } catch (err) {
-          setPersistError(err instanceof Error ? err.message : String(err));
-        } finally {
-          setIsPersisting(false);
-        }
+      if (!parsed || meetingId === null) return;
+      // Checked before any write: nothing touches the database until the volunteer confirms.
+      const existing = await window.electronAPI.getSwimmerResults(meetingId);
+      const warnings = checkImportAgainstExisting(existing, parsed.rows, meeting?.lastImportedAt ?? null);
+      if (warnings.some((warning) => warning.blocking)) {
+        setPending({ parsed, warnings });
+        return;
       }
+      await persist(parsed);
     },
-    [handleFileAccepted, meetingId, meeting, refresh]
+    [handleFileAccepted, meetingId, meeting, persist]
   );
+
+  const confirmPending = (): void => {
+    if (!pending) return;
+    const { parsed } = pending;
+    setPending(null);
+    void persist(parsed);
+  };
+
+  const cancelPending = (): void => {
+    setPending(null);
+    resetImport();
+  };
 
   const categoryCounts = useMemo(() => (result ? countRowsByCategory(result.rows) : []), [result]);
 
@@ -73,7 +104,7 @@ export default function ImportPage(): JSX.Element {
 
   // hasResult drives the card's visibility and the "résultats déjà importés" banner;
   // it stays true across the whole save window so the two don't appear together.
-  const hasResult = result !== null && persistError === null;
+  const hasResult = result !== null && persistError === null && pending === null;
   // isDone only turns true once the save has genuinely finished — used to gate the
   // success (green/check) treatment so a volunteer can't mistake "still saving" for "done".
   const isDone = hasResult && !isPersisting;
@@ -157,6 +188,8 @@ export default function ImportPage(): JSX.Element {
           {resultCountLabel(meeting.resultCount)} pour ce meeting. Un nouveau fichier les met à jour, sans doublons.
         </p>
       )}
+
+      {pending && <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />}
 
       <DropZone compact={hasResult} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
     </div>

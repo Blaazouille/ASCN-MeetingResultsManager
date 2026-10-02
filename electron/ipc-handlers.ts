@@ -39,6 +39,11 @@ export function registerIpcHandlers(db: Database.Database): void {
   });
 
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
+    // Pre-import backup: the post-import one captures the overwritten state, so
+    // this is the only restore point if the file turns out to be the wrong one.
+    if (getSwimmerResults(db, meetingId).length > 0) {
+      performAutoBackup(db);
+    }
     insertSwimmerResults(db, meetingId, rows);
     // Deferred to the next tick: performAutoBackup does a full DB export,
     // JSON write, and rotation pass, which must not add latency to the
