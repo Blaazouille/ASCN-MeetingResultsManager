@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, formatMeetingCreatedAt, formatMeetingImportedAt, slugifyCategory } from '../src/lib/export-data';
+import { buildPrintMeta, formatMeetingCreatedAt, formatMeetingImportedAt, parseSqliteTimestamp, slugifyCategory } from '../src/lib/export-data';
+
+describe('parseSqliteTimestamp', () => {
+  it('reads a SQLite datetime as UTC, not local time', () => {
+    expect(parseSqliteTimestamp('2026-11-16 14:32:05').toISOString()).toBe('2026-11-16T14:32:05.000Z');
+  });
+});
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {

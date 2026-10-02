@@ -1,6 +1,6 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx, ceremony-warnings.ts.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
@@ -25,7 +25,7 @@ const IMPORT_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit'
  * UTC) into a Date. `new Date(...)` needs an explicit "Z" to treat the string
  * as UTC instead of local time.
  */
-function parseSqliteTimestamp(value: string): Date {
+export function parseSqliteTimestamp(value: string): Date {
   return new Date(`${value.replace(' ', 'T')}Z`);
 }
 

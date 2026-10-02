@@ -108,6 +108,13 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
+│   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
+│   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre → options du déroulé
+│   │   ├── ceremony-navigation.ts # Progression : annonce courante, annonces faites, raccourcis clavier
+│   │   ├── ceremony-session.ts    # Déroulé figé au lancement, relu depuis sessionStorage
+│   │   ├── ceremony-warnings.ts   # Points à vérifier avant la cérémonie (ex æquo, import ancien, catégorie vide)
+│   │   ├── ceremony-labels.ts     # Textes du déroulé (intitulés, progression, écarts, alertes)
+│   │   ├── ceremony-pdf-export.tsx # Fiche de proclamation PDF (même déroulé que l'écran)
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
@@ -132,6 +139,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
 │   │   ├── use-print-export.ts    # Exports PDF/Excel du classement par équipes (nom hérité, voir note)
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
+│   │   ├── use-ceremony.ts        # Écran Cérémonie : préparation, déroulé figé, navigation clavier
+│   │   ├── use-ceremony-export.ts # Impression PDF du déroulé de cérémonie
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
 │   │   └── use-auto-update.ts     # Notification de mise à jour téléchargée
@@ -141,9 +150,10 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
+│   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
-│   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage
+│   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, CeremonyPage, SettingsPage
 │   ├── styles/
 │   │   ├── globals.css            # Tailwind base + custom properties (tokens)
 │   │   └── fonts.css              # Déclarations @font-face (polices embarquées)
