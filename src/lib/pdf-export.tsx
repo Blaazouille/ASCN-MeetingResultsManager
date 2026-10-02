@@ -10,6 +10,7 @@ import { rankText } from './ui-labels';
 import type { ExportMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
+import { PdfExportNotice } from './pdf-export-notice';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
 const styles = StyleSheet.create({
@@ -39,6 +40,7 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <PdfExportNotice meta={meta} />
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
 

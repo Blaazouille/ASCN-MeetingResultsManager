@@ -1,6 +1,6 @@
 /**
  * Responsabilité : état partagé d'un export (en cours, succès, échec) autour d'une tâche d'export.
- * Appelé par : use-ranking-export.ts, use-individual-export.ts.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, use-ceremony-export.ts.
  * Suppression casserait : le suivi des exports PDF/Excel (bouton désactivé, messages de succès et d'erreur).
  */
 import { useState } from 'react';

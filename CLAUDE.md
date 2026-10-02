@@ -75,7 +75,7 @@ Détail complet (palette, contraste, primitives `src/components/ui/`) : `docs/de
 
 ## Structure du projet
 
-L'arborescence complète (une seule, maintenue à jour par un test) est dans `docs/architecture.md`. En bref : `electron/` (main, preload, IPC, sauvegarde auto, mises à jour), `src/lib/` (logique pure : parseur, moteurs de classement, exports, base), `src/hooks/`, `src/components/`, `src/pages/`, `test/`, `docs/`.
+L'arborescence complète (une seule, maintenue à jour par un test) est dans `docs/architecture.md`. En bref : `electron/` (main, preload, IPC, sauvegarde auto, mises à jour), `src/lib/` (logique pure : parseur, moteurs de classement, exports, base), `src/hooks/`, `src/components/`, `src/pages/`, `test/`, `docs/`, `scripts/` (outils de dev, ex. `anonymize-sample.ts` qui génère le CSV du meeting d'entraînement), `resources/` (icône, CSV d'exemple embarqué).
 
 ## Conventions de code
 
@@ -119,7 +119,8 @@ L'arborescence complète (une seule, maintenue à jour par un test) est dans `do
 3. **Classement** — Tableau des clubs avec drill-down nageurs, filtres par catégorie, sélecteur top N, export PDF/Excel
 4. **Individuels** — Classement des nageurs par catégorie, export PDF/Excel
 5. **Palmarès** — Prix rigolos générés automatiquement
-6. **Paramètres** — Config meeting (nom), règles de calcul (top N, catégories, seuil), sauvegarde et restauration
+6. **Cérémonie** — Antisèche du gérant pour la remise des prix : déroulé guidé, à rebours, et fiche PDF (pas d'affichage public)
+7. **Paramètres** — Config meeting (nom), règles de calcul (top N, catégories, seuil), sauvegarde et restauration
 
 Les specs détaillées de chaque écran sont dans `docs/screens.md`.
 

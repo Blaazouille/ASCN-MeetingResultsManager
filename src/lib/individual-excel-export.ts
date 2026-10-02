@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
-import { excelSheetName, individualExportFileName } from './export-data';
+import { addExportNotice, excelSheetName, individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 
 /** Builds the workbook without downloading it, so tests can inspect its content. */
@@ -46,6 +46,8 @@ export async function buildIndividualWorkbookBuffer(
       tied: tied.has(r.rank) ? 'ex.' : '',
     });
   }
+
+  addExportNotice(sheet, meta);
 
   return workbook.xlsx.writeBuffer();
 }

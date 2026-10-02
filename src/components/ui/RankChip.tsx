@@ -1,6 +1,6 @@
 /**
  * Responsabilité : numéro de rang, aux couleurs de la médaille pour les trois premiers.
- * Appelé par : PodiumCards.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx.
+ * Appelé par : PodiumCards.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx.
  * Suppression casserait : l'affichage des rangs dans les classements.
  */
 import { placeLabel } from '@/lib/ui-labels';

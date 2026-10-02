@@ -5,8 +5,15 @@ import {
   formatMeetingCreatedAt,
   formatMeetingImportedAt,
   individualExportFileName,
+  parseSqliteTimestamp,
   slugifyCategory,
 } from '../src/lib/export-data';
+
+describe('parseSqliteTimestamp', () => {
+  it('reads a SQLite datetime as UTC, not local time', () => {
+    expect(parseSqliteTimestamp('2026-11-16 14:32:05').toISOString()).toBe('2026-11-16T14:32:05.000Z');
+  });
+});
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {
@@ -40,6 +47,7 @@ describe('buildExportMeta', () => {
       lastImportedAt: null,
       clubCount: 0,
       swimmerCount: 0,
+      isDemo: false,
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
@@ -61,6 +69,7 @@ describe('formatMeetingCreatedAt', () => {
       lastImportedAt: null,
       clubCount: 0,
       swimmerCount: 0,
+      isDemo: false,
     });
 
     expect(formatted).toMatch(/16 novembre 2026/);
@@ -79,6 +88,7 @@ describe('formatMeetingImportedAt', () => {
     resultCount: 0,
     clubCount: 0,
     swimmerCount: 0,
+    isDemo: false,
   };
 
   it('is null when the meeting was never imported', () => {

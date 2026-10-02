@@ -19,6 +19,7 @@ import {
   movementAriaLabel,
   movementText,
   placeLabel,
+  prizeLabel,
   resultCountLabel,
   sinceImportLabel,
   swimmerCountLabel,
@@ -27,6 +28,13 @@ import {
 
 const NBSP = ' ';
 const MINUS = '−';
+
+describe('prizeLabel', () => {
+  it('writes French prize ordinals', () => {
+    expect(prizeLabel(1)).toBe('1er Prix');
+    expect(prizeLabel(2)).toBe('2e Prix');
+  });
+});
 
 describe('placeLabel', () => {
   it('uses "1re" for first place and "e" after', () => {

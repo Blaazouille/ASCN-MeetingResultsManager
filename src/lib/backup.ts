@@ -48,7 +48,10 @@ interface SwimmerRow {
 }
 
 export function exportDatabase(db: Database.Database): BackupData {
-  const meetings = db.prepare('SELECT * FROM meeting ORDER BY id').all() as MeetingRow[];
+  // The training meeting (issue #28) is disposable sample data: left out of
+  // every backup — automatic, manual and pre-restore — so it never takes
+  // space in one nor comes back on a restore.
+  const meetings = db.prepare('SELECT * FROM meeting WHERE is_demo = 0 ORDER BY id').all() as MeetingRow[];
 
   // Prepared once and reused per meeting (via .all(m.id)) instead of inside
   // the .map() below — a backup with many meetings would otherwise recompile

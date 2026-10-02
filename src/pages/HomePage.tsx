@@ -12,6 +12,7 @@ import { DeleteMeetingDialog } from '@/components/meeting/DeleteMeetingDialog';
 import { MeetingForm } from '@/components/meeting/MeetingForm';
 import { MeetingList } from '@/components/meeting/MeetingList';
 import { ResumeMeetingCard } from '@/components/meeting/ResumeMeetingCard';
+import { TrainingSection } from '@/components/meeting/TrainingSection';
 
 const STEPS = ['Créer le meeting', "Importer le CSV exporté d'extraNat", 'Consulter, puis exporter en PDF'] as const;
 
@@ -54,7 +55,13 @@ export default function HomePage(): JSX.Element {
             <MeetingList
               meetings={meetingState.meetings}
               onOpen={(meeting) => openAt(meeting, '/classement')}
-              onDelete={setMeetingToDelete}
+              // The training meeting has no value to protect: deleted in one click,
+              // no confirmation. A failure is already shown by useMeeting (error above).
+              onDelete={(meeting) =>
+                meeting.isDemo
+                  ? void meetingState.deleteMeeting(meeting.id).catch(() => undefined)
+                  : setMeetingToDelete(meeting)
+              }
             />
           )}
         </section>
@@ -80,6 +87,12 @@ export default function HomePage(): JSX.Element {
               </li>
             ))}
           </ol>
+          <TrainingSection
+            onStart={async () => {
+              const meeting = await meetingState.createDemoMeeting();
+              openAt(meeting, '/classement');
+            }}
+          />
         </section>
       </div>
 

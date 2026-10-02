@@ -1,5 +1,5 @@
 /**
- * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (pastille « À importer », clubs, nageurs, dernier import, accès direct).
+ * Responsabilité : carte « Reprendre » du dernier meeting sur l'Accueil (pastilles « À importer » / « Exemple », clubs, nageurs, dernier import, accès direct).
  * Appelé par : HomePage.tsx.
  * Suppression casserait : l'accès en un clic au meeting du jour.
  */
@@ -8,6 +8,8 @@ import type { Meeting } from '@/lib/db';
 import { formatMeetingImportedAt } from '@/lib/export-data';
 import { lastImportLabel, meetingStatsLabel } from '@/lib/ui-labels';
 import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
+import { DemoBadge } from '@/components/ui/DemoBadge';
+import { cn } from '@/lib/utils';
 
 export interface ResumeMeetingCardProps {
   meeting: Meeting;
@@ -22,12 +24,16 @@ export function ResumeMeetingCard({ meeting, onOpenRanking, onImport }: ResumeMe
   return (
     <section
       aria-label="Dernier meeting"
-      className="flex flex-wrap items-center justify-between gap-8 rounded-xl bg-marine px-8 py-7 text-on-marine shadow-raised"
+      className={cn(
+        'flex flex-wrap items-center justify-between gap-8 rounded-xl bg-marine px-8 py-7 text-on-marine shadow-raised',
+        meeting.isDemo && 'border-2 border-dashed border-warning-light'
+      )}
     >
       <div className="flex flex-col gap-2.5">
         <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-on-marine-muted">Reprendre</span>
         <span className="font-display text-4xl font-bold leading-none">{meeting.name}</span>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px] text-on-marine-subtle">
+          {meeting.isDemo && <DemoBadge />}
           {!hasResults && <ImportPendingBadge />}
           {hasResults && <span>{meetingStatsLabel(meeting.clubCount, meeting.swimmerCount)}</span>}
           {hasResults && importedAt && <span>· {lastImportLabel(importedAt)}</span>}

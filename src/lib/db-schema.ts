@@ -125,4 +125,15 @@ function migrateSchema(db: Database.Database): void {
     db.exec('DROP TABLE IF EXISTS team_ranking');
     db.pragma('user_version = 7');
   }
+  if (version < 8) {
+    // Marks the training meeting (issue #28). An explicit flag rather than a
+    // reserved name: a real meeting may well be called "Entraînement". Default
+    // 0 so every existing meeting stays a real one. Same existence check as
+    // v5, so a database that already has the column is a no-op.
+    const columns = db.prepare('PRAGMA table_info(meeting)').all() as Array<{ name: string }>;
+    if (!columns.some((c) => c.name === 'is_demo')) {
+      db.exec('ALTER TABLE meeting ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0');
+    }
+    db.pragma('user_version = 8');
+  }
 }

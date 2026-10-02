@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
-import { excelSheetName, slugifyCategory } from './export-data';
+import { addExportNotice, excelSheetName, slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
 const COLUMN_HEADERS = ['Rang', 'Club', 'Points', 'Nageurs retenus'];
@@ -47,6 +47,8 @@ export async function buildRankingWorkbookBuffer(
       swimmers: formatSwimmerList(team),
     });
   }
+
+  addExportNotice(sheet, meta);
 
   return workbook.xlsx.writeBuffer();
 }
