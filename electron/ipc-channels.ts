@@ -49,6 +49,10 @@ export const IpcChannels = {
   checkForUpdatesNow: 'update:checkNow',
 
   getAppVersion: 'app:getVersion',
+
+  // « Notre club » (issue #26), app-wide and stored in SQLite — see src/lib/app-settings.ts.
+  getOurClub: 'settings:getOurClub',
+  setOurClub: 'settings:setOurClub',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

@@ -20,6 +20,7 @@ import {
   movementText,
   placeLabel,
   prizeLabel,
+  readableClubName,
   resultCountLabel,
   sinceImportLabel,
   swimmerCountLabel,
@@ -239,5 +240,22 @@ describe('excludedSwimmersNotice', () => {
 
   it('never claims the points count in no ranking at all', () => {
     expect(excludedSwimmersNotice([bob])).not.toContain('aucun classement');
+  });
+});
+
+describe('readableClubName', () => {
+  it('turns the FFN capitals into a readable name, keeping the initials', () => {
+    expect(readableClubName('AS CHERBOURG NATATION')).toBe('AS Cherbourg Natation');
+    expect(readableClubName('CN VIRY-CHÂTILLON')).toBe('CN Viry-Châtillon');
+    expect(readableClubName('UAS ST-CLOUD')).toBe('UAS St-Cloud');
+  });
+
+  it('keeps small French words in lower case, except at the start', () => {
+    expect(readableClubName('AC CHERBOURG EN COTENTIN')).toBe('AC Cherbourg en Cotentin');
+    expect(readableClubName('EN CAEN')).toBe('EN Caen');
+  });
+
+  it('leaves a name typed in mixed case as the volunteer wrote it', () => {
+    expect(readableClubName('Club des Dauphins')).toBe('Club des Dauphins');
   });
 });

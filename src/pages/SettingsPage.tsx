@@ -8,12 +8,19 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SettingsForm } from '@/components/settings/SettingsForm';
 import { BackupSection } from '@/components/settings/BackupSection';
+import { OurClubSection } from '@/components/settings/OurClubSection';
+import { reloadOurClub } from '@/hooks/use-our-club';
 import { BackupConfigSection } from '@/components/settings/BackupConfigSection';
 import { UpdateSection } from '@/components/settings/UpdateSection';
 
 export default function SettingsPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
   const meeting = meetingState.currentMeeting;
+
+  // A restore replaces the club setting along with the meetings.
+  const onRestored = async (): Promise<void> => {
+    await Promise.all([meetingState.refresh(), reloadOurClub()]);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +38,9 @@ export default function SettingsPage(): JSX.Element {
           ci-dessous fonctionnent sans meeting ouvert.
         </p>
       )}
-      <BackupSection onRestored={meetingState.refresh} />
+      {/* Outside SettingsForm: the club is app-wide, the same from one meeting to the next, and settable with no meeting open. */}
+      <OurClubSection meeting={meeting} />
+      <BackupSection onRestored={onRestored} />
       <BackupConfigSection />
       <UpdateSection />
     </div>

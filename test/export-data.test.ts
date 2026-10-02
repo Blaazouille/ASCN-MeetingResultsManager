@@ -34,7 +34,7 @@ describe('slugifyCategory', () => {
 });
 
 describe('buildExportMeta', () => {
-  it('maps the meeting name and a computation timestamp', () => {
+  it('maps the meeting name, a computation timestamp and the configured club', () => {
     const meta = buildExportMeta({
       id: 1,
       name: 'Meeting de la Mer 2026',
@@ -48,9 +48,10 @@ describe('buildExportMeta', () => {
       clubCount: 0,
       swimmerCount: 0,
       isDemo: false,
-    });
+    }, 'CN VIRY-CHÂTILLON');
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
+    expect(meta.ourClub).toBe('CN VIRY-CHÂTILLON');
     expect(meta.computedAt.length).toBeGreaterThan(0);
   });
 });

@@ -18,6 +18,7 @@ import {
   type MeetingInput,
 } from '../src/lib/db';
 import { getImportSnapshot } from '../src/lib/import-snapshot';
+import { getOurClub, setOurClub } from '../src/lib/app-settings';
 import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
 import { isDemoMeeting, resetDemoMeeting } from '../src/lib/demo-meeting';
 import { exportDatabase, validateBackup, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
@@ -247,4 +248,8 @@ export function registerIpcHandlers(db: Database.Database): void {
   });
 
   ipcMain.handle(IpcChannels.getAppVersion, async () => app.getVersion());
+
+  ipcMain.handle(IpcChannels.getOurClub, async () => getOurClub(db));
+
+  ipcMain.handle(IpcChannels.setOurClub, async (_event, club: string) => setOurClub(db, club));
 }

@@ -5,6 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { createDatabase } from '../src/lib/db-schema';
 import { createMeeting, getAllMeetings, getSwimmerResults, insertSwimmerResults } from '../src/lib/db';
+import { getOurClub } from '../src/lib/app-settings';
+import { DEFAULT_OUR_CLUB } from '../src/lib/our-club';
 
 describe('schema migrations', () => {
   it('drops the legacy status column from an existing database without losing meetings', () => {
@@ -60,7 +62,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       const meetings = getAllMeetings(db);
       expect(meetings.map((m) => m.name)).toEqual(['Meeting 2025']);
       expect(meetings[0]?.lastImportedAt).toBeNull();
@@ -93,7 +95,7 @@ describe('schema migrations', () => {
     let db: ReturnType<typeof createDatabase> | undefined;
     try {
       db = createDatabase(file);
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       expect(getAllMeetings(db)[0]?.lastImportedAt).toBe('2026-09-27 12:30:00');
     } finally {
       db?.close();
@@ -101,9 +103,9 @@ describe('schema migrations', () => {
     }
   });
 
-  it('gives a fresh database the last_imported_at column at version 8', () => {
+  it('gives a fresh database the last_imported_at column at version 9', () => {
     const db = createDatabase(':memory:');
-    expect(db.pragma('user_version', { simple: true })).toBe(8);
+    expect(db.pragma('user_version', { simple: true })).toBe(9);
     expect(createMeeting(db, { name: 'Neuf' }).lastImportedAt).toBeNull();
   });
 
@@ -129,7 +131,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       expect(db.prepare('SELECT COUNT(*) AS n FROM import_snapshot').get()).toEqual({ n: 0 });
       expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting 2025']);
     } finally {
@@ -170,7 +172,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       expect(tableNames(db)).not.toContain('team_ranking');
       expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting 2025']);
       expect(getSwimmerResults(db, meeting.id)).toHaveLength(1);
@@ -207,7 +209,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       // Even a real meeting named "Entraînement" is not mistaken for the training one.
       expect(getAllMeetings(db).map((m) => [m.name, m.isDemo])).toEqual([['Entraînement', false]]);
     } finally {
@@ -228,10 +230,32 @@ describe('schema migrations', () => {
     let db: ReturnType<typeof createDatabase> | undefined;
     try {
       db = createDatabase(file);
-      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
       expect(getAllMeetings(db)[0]?.isDemo).toBe(true);
     } finally {
       db?.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('adds the app_setting table to a v8 database, keeping meetings and the default club', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'mrm-migration-'));
+    const file = path.join(dir, 'v8.db');
+    const seeded = createDatabase(file);
+    createMeeting(seeded, { name: 'Meeting 2025' });
+    seeded.exec('DROP TABLE app_setting');
+    seeded.pragma('user_version = 8');
+    seeded.close();
+
+    const db = createDatabase(file);
+    try {
+      expect(db.pragma('user_version', { simple: true })).toBe(9);
+      expect(tableNames(db)).toContain('app_setting');
+      expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting 2025']);
+      // An existing install keeps highlighting the same club after the update.
+      expect(getOurClub(db)).toBe(DEFAULT_OUR_CLUB);
+    } finally {
+      db.close();
       rmSync(dir, { recursive: true, force: true });
     }
   });

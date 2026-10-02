@@ -1,5 +1,5 @@
 /**
- * Responsabilité : helpers partagés (cn, formatPoints, formatRetainedSwimmers, formatDateTimeFr, ASCN_CLUB_NAME).
+ * Responsabilité : helpers partagés (cn, formatPoints, formatRetainedSwimmers, formatDateTimeFr).
  * Appelé par : la plupart des composants et modules.
  * Suppression casserait : le formatage des classes CSS, des points, du nombre de nageurs retenus et des dates « 27 sept. 2026 à 14 h 32 ».
  */
@@ -47,6 +47,3 @@ export function formatDateTimeFr(at: Date): string {
   // Non-breaking spaces keep "14 h 32" on one line when the card wraps.
   return `${DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
-
-/** The club name used to highlight ASCN own rows throughout the ranking UI and exports. */
-export const ASCN_CLUB_NAME = "AS CHERBOURG NATATION";

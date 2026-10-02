@@ -8,6 +8,13 @@ export interface BackupData {
   version: 1;
   appName: string;
   exportedAt: string;
+  /**
+   * « Notre club » (issue #26). Optional: backups made before it existed lack
+   * it and restore the default club. A top-level field on purpose: older app
+   * versions' validateBackup ignores unknown top-level keys, so they can still
+   * restore a backup made by this one (without the setting) — no version bump.
+   */
+  ourClub?: string;
   meetings: MeetingBackup[];
 }
 
@@ -59,6 +66,12 @@ export function validateBackup(data: unknown): BackupData {
 
   if (obj.version !== 1) {
     throw new Error(`Version de backup non supportée : ${String(obj.version ?? 'manquante')}`);
+  }
+
+  // Checked here because restoreDatabase stores it as is: an empty or
+  // non-string value would otherwise reach setOurClub's error or SQLite raw.
+  if (obj.ourClub !== undefined && (typeof obj.ourClub !== 'string' || obj.ourClub.trim() === '')) {
+    throw new Error('Format de backup invalide : ourClub doit être un nom de club non vide');
   }
 
   if (!Array.isArray(obj.meetings)) {

@@ -8,7 +8,9 @@ import { Award, Check, Home, Settings, Trophy, Upload, User, Users, type LucideI
 import logoUrl from '../../../resources/icon.png';
 import type { Meeting } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { readableClubName } from '@/lib/ui-labels';
 import { useAppVersion } from '@/hooks/use-app-version';
+import { useOurClub } from '@/hooks/use-our-club';
 import { SidebarMeetingCard } from './SidebarMeetingCard';
 
 interface NavEntry {
@@ -81,6 +83,7 @@ export interface SidebarProps {
 
 export function Sidebar({ meeting }: SidebarProps): JSX.Element {
   const version = useAppVersion();
+  const ourClub = useOurClub();
   const hasResults = meeting !== null && meeting.resultCount > 0;
 
   return (
@@ -95,7 +98,7 @@ export function Sidebar({ meeting }: SidebarProps): JSX.Element {
         </span>
         <span className="flex flex-col">
           <span className="font-display text-xl font-bold leading-6 tracking-[0.02em]">MDLM Ranking</span>
-          <span className="text-[13px] text-on-marine-muted">AS Cherbourg Natation</span>
+          <span className="text-[13px] text-on-marine-muted">{readableClubName(ourClub)}</span>
         </span>
       </div>
 

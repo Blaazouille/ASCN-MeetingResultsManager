@@ -155,3 +155,29 @@ export function excludedSwimmersNotice(swimmers: ExcludedSwimmer[]): string {
   const rankings = new Set(swimmers.flatMap((s) => s.categories)).size >= 2 ? 'ces classements' : 'ce classement';
   return `${swimmerCountLabel(swimmers.length)} ${what} (année de naissance vide ou illisible dans le fichier) : ${list}. ${several ? 'Leurs' : 'Ses'} points ne comptent pas dans ${rankings}.`;
 }
+
+// French words left in lower case inside a club name (« Cherbourg en Cotentin »).
+const CLUB_NAME_PARTICLES = new Set(['DE', 'DU', 'DES', 'LA', 'LE', 'LES', 'EN', 'ET', 'SUR', 'SOUS', 'AUX']);
+
+/**
+ * A club name as the FFN writes it (« AS CHERBOURG NATATION ») made easy to
+ * read (« AS Cherbourg Natation ») for the sidebar. Short words stay in
+ * capitals since club names start with initials (AS, CN, UAS); a name already
+ * typed in mixed case is left alone, the volunteer chose that spelling.
+ */
+export function readableClubName(club: string): string {
+  if (club !== club.toLocaleUpperCase('fr-FR')) {
+    return club;
+  }
+  return club
+    .split(' ')
+    .map((word, index) => {
+      if (index > 0 && CLUB_NAME_PARTICLES.has(word)) return word.toLocaleLowerCase('fr-FR');
+      if (word.length <= 3 && !word.includes('-')) return word;
+      return word
+        .split('-')
+        .map((part) => part.charAt(0) + part.slice(1).toLocaleLowerCase('fr-FR'))
+        .join('-');
+    })
+    .join(' ');
+}

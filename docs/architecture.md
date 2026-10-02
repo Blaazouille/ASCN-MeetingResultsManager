@@ -98,6 +98,16 @@ Canaux IPC de `electron/ipc-channels.ts` :
 - `export:openPackFolder` — ouvre dans l'explorateur (`shell.openPath`) un dossier écrit par `export:writePack` pendant la session, et aucun autre chemin
 - `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde ; renvoie `{ success: true, path }` (`path` vaut `null` si le bénévole annule) ou `{ success: false, error }` si le dialogue échoue, pour ne pas confondre une erreur avec une annulation
 
+### « Notre club » (issue #26)
+
+Le club mis en avant (ligne corail, `ClubTag`, exports PDF, cérémonie, barre latérale) n'est plus une constante : c'est un réglage global de l'application, stocké dans la table SQLite `app_setting` (clé `our_club`, migration 9) par `src/lib/app-settings.ts`. Clé absente = `DEFAULT_OUR_CLUB` (« AS CHERBOURG NATATION ») : rien ne change pour une installation existante. SQLite plutôt qu'un fichier JSON dans `userData` comme `backup-config.json`, pour que le réglage voyage dans les sauvegardes.
+
+Canaux IPC : `settings:getOurClub` (valeur configurée ou défaut) et `settings:setOurClub` (enregistre le nom, espaces nettoyés, et renvoie la valeur stockée ; refuse un nom vide).
+
+Côté renderer, `src/hooks/use-our-club.ts` garde la valeur dans un store de module lu par `useSyncExternalStore` : chargée une fois, elle est partagée par tous les écrans, et un enregistrement depuis Paramètres (`saveOurClub`) ou une restauration (`reloadOurClub`) la met à jour partout sans passer de prop depuis `AppShell`. Les générateurs PDF la reçoivent dans `ExportMeta.ourClub` (`buildExportMeta(meeting, ourClub)`, appelé par les hooks d'export).
+
+La comparaison passe toujours par `isOurClub` (`src/lib/our-club.ts`) : exacte, insensible seulement à la casse et aux espaces superflus. Aucune correspondance approximative : le fichier réel contient aussi « AC CHERBOURG EN COTENTIN ». Le script `scripts/anonymize-sample.ts` garde « AS CHERBOURG NATATION » en dur : c'est le club par défaut, que le meeting d'entraînement doit montrer surligné.
+
 ## Configuration Electron
 
 La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: true` — la barre de menus native est cachée par défaut et accessible via la touche Alt. Le layout utilise une sidebar en position `fixed` et un header `sticky` : seul le contenu principal (`<main>`) défile, la sidebar et le header restent visibles en permanence.
@@ -147,6 +157,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ceremony-pdf-export.tsx # Fiche de proclamation PDF (même déroulé que l'écran)
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
+│   │   ├── app-settings.ts        # Réglages globaux (table app_setting) : « Notre club »
+│   │   ├── our-club.ts            # « Notre club » : valeur par défaut, correspondance exacte, choix proposés, alerte d'absence
 │   │   ├── demo-meeting.ts        # Meeting d'entraînement : création/réinitialisation, détection
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
@@ -187,6 +199,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-export-pack.ts     # « Tout exporter » : dossier, génération, écriture, ouverture
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
+│   │   ├── use-our-club.ts        # « Notre club » configuré, partagé par tous les écrans (useSyncExternalStore)
 │   │   ├── use-auto-update.ts     # Notification de mise à jour téléchargée
 │   │   └── use-update-status.ts   # Section « Mises à jour » de Paramètres (statut, vérification à la demande)
 │   ├── components/
@@ -199,7 +212,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   │                          # PodiumCards, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
-│   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection, UpdateSection
+│   │   ├── settings/              # SettingsForm, OurClubSection, BackupSection, BackupConfigSection, UpdateSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, DemoBadge, RankChip, ClubTag,
 │   │                              # MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, CeremonyPage, SettingsPage

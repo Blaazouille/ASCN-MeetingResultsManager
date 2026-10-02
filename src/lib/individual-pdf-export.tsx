@@ -11,7 +11,8 @@ import type { ExportMeta, ExportSection } from './export-data';
 import { individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 import { PdfExportNotice } from './pdf-export-notice';
-import { ASCN_CLUB_NAME, formatPoints } from './utils';
+import { formatPoints } from './utils';
+import { isOurClub } from './our-club';
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10 },
@@ -19,7 +20,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 5 },
-  rowAscn: { backgroundColor: '#F0FAFF' },
+  rowOurClub: { backgroundColor: '#F0FAFF' },
   rank: { width: 42, fontWeight: 700 },
   name: { flex: 1 },
   year: { width: 46, textAlign: 'right' },
@@ -56,7 +57,7 @@ function IndividualPdfPage({ meta, category, results }: IndividualPdfPageProps):
           {results.map((r) => (
             <View
               key={`${r.lastname}-${r.firstname}-${r.birthyear}-${r.club}`}
-              style={r.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
+              style={isOurClub(r.club, meta.ourClub) ? [styles.row, styles.rowOurClub] : styles.row}
             >
               <Text style={styles.rank}>{rankText(r.rank, tied.has(r.rank))}</Text>
               <Text style={styles.name}>{r.lastname} {r.firstname}</Text>

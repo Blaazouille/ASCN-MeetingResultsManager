@@ -1,5 +1,5 @@
 /**
- * Responsabilité : étiquette « Notre club » accolée à AS Cherbourg Natation dans les classements.
+ * Responsabilité : étiquette « Notre club » accolée au club choisi dans Paramètres (AS Cherbourg Natation par défaut) dans les classements.
  * Appelé par : TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx.
  * Suppression casserait : le repérage de notre club autrement que par la couleur.
  */

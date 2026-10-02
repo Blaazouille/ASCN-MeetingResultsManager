@@ -9,6 +9,7 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { parseCsv } from '../src/lib/csv-parser';
 import { buildExportMeta } from '../src/lib/export-data';
+import { DEFAULT_OUR_CLUB } from '../src/lib/our-club';
 import { buildPackFile, type ExportPackInput } from '../src/lib/export-pack-files';
 import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
@@ -32,7 +33,7 @@ const TEST_MEETING = {
 const rows = parseCsv(new Uint8Array(readFileSync(path.join(__dirname, 'fixtures', 'sample.csv')))).rows;
 
 function packInput(categories: string[]): ExportPackInput {
-  return { meta: buildExportMeta(TEST_MEETING), rows, categories, topN: 5, minSwimmers: 0 };
+  return { meta: buildExportMeta(TEST_MEETING, DEFAULT_OUR_CLUB), rows, categories, topN: 5, minSwimmers: 0 };
 }
 
 async function loadWorkbook(bytes: Uint8Array): Promise<ExcelJS.Workbook> {
@@ -63,7 +64,7 @@ describe('buildPackFile — team Excel', () => {
   it('gives each category the same sheet as its single-category export', async () => {
     const pack = await loadWorkbook(await buildPackFile('team-excel', packInput(['Classement Dames', 'Classement Mixte'])));
     const unit = await loadWorkbook(
-      new Uint8Array(await buildRankingWorkbookBuffer(buildExportMeta(TEST_MEETING), [
+      new Uint8Array(await buildRankingWorkbookBuffer(buildExportMeta(TEST_MEETING, DEFAULT_OUR_CLUB), [
         { category: 'Classement Mixte', results: computeTeamRanking(rows, { category: 'Classement Mixte', topN: 5 }) },
       ]))
     );
@@ -104,7 +105,7 @@ describe('buildPackFile — PDF files', () => {
 
 describe('buildPalmaresPdfBlob', () => {
   it('still produces a PDF when a category has no prize', async () => {
-    const blob = await buildPalmaresPdfBlob(buildExportMeta(TEST_MEETING), [{ category: 'Classement Dames', results: [] }]);
+    const blob = await buildPalmaresPdfBlob(buildExportMeta(TEST_MEETING, DEFAULT_OUR_CLUB), [{ category: 'Classement Dames', results: [] }]);
     expect(blob.type).toBe('application/pdf');
     expect(blob.size).toBeGreaterThan(0);
   });

@@ -21,7 +21,9 @@ import { summarizeImportChanges } from '@/lib/import-diff';
 import { importCardState } from '@/lib/import-card-state';
 import { categoryShortLabel, excludedSwimmersNotice, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
+import { ourClubMissingNotice } from '@/lib/our-club';
 import type { ImportOutcome } from '@/hooks/use-import';
+import { useOurClub } from '@/hooks/use-our-club';
 
 // The parser's encoding ids, as a volunteer would read them.
 const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
@@ -148,6 +150,8 @@ export default function ImportPage(): JSX.Element {
   }, [pending, result]);
 
   const categoryCounts = useMemo(() => (result ? countRowsByCategory(result.rows) : []), [result]);
+  const ourClub = useOurClub();
+  const clubNotice = useMemo(() => (result ? ourClubMissingNotice(result.rows, ourClub) : null), [result, ourClub]);
 
   if (!meeting) {
     return <Navigate to="/" replace />;
@@ -219,13 +223,14 @@ export default function ImportPage(): JSX.Element {
             </StatTile>
           </div>
 
-          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.excludedSwimmers.length > 0 || result.duplicateRowCount > 0) && (
+          {isDone && ((outcome?.notices.length ?? 0) > 0 || clubNotice !== null || result.ignoredRowCount > 0 || result.excludedSwimmers.length > 0 || result.duplicateRowCount > 0) && (
             <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
               <p className="font-semibold">À savoir</p>
               <ul className="list-disc space-y-1 pl-5">
                 {outcome?.notices.map((notice) => (
                   <li key={notice}>{notice}</li>
                 ))}
+                {clubNotice && <li>{clubNotice}</li>}
                 {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}
                 {result.excludedSwimmers.length > 0 && <li>{excludedSwimmersNotice(result.excludedSwimmers)}</li>}
                 {result.duplicateRowCount > 0 && <li>Nageurs en double dans une catégorie (seul le dernier est gardé)&nbsp;: {result.duplicateRowCount}.</li>}

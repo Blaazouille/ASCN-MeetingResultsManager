@@ -10,6 +10,7 @@ import { buildExportMeta } from '@/lib/export-data';
 import { planExportPack, type ExportPackPlan, type PackFileFailure, type PackFilePayload } from '@/lib/export-pack-plan';
 import { buildPackFile, type ExportPackInput } from '@/lib/export-pack-files';
 import { errorCause, exportPackErrorMessage } from '@/lib/export-feedback';
+import { useOurClub } from './use-our-club';
 
 export interface ExportPackRequest {
   meeting: Meeting;
@@ -45,6 +46,8 @@ export function useExportPack(meetingId: number | null): UseExportPackResult {
   const [outcome, setOutcome] = useState<ExportPackOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
   const currentMeetingId = useRef(meetingId);
+  // Same highlighted club as the unit exports: every file of the pack is built from this one meta.
+  const ourClub = useOurClub();
 
   // The report names another meeting's folder once the volunteer switches
   // meeting: clear it, and drop the result of an export still running for the old one.
@@ -59,7 +62,7 @@ export function useExportPack(meetingId: number | null): UseExportPackResult {
     plan: ExportPackPlan
   ): Promise<{ payloads: PackFilePayload[]; failed: PackFileFailure[] }> {
     const input: ExportPackInput = {
-      meta: buildExportMeta(request.meeting),
+      meta: buildExportMeta(request.meeting, ourClub),
       rows: request.rows,
       categories: request.categories,
       topN: request.topN,

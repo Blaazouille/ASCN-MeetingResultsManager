@@ -85,6 +85,10 @@ const electronAPI = {
   checkForUpdatesNow: (): Promise<UpdateStatus> => ipcRenderer.invoke(IpcChannels.checkForUpdatesNow),
 
   getAppVersion: (): Promise<string> => ipcRenderer.invoke(IpcChannels.getAppVersion),
+
+  // « Notre club »: setOurClub resolves with the name as stored (spaces tidied).
+  getOurClub: (): Promise<string> => ipcRenderer.invoke(IpcChannels.getOurClub),
+  setOurClub: (club: string): Promise<string> => ipcRenderer.invoke(IpcChannels.setOurClub, club),
 };
 
 export type ElectronAPI = typeof electronAPI;

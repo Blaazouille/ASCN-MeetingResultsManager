@@ -39,11 +39,17 @@ CREATE TABLE IF NOT EXISTS import_snapshot (
   rows        TEXT NOT NULL                         -- JSON : RawSwimmerRow[]
 );
 
+-- ajoutée en migration user_version 9 : réglages globaux de l'application (clé absente = valeur par défaut)
+CREATE TABLE IF NOT EXISTS app_setting (
+  key   TEXT PRIMARY KEY,                           -- 'our_club' : « Notre club » (défaut : AS CHERBOURG NATATION)
+  value TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_swimmer_meeting ON swimmer_result(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, category);
 ```
 
-`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `8` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage ; `5` a ajouté `last_imported_at` (date du dernier import CSV, posée par `insertSwimmerResults` ; NULL jusqu'au prochain import pour les meetings existants) ; `6` a créé `import_snapshot` (instantané d'avant le dernier import, pour les mouvements de classement) ; `7` a supprimé la table `team_ranking`, jamais alimentée par un écran : les classements sont toujours recalculés depuis `swimmer_result` ; `8` a ajouté `is_demo` (meeting d'entraînement, 0 pour tous les meetings existants) — chaque migration vérifie la présence des colonnes ou tables avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
+`createDatabase` exécute les migrations gatées sur `PRAGMA user_version` (`migrateSchema`) : une base fraîche (ou `:memory:`) part de la version 0 et rejoue toutes les migrations dans l'ordre ; une base existante ne rejoue que celles qu'elle n'a pas encore vues. Version actuelle : `9` (`2` a ajouté `default_top_n`, `min_swimmers`, `active_categories` ; `3` a supprimé `date` et `location`, qui n'alimentaient rien de fonctionnel ; `4` a supprimé `status` (provisoire/définitif), dont le club n'avait pas l'usage ; `5` a ajouté `last_imported_at` (date du dernier import CSV, posée par `insertSwimmerResults` ; NULL jusqu'au prochain import pour les meetings existants) ; `6` a créé `import_snapshot` (instantané d'avant le dernier import, pour les mouvements de classement) ; `7` a supprimé la table `team_ranking`, jamais alimentée par un écran : les classements sont toujours recalculés depuis `swimmer_result` ; `8` a ajouté `is_demo` (meeting d'entraînement, 0 pour tous les meetings existants) ; `9` a créé `app_setting` (réglages globaux, vide : « Notre club » garde sa valeur par défaut) — chaque migration vérifie la présence des colonnes ou tables avant de les `DROP`, pour rester un no-op sur une base déjà à jour). Toute migration future doit incrémenter `user_version` et gérer la transition de la même façon.
 
 ## Interfaces TypeScript
 
@@ -120,6 +126,7 @@ interface BackupData {
   version: 1;
   appName: string;              // "MDLM Ranking"
   exportedAt: string;           // ISO timestamp
+  ourClub?: string;             // « Notre club » ; absent des sauvegardes d'avant l'issue #26
   meetings: MeetingBackup[];
 }
 
@@ -149,6 +156,8 @@ interface SwimmerBackup {
 ```
 
 Le meeting d'entraînement (`is_demo = 1`, voir `src/lib/demo-meeting.ts`) n'est jamais sauvegardé : `exportDatabase` l'écarte, donc il est absent des sauvegardes automatiques, de l'export manuel et de la copie avant restauration. Ce sont des données d'exemple jetables : il se recrée en un clic depuis l'Accueil. Une restauration le supprime comme tous les meetings. Le format `BackupData` ne change pas (pas de champ `isDemo`).
+
+« Notre club » (`ourClub`) est toujours écrit, valeur par défaut comprise, et restauré comme le reste : une sauvegarde est un instantané. Une sauvegarde qui n'a pas le champ (faite avant l'issue #26) se restaure sans erreur et remet le club par défaut. Le champ est au premier niveau et le format reste en `version: 1` : la validation des versions précédentes de l'app ignore les champs inconnus du premier niveau, elles peuvent donc relire une sauvegarde récente (sans le réglage). Une valeur vide ou qui n'est pas du texte est refusée par `validateBackup`.
 
 L'instantané `import_snapshot` n'est volontairement pas sauvegardé : une restauration repart sans « import précédent » (pas de flèches tant qu'un nouvel import n'a pas eu lieu).
 
