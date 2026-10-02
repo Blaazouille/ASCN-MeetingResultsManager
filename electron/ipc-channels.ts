@@ -8,6 +8,10 @@ export const IpcChannels = {
   createMeeting: 'meeting:create',
   updateMeeting: 'meeting:update',
   deleteMeeting: 'meeting:delete',
+  // Training meeting (issue #28): (re)create it from the embedded anonymized
+  // CSV, and hand that CSV to the renderer for download.
+  createDemoMeeting: 'meeting:createDemo',
+  getDemoCsv: 'meeting:getDemoCsv',
 
   // Persists already-parsed rows (the renderer parses the CSV itself via
   // src/lib/csv-parser.ts so the on-screen preview and the persisted data

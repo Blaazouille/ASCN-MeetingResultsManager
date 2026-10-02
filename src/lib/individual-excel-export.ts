@@ -47,6 +47,12 @@ export async function buildIndividualWorkbookBuffer(
     });
   }
 
+  // Inserted last, above the header row, so it is the first line seen when the file opens.
+  if (meta.notice) {
+    sheet.spliceRows(1, 0, [meta.notice]);
+    sheet.getRow(1).font = { bold: true, color: { argb: 'FF92400E' } };
+  }
+
   return workbook.xlsx.writeBuffer();
 }
 

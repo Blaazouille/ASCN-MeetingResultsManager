@@ -32,6 +32,16 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
+## Meeting d'entraînement (issue #28)
+
+Un meeting « Entraînement » (`meeting.is_demo = 1`) permet de répéter tout le parcours avant le jour J sans toucher aux vrais meetings.
+
+- **Données** : `resources/meeting-exemple.csv`, version anonymisée de `test/fixtures/sample.csv`, produite par `scripts/anonymize-sample.ts` (`npm run anonymize-sample`, exécuté avec `node --experimental-strip-types`, sans dépendance). Noms et prénoms remplacés par des noms courants fictifs, de façon déterministe (même nageur → même identité fictive dans Dames/Messieurs et Mixte), avec le genre conservé ; clubs remplacés par des clubs fictifs sauf AS Cherbourg Natation ; années de naissance, places et points conservés (ex-aequo compris) ; format extraNat intact (Latin-1, `;`, `"1274 Pts"`). Toute valeur fictive présente dans le vrai fichier est écartée. Le fichier est versionné et embarqué dans le paquet (`build.files` de `package.json`) : aucun accès réseau. `test/demo-sample.test.ts` vérifie qu'aucun nom ou prénom réel n'y figure et que le fichier versionné correspond à la sortie du script.
+- **Création** : canal `meeting:createDemo` → le main lit le fichier, le parse avec `parseCsv` (le vrai parseur) et appelle `resetDemoMeeting` (`src/lib/demo-meeting.ts`), qui supprime l'ancien meeting d'entraînement et en crée un nouveau dans une seule transaction : il n'y en a jamais qu'un.
+- **Téléchargement** : canal `meeting:getDemoCsv` → octets bruts du fichier, téléchargés par le renderer (`downloadBlob`) pour s'exercer au glisser-déposer.
+- **Sauvegardes** : exclu de `exportDatabase` (donc des sauvegardes automatiques, de l'export manuel et de la copie avant restauration). Un import dans ce meeting n'écrit pas de sauvegarde automatique (`isDemoMeeting` dans le handler `import:csv`) : chaque répétition ferait sinon sortir une vraie sauvegarde de la rotation.
+- **Exports** : `buildExportMeta` renseigne `notice` (« EXEMPLE — non officiel ») pour ce meeting ; les PDF l'impriment au-dessus du titre, les Excel en première ligne.
+
 ## Sauvegarde et restauration (Phase 9)
 
 ### Flux de sauvegarde et restauration
@@ -48,7 +58,7 @@ Fichier .json sur disque
 validateBackup() [src/lib/backup-validation.ts]
     ↓  (confirmation)
 restoreWithSafetyCopy() [electron/pre-restore-backup.ts]
-    ├─ si la base contient des meetings : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
+    ├─ si la base contient des meetings réels : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
     │   (échec → restauration annulée, message en français, base intacte)
     ↓
 restoreDatabase() [src/lib/backup.ts]
@@ -105,7 +115,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── preload.ts                 # Context bridge IPC
 │   ├── ipc-handlers.ts            # Handlers filesystem + SQLite
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
-│   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
+│   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation (sauf meeting d'entraînement)
 │   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
 │   └── auto-updater.ts            # Vérification et téléchargement des mises à jour
 ├── src/
@@ -119,6 +129,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
+│   │   ├── demo-meeting.ts        # Meeting d'entraînement : création/réinitialisation, détection
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
 │   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
@@ -146,12 +157,14 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   └── use-auto-update.ts     # Notification de mise à jour téléchargée
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
-│   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
+│   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog,
+│   │   │                          # TrainingSection
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
-│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
+│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, DemoBadge, RankChip, ClubTag,
+│   │                              # MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage
 │   ├── styles/
 │   │   ├── globals.css            # Tailwind base + custom properties (tokens)
@@ -160,7 +173,11 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 ├── test/                          # Tests Vitest : un fichier par module de src/lib et electron, plus les
 │   │                              # garde-fous design-tokens, no-legacy-tokens et docs-architecture
 │   └── fixtures/                  # sample.csv (vrai CSV Latin-1), expected-ranking.json, CSV d'essais manuels
-├── resources/icon.png
+├── scripts/
+│   └── anonymize-sample.ts        # Génère resources/meeting-exemple.csv à partir de sample.csv
+├── resources/
+│   ├── icon.png
+│   └── meeting-exemple.csv        # CSV d'exemple anonymisé (meeting d'entraînement), embarqué
 └── docs/
     ├── architecture.md            # Ce fichier
     ├── screens.md

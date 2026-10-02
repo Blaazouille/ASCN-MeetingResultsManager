@@ -7,7 +7,7 @@
 Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écrans (`Sidebar.tsx` dans `AppShell.tsx` — il n'y a plus de barre d'en-tête séparée, elle a été retirée en Phase 11).
 
 - Logo/nom de l'app en haut.
-- Carte du meeting courant (`SidebarMeetingCard`) : nom + `ImportPendingBadge` (si rien n'est importé) sur fond `marine-raised` ; état vide en pointillés quand aucun meeting n'est ouvert.
+- Carte du meeting courant (`SidebarMeetingCard`) : nom + `ImportPendingBadge` (si rien n'est importé) sur fond `marine-raised` ; pour le meeting d'entraînement, pastille `DemoBadge` « Exemple » et bordure pointillée ; état vide en pointillés quand aucun meeting n'est ouvert.
 - Sections de navigation à plat : Meetings, Données (Import), Résultats (Classement, Individuels, Palmarès), Paramètres.
 - Les entrées Données/Résultats restent visibles mais grisées/désactivées tant qu'aucun meeting n'est ouvert (plutôt que masquées, pour que le bénévole sache qu'elles existent).
 - L'entrée « Import CSV » affiche une coche verte (`bg-success-bright`) dès que des résultats ont été importés (`resultCount > 0`).
@@ -18,6 +18,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` en tête.
 - Carte « Reprendre » (`ResumeMeetingCard`, fond `marine`) mettant en avant le dernier meeting ouvert, avec les mêmes clubs, nageurs et dernier import, et accès direct à l'import ou au classement.
 - Deux colonnes : « Tous les meetings » (`MeetingList` / `MeetingCard`, une ligne cliquable pleine largeur par meeting avec `ImportPendingBadge` (si rien n'est importé) et, une fois importé, nombre de clubs et de nageurs uniques (`meetingStatsLabel`) puis date et heure du dernier import (`lastImportLabel`, `formatMeetingImportedAt`) et un bouton corbeille qui ouvre `DeleteMeetingDialog` : avertissement, puis saisie du nom exact du meeting pour activer « Supprimer définitivement ») et « Nouveau meeting » (`MeetingForm`, toujours visible, plus de bascule créer/annuler) avec une liste numérotée des 3 étapes suivantes.
+- Meeting d'entraînement : sous les étapes, `TrainingSection` propose « S'entraîner avec un meeting d'exemple » (crée ou remet à zéro le meeting « Entraînement » rempli avec des nageurs et clubs fictifs, puis ouvre son classement) et « Télécharger le CSV d'exemple » (pour s'exercer à l'import). Ce meeting porte la pastille « Exemple » (`DemoBadge`, tons `warning` car le corail signifie déjà « Notre club ») et une bordure pointillée dans la liste, la carte « Reprendre » et la barre latérale. Sa corbeille le supprime en un clic, sans `DeleteMeetingDialog` : il n'a aucune valeur à protéger. Ses exports PDF/Excel portent la mention « EXEMPLE — non officiel ».
 - Seul le nom du meeting est demandé à la création (pas de date ni de lieu — retirés du modèle de données ; la carte affiche la date de création à titre indicatif).
 - Clic sur une carte existante ou sur « Reprendre » navigue vers Import ou Classement selon l'état du meeting.
 
@@ -66,7 +67,7 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 
 ### Sauvegarde et restauration
 
-- Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, des nageurs et des classements.
+- Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, des nageurs et des classements. Le meeting d'entraînement n'y figure pas (données d'exemple jetables), ni dans les sauvegardes automatiques ; un import dans ce meeting ne déclenche pas de sauvegarde automatique.
 - Import = restauration à l'identique : la base est remplacée entièrement par le contenu du fichier, exactement comme elle était au moment de l'export. Tous les meetings actuellement présents sont supprimés au profit de ceux du fichier, y compris un meeting créé après la sauvegarde et absent du fichier — ce n'est pas une fusion.
 - Aperçu préalable avant d'écrire la base : nombre de meetings et de lignes de résultats dans le fichier (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), et nombre de meetings actuellement dans la base qui seront supprimés. Confirmation explicite requise.
 - Copie de sécurité avant restauration : à la confirmation, si la base contient au moins un meeting, elle est d'abord enregistrée dans le dossier de sauvegarde sous le nom `mdlm-pre-restore-<horodatage>.json` (l'aperçu l'annonce). Sur une base vide (installation neuve), aucune copie n'est faite ni annoncée, pour qu'un dossier de sauvegarde inaccessible ne bloque pas la récupération des données. Après la restauration, le message de succès indique le chemin de la copie quand il y en a une ; l'importer annule la restauration. Si la copie ne peut pas être écrite, la restauration n'a pas lieu et un message demande de vérifier le dossier de sauvegarde. Ces copies ne sont jamais supprimées par la rotation des sauvegardes automatiques.

@@ -10,7 +10,11 @@ export interface ExportMeta {
   meetingName: string;
   /** Timestamp of computation, formatted fr-FR date + time. */
   computedAt: string;
+  /** Warning printed on every export of the training meeting, so a sample sheet can't pass for official results; null for a real meeting. */
+  notice: string | null;
 }
+
+export const DEMO_EXPORT_NOTICE = 'EXEMPLE — non officiel';
 
 const CREATED_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
@@ -60,6 +64,7 @@ export function buildExportMeta(meeting: Meeting): ExportMeta {
   return {
     meetingName: meeting.name,
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),
+    notice: meeting.isDemo ? DEMO_EXPORT_NOTICE : null,
   };
 }
 

@@ -20,6 +20,7 @@ const TEST_MEETING = {
   lastImportedAt: null,
   clubCount: 0,
   swimmerCount: 0,
+  isDemo: false,
 };
 
 function loadDamesRanking(): IndividualResult[] {

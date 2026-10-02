@@ -1,5 +1,5 @@
 /**
- * Responsabilité : ligne résumant un meeting (nom, création, clubs, nageurs, dernier import, pastille « À importer ») sur l'Accueil, avec ouverture et suppression.
+ * Responsabilité : ligne résumant un meeting (nom, création, clubs, nageurs, dernier import, pastilles « À importer » / « Exemple ») sur l'Accueil, avec ouverture et suppression.
  * Appelé par : MeetingList.tsx.
  * Suppression casserait : l'affichage de la liste des meetings.
  */
@@ -8,6 +8,8 @@ import type { Meeting } from '@/lib/db';
 import { formatMeetingCreatedAt, formatMeetingImportedAt } from '@/lib/export-data';
 import { lastImportLabel, meetingStatsLabel } from '@/lib/ui-labels';
 import { ImportPendingBadge } from '@/components/ui/ImportPendingBadge';
+import { DemoBadge } from '@/components/ui/DemoBadge';
+import { cn } from '@/lib/utils';
 
 export interface MeetingCardProps {
   meeting: Meeting;
@@ -23,14 +25,23 @@ export function MeetingCard({ meeting, onOpen, onDelete }: MeetingCardProps): JS
   // Two sibling buttons rather than a button inside a button (invalid HTML, and
   // the trash click would also open the meeting).
   return (
-    <div className="flex items-center transition-colors hover:bg-surface">
+    // Dashed outline + badge: the training meeting must never pass for a real one.
+    <div
+      className={cn(
+        'flex items-center transition-colors hover:bg-surface',
+        meeting.isDemo && 'm-1 rounded-md border-2 border-dashed border-warning'
+      )}
+    >
       <button
         type="button"
         onClick={() => onOpen(meeting)}
         className="flex flex-1 items-center gap-4 py-4 pl-5 text-left"
       >
         <span className="flex flex-1 flex-col gap-0.5">
-          <span className="text-[17px] font-semibold text-ink">{meeting.name}</span>
+          <span className="flex items-center gap-2 text-[17px] font-semibold text-ink">
+            {meeting.name}
+            {meeting.isDemo && <DemoBadge />}
+          </span>
           <span className="text-sm text-ink-muted">
             Créé le {formatMeetingCreatedAt(meeting)}
             {hasResults && ` · ${meetingStatsLabel(meeting.clubCount, meeting.swimmerCount)}`}

@@ -14,6 +14,7 @@ import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11 },
+  notice: { fontSize: 12, fontWeight: 700, color: '#92400E', marginBottom: 8 },
   title: { fontSize: 20, fontWeight: 700, marginBottom: 4 },
   subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
@@ -39,6 +40,7 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {meta.notice && <Text style={styles.notice}>{meta.notice}</Text>}
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
 

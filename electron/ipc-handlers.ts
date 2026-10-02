@@ -18,10 +18,17 @@ import {
   type MeetingInput,
 } from '../src/lib/db';
 import { getImportSnapshot } from '../src/lib/import-snapshot';
-import type { RawSwimmerRow } from '../src/lib/csv-parser';
+import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
+import { isDemoMeeting, resetDemoMeeting } from '../src/lib/demo-meeting';
 import { exportDatabase, validateBackup, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 import { restoreWithSafetyCopy } from './pre-restore-backup';
+
+// Embedded in the package (see "files" in package.json's build config): the
+// training meeting works offline. APP_ROOT is set by main.ts.
+function readDemoCsv(): Buffer {
+  return readFileSync(path.join(process.env.APP_ROOT ?? '', 'resources', 'meeting-exemple.csv'));
+}
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -37,8 +44,19 @@ export function registerIpcHandlers(db: Database.Database): void {
     deleteMeeting(db, id);
   });
 
+  // Parsed here with the same parser as a real import, so the rehearsal runs on the real code path.
+  ipcMain.handle(IpcChannels.createDemoMeeting, async () => resetDemoMeeting(db, parseCsv(readDemoCsv()).rows));
+
+  // Raw Latin-1 bytes, so the downloaded copy is exactly what extraNat would produce.
+  ipcMain.handle(IpcChannels.getDemoCsv, async () => new Uint8Array(readDemoCsv()));
+
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
     insertSwimmerResults(db, meetingId, rows);
+    // A rehearsal import writes no backup: the training meeting is left out of
+    // backups anyway, and each file would rotate a real restore point out.
+    if (isDemoMeeting(db, meetingId)) {
+      return { backupError: null };
+    }
     // Awaited (not deferred): the response carries the backup outcome so the
     // import screen can warn when no restore point was written.
     return { backupError: performAutoBackup(db) };

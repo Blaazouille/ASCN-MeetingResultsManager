@@ -13,6 +13,8 @@ export interface UseMeetingResult {
   error: string | null;
   refresh: () => Promise<void>;
   createMeeting: (input: MeetingInput) => Promise<Meeting>;
+  /** (Re)creates the training meeting from the embedded sample; replaces any previous one. */
+  createDemoMeeting: () => Promise<Meeting>;
   updateMeeting: (id: number, input: Partial<MeetingInput>) => Promise<Meeting>;
   deleteMeeting: (id: number) => Promise<void>;
   selectMeeting: (id: number | null) => void;
@@ -60,6 +62,19 @@ export function useMeeting(): UseMeetingResult {
     }
   }, []);
 
+  const createDemoMeeting = useCallback(async (): Promise<Meeting> => {
+    try {
+      const meeting = await window.electronAPI.createDemoMeeting();
+      // The main process deleted the previous training meeting: drop it here too.
+      setMeetings((current) => [meeting, ...current.filter((existing) => !existing.isDemo)].sort((a, b) => b.id - a.id));
+      setError(null);
+      return meeting;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  }, []);
+
   const updateMeeting = useCallback(async (id: number, input: Partial<MeetingInput>): Promise<Meeting> => {
     try {
       const meeting = await window.electronAPI.updateMeeting(id, input);
@@ -91,5 +106,16 @@ export function useMeeting(): UseMeetingResult {
 
   const currentMeeting = meetings.find((meeting) => meeting.id === currentMeetingId) ?? null;
 
-  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, updateMeeting, deleteMeeting, selectMeeting };
+  return {
+    meetings,
+    currentMeeting,
+    isLoading,
+    error,
+    refresh,
+    createMeeting,
+    createDemoMeeting,
+    updateMeeting,
+    deleteMeeting,
+    selectMeeting,
+  };
 }
