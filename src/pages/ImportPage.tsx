@@ -49,10 +49,11 @@ export default function ImportPage(): JSX.Element {
             window.electronAPI.getSwimmerResults(meetingId),
           ]);
           if (snapshot && meeting) {
-            setChanges({ since: snapshot.importedAt, summary: summarizeImportChanges(snapshot.rows, current, {
-                topN: meeting.defaultTopN,
-                minSwimmers: meeting.minSwimmers,
-              }) });
+            const summary = summarizeImportChanges(snapshot.rows, current, {
+              topN: meeting.defaultTopN,
+              minSwimmers: meeting.minSwimmers,
+            });
+            setChanges({ since: snapshot.importedAt, summary });
           }
         } catch (err) {
           setPersistError(err instanceof Error ? err.message : String(err));
