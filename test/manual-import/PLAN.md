@@ -10,7 +10,7 @@ Les fichiers de ce dossier sont tous dérivés de `test/fixtures/sample.csv` (La
 3. Paramètres → Sauvegardes automatiques : noter le dossier (par défaut `Documents\MDLM Ranking\Sauvegardes`), le vider, laisser le nombre à 5.
 4. Pour chaque scénario : glisser le fichier dans la zone de dépôt de l'écran Import (ou « Parcourir… »).
 
-**Remise à zéro** : après les scénarios C, D et J, réimporter `01-baseline.csv` (une confirmation peut s'afficher, l'accepter) pour retrouver l'état de départ. Les scénarios B, E, F, G, H et I annulés ne touchent pas la base.
+**Remise à zéro** : après les scénarios C, D et I, réimporter `01-baseline.csv` (une confirmation peut s'afficher, l'accepter) pour retrouver l'état de départ. Les scénarios B, E, F, G et H annulés ne touchent pas la base.
 
 ## Scénarios d'import
 
