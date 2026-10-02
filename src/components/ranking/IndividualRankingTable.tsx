@@ -5,6 +5,7 @@
  */
 import { useMemo } from 'react';
 import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
+import { tiedRanks } from '@/lib/rank-ties';
 import type { IndividualResult } from '@/lib/individual-ranking';
 import { RankChip } from '@/components/ui/RankChip';
 import { ClubTag } from '@/components/ui/ClubTag';
@@ -27,6 +28,8 @@ export function IndividualRankingTable({ results, prizeCount, search }: Individu
         r.club.toLowerCase().includes(query)
     );
   }, [results, search]);
+
+  const tied = useMemo(() => tiedRanks(results), [results]);
 
   if (filtered.length === 0) {
     return (
@@ -58,7 +61,7 @@ export function IndividualRankingTable({ results, prizeCount, search }: Individu
               >
                 <td className="py-2 pl-5 pr-3">
                   <span className="flex items-center gap-2">
-                    <RankChip rank={r.rank} />
+                    <RankChip rank={r.rank} tied={tied.has(r.rank)} />
                     {r.rank <= prizeCount && (
                       <span className="whitespace-nowrap rounded-full bg-corail-soft px-2.5 py-0.5 text-xs font-bold text-corail-strong">
                         {r.rank === 1 ? '1er Prix' : `${r.rank}e Prix`}

@@ -4,6 +4,7 @@
  * Suppression casserait : tout le calcul de classement.
  */
 import type { RawSwimmerRow } from './csv-parser';
+import { assignCompetitionRanks } from './rank-ties';
 
 /** The three FFN result categories this app supports, in the order they should be offered as UI options. */
 export const ALL_CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'] as const;
@@ -57,7 +58,7 @@ export interface TeamResult {
 /**
  * Computes the team ranking for a category: group swimmers by club, keep
  * each club's topN highest scorers, sum their points, and rank clubs by
- * that total (descending, 1-indexed, no gaps).
+ * that total (descending, 1-indexed; ties share a rank, the next one skips).
  */
 export function computeTeamRanking(
   rows: RawSwimmerRow[],
@@ -101,10 +102,8 @@ export function computeTeamRanking(
 
   unranked.sort((a, b) => b.totalPoints - a.totalPoints);
 
-  return unranked.map((team, index) => ({
-    ...team,
-    rank: index + 1,
-  }));
+  const ranks = assignCompetitionRanks(unranked, (team) => team.totalPoints);
+  return unranked.map((team, index) => ({ ...team, rank: ranks[index]! }));
 }
 
 /**

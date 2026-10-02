@@ -5,6 +5,8 @@
  */
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
+import { tiedRanks } from './rank-ties';
+import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 
@@ -36,9 +38,10 @@ export async function exportIndividualToExcel(
   sheet.columns = columns as ExcelJS.Column[];
   sheet.getRow(1).font = { bold: true };
 
+  const tied = tiedRanks(results);
   for (const r of results) {
     const row: Record<string, unknown> = {
-      rank: r.rank,
+      rank: rankText(r.rank, tied.has(r.rank)),
       lastname: r.lastname,
       firstname: r.firstname,
       birthyear: r.birthyear,

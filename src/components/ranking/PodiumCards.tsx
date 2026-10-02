@@ -4,6 +4,7 @@
  * Suppression casserait : le résumé du podium sur l'écran de classement.
  */
 import type { TeamResult } from '@/lib/ranking-engine';
+import { tiedRanks } from '@/lib/rank-ties';
 import { formatGap, placeLabel } from '@/lib/ui-labels';
 import { cn, formatPoints } from '@/lib/utils';
 import { RankChip } from '@/components/ui/RankChip';
@@ -16,7 +17,9 @@ export interface PodiumCardsProps {
 // Left to right 1-2-3, not the 2-1-3 podium shape: people read left to right.
 // The 1st card is wider and navy so it still stands out.
 export function PodiumCards({ results }: PodiumCardsProps): JSX.Element | null {
-  const podium = results.slice(0, 3);
+  // Filter on rank, not slice: tied clubs all stay on the podium, side by side.
+  const podium = results.filter((team) => team.rank <= 3);
+  const tied = tiedRanks(podium);
   if (podium.length === 0) return null;
   // noUncheckedIndexedAccess can't see the length guard above; the non-null assertion is safe here.
   const leaderPoints = podium[0]!.totalPoints;
@@ -34,7 +37,7 @@ export function PodiumCards({ results }: PodiumCardsProps): JSX.Element | null {
             )}
           >
             <div className="flex items-center gap-3">
-              <RankChip rank={team.rank} size="lg" />
+              <RankChip rank={team.rank} size="lg" tied={tied.has(team.rank)} />
               <span
                 className={cn(
                   'text-[13px] font-bold uppercase tracking-[0.08em]',

@@ -4,6 +4,7 @@
  * Suppression casserait : la page de classement individuel.
  */
 import type { RawSwimmerRow } from './csv-parser';
+import { assignCompetitionRanks } from './rank-ties';
 
 export type Gender = 'F' | 'M' | null;
 
@@ -47,8 +48,9 @@ export function computeIndividualRanking(rows: RawSwimmerRow[]): IndividualResul
   const entries = Array.from(bestBySwimmer.values());
   entries.sort((a, b) => b.row.points - a.row.points);
 
+  const ranks = assignCompetitionRanks(entries, (entry) => entry.row.points);
   return entries.map(({ row, gender }, index) => ({
-    rank: index + 1,
+    rank: ranks[index]!,
     lastname: row.lastname,
     firstname: row.firstname,
     birthyear: row.birthyear,
@@ -60,7 +62,7 @@ export function computeIndividualRanking(rows: RawSwimmerRow[]): IndividualResul
 }
 
 export function filterByCategory(results: IndividualResult[], category: string): IndividualResult[] {
-  return results
-    .filter((r) => r.category === category)
-    .map((r, index) => ({ ...r, rank: index + 1 }));
+  const inCategory = results.filter((r) => r.category === category);
+  const ranks = assignCompetitionRanks(inCategory, (r) => r.points);
+  return inCategory.map((r, index) => ({ ...r, rank: ranks[index]! }));
 }

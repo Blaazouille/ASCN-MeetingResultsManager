@@ -51,7 +51,7 @@ Le parseur CSV et le moteur de calcul sont dans `src/lib/`, indépendants de Rea
    b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5
    c. Sommer leurs points → totalPoints
 4. Trier les clubs par totalPoints DESC
-5. Attribuer le rang (1-indexed, sans gaps)
+5. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant)
 ```
 
 **Résultat de référence** (Classement Mixte, top 5) — doit correspondre exactement :

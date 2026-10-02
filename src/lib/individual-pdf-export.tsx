@@ -5,6 +5,8 @@
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { IndividualResult } from './individual-ranking';
+import { tiedRanks } from './rank-ties';
+import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
@@ -16,7 +18,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 5 },
   rowAscn: { backgroundColor: '#F0FAFF' },
-  rank: { width: 28, fontWeight: 700 },
+  rank: { width: 42, fontWeight: 700 },
   name: { flex: 1 },
   year: { width: 46, textAlign: 'right' },
   club: { width: 150 },
@@ -34,6 +36,7 @@ interface IndividualPdfDocumentProps {
 
 function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumentProps): JSX.Element {
   const showCategory = category === 'Tous';
+  const tied = tiedRanks(results);
   const subtitle = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
 
   return (
@@ -59,7 +62,7 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
                 key={`${r.lastname}-${r.firstname}-${r.birthyear}-${r.club}`}
                 style={r.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
               >
-                <Text style={styles.rank}>{r.rank}</Text>
+                <Text style={styles.rank}>{rankText(r.rank, tied.has(r.rank))}</Text>
                 <Text style={styles.name}>{r.lastname} {r.firstname}</Text>
                 <Text style={styles.year}>{r.birthyear}</Text>
                 <Text style={styles.club}>{r.club}</Text>

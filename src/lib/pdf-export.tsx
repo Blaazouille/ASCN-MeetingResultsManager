@@ -5,6 +5,8 @@
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { TeamResult } from './ranking-engine';
+import { tiedRanks } from './rank-ties';
+import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
@@ -17,7 +19,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
   row: { flexDirection: 'row', borderBottom: '1px solid #D1D7DE', paddingVertical: 6 },
   rowAscn: { backgroundColor: '#F0FAFF' },
-  rank: { width: 30, fontWeight: 700 },
+  rank: { width: 42, fontWeight: 700 },
   club: { flex: 1, fontWeight: 600 },
   points: { width: 70, textAlign: 'right', fontWeight: 500 },
   headerCell: { fontSize: 9, textTransform: 'uppercase', color: '#5B6B7D' },
@@ -33,6 +35,7 @@ interface RankingPdfDocumentProps {
 }
 
 function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps): JSX.Element {
+  const tied = tiedRanks(results);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -53,7 +56,7 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
                 key={team.club}
                 style={team.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
               >
-                <Text style={styles.rank}>{team.rank}</Text>
+                <Text style={styles.rank}>{rankText(team.rank, tied.has(team.rank))}</Text>
                 <View style={styles.club}>
                   <Text>{team.club}</Text>
                   <Text style={styles.swimmers}>

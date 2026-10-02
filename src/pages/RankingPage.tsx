@@ -10,9 +10,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
+import { findPodiumTies } from '@/lib/rank-ties';
 import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { categoryShortLabel } from '@/lib/ui-labels';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
+import { TieBanner } from '@/components/ranking/TieBanner';
 import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
@@ -73,6 +75,7 @@ export default function RankingPage(): JSX.Element {
         onSearchChange={setSearch}
       />
       {error && <p className="text-sm text-error">{error}</p>}
+      <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={ranking.category} />
       <PodiumCards results={ranking.teamResults} />
       <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} />
     </div>

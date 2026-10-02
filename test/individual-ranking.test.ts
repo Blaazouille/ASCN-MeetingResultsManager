@@ -43,9 +43,9 @@ describe('computeIndividualRanking', () => {
     }
   });
 
-  it('assigns ranks starting at 1 with no gaps', () => {
-    results.forEach((result, index) => {
-      expect(result.rank).toBe(index + 1);
+  it('ranks each swimmer 1 + the number of swimmers with strictly more points', () => {
+    results.forEach((result) => {
+      expect(result.rank).toBe(1 + results.filter((other) => other.points > result.points).length);
     });
   });
 
@@ -86,10 +86,10 @@ describe('filterByCategory', () => {
     expect(messieurs.length).toBeGreaterThan(0);
   });
 
-  it('re-ranks filtered results starting at 1', () => {
+  it('re-ranks filtered results within the category, ties sharing a rank', () => {
     const dames = filterByCategory(results, 'Classement Dames');
-    dames.forEach((result, index) => {
-      expect(result.rank).toBe(index + 1);
+    dames.forEach((result) => {
+      expect(result.rank).toBe(1 + dames.filter((other) => other.points > result.points).length);
     });
   });
 });

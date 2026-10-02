@@ -79,3 +79,14 @@ export function isDeleteConfirmed(typed: string, meetingName: string): boolean {
   const entry = typed.trim();
   return entry !== '' && entry === meetingName.trim();
 }
+
+/** Rank for exports: "3 ex." when shared, the plain number otherwise. */
+export function rankText(rank: number, tied: boolean): string {
+  return tied ? `${rank} ex.` : String(rank);
+}
+
+/** Banner text for a tie on a podium place or prize, e.g. "Égalité pour la 3e place en Mixte : à départager". */
+export function tieAlertLabel(ranks: number[], category: string): string {
+  const places = ranks.length === 1 ? `la ${placeLabel(ranks[0]!)}` : `les places ${ranks.join(' et ')}`;
+  return `Égalité pour ${places} en ${categoryShortLabel(category)} : à départager`;
+}

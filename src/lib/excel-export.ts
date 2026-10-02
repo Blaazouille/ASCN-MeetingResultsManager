@@ -5,6 +5,8 @@
  */
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
+import { tiedRanks } from './rank-ties';
+import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
@@ -41,9 +43,10 @@ export async function buildRankingWorkbookBuffer(
   ];
   sheet.getRow(1).font = { bold: true };
 
+  const tied = tiedRanks(results);
   for (const team of results) {
     sheet.addRow({
-      rank: team.rank,
+      rank: rankText(team.rank, tied.has(team.rank)),
       club: team.club,
       points: team.totalPoints,
       swimmers: formatSwimmerList(team),

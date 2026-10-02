@@ -12,6 +12,7 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table';
 import { ASCN_CLUB_NAME, cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
+import { tiedRanks } from '@/lib/rank-ties';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
 import { formatGap, leaderRatio } from '@/lib/ui-labels';
 import { RankChip } from '@/components/ui/RankChip';
@@ -37,11 +38,11 @@ const RIGHT_ALIGNED = new Set(['gap', 'totalPoints']);
 
 // TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
 // columns; `any` here is the library's own documented pattern for a mixed column array.
-function buildColumns(leaderPoints: number): ColumnDef<TeamResult, any>[] {
+function buildColumns(leaderPoints: number, tied: Set<number>): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
-      cell: (info) => <RankChip rank={info.getValue()} />,
+      cell: (info) => <RankChip rank={info.getValue()} tied={tied.has(info.getValue())} />,
     }),
     columnHelper.accessor('club', {
       header: 'Club',
@@ -99,7 +100,8 @@ export function TeamRankingTable({ results, category, search }: TeamRankingTable
   const filtered = useMemo(() => filterTeamResultsByClub(results, search), [results, search]);
   // Gaps and bars compare every club to the 1st of the whole ranking, not of the filtered view.
   const leaderPoints = results[0]?.totalPoints ?? 0;
-  const columns = useMemo(() => buildColumns(leaderPoints), [leaderPoints]);
+  const tied = useMemo(() => tiedRanks(results), [results]);
+  const columns = useMemo(() => buildColumns(leaderPoints, tied), [leaderPoints, tied]);
 
   const table = useReactTable({
     data: filtered,
