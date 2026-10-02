@@ -1,6 +1,6 @@
 /**
  * Responsabilité : export / import complet de la base de données en JSON.
- * Appelé par : electron/ipc-handlers.ts (export/import), electron/auto-backup.ts, tests.
+ * Appelé par : electron/ipc-handlers.ts (export), electron/auto-backup.ts, electron/pre-restore-backup.ts (restauration), tests.
  * Suppression casserait : la fonctionnalité de sauvegarde et restauration.
  */
 import type Database from 'better-sqlite3';

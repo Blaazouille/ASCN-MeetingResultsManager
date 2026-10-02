@@ -19,8 +19,9 @@ import {
 } from '../src/lib/db';
 import { getImportSnapshot } from '../src/lib/import-snapshot';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
-import { exportDatabase, validateBackup, restoreDatabase, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
+import { exportDatabase, validateBackup, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
+import { restoreWithSafetyCopy } from './pre-restore-backup';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -126,9 +127,11 @@ export function registerIpcHandlers(db: Database.Database): void {
       if (!pendingImport) {
         return { success: false, error: 'Aucune sauvegarde en attente de confirmation' };
       }
-      const result = restoreDatabase(db, pendingImport);
+      // A restore wipes every meeting, so the current state is written to the
+      // backup folder first; if that copy fails, nothing is restored.
+      const { result, safetyCopyPath } = restoreWithSafetyCopy(db, pendingImport, () => loadBackupConfig().backupDir);
       pendingImport = null;
-      return { success: true, result };
+      return { success: true, result, safetyCopyPath };
     } catch (error) {
       pendingImport = null;
       return { success: false, error: error instanceof Error ? error.message : String(error) };
