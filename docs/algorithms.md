@@ -13,7 +13,7 @@ Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
    b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5 (issu du top N par défaut du meeting)
    c. Sommer leurs points → totalPoints
 5. Trier les clubs par totalPoints DESC
-6. Attribuer le rang (1-indexed, sans gaps)
+6. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant)
 ```
 
 ### Résultat de référence (Classement Mixte, top 5)
@@ -48,16 +48,16 @@ Implémenté dans `src/lib/individual-ranking.ts` (`computeIndividualRanking`, `
    « dames » → F, « messieurs » → M, sinon (Mixte) → aucun genre
    Un nageur vu en Dames/Messieurs ET en Mixte garde le genre connu
 4. Trier par points DESC
-5. Attribuer le rang (1-indexed, sans gaps) — rang « global », toutes catégories confondues
+5. Attribuer le rang « standard competition » (1, 2, 2, 4) : les ex-aequo partagent le rang, le suivant saute ; aucune règle de départage (à la charge du gérant) — rang « global », toutes catégories confondues
 ```
 
 Le genre n'est jamais déduit du prénom : seule la catégorie fait foi.
 
-L'écran n'affiche pas ce classement global tel quel : `filterByCategory` ne garde que les résultats dont la catégorie est celle de l'onglet actif et **recalcule le rang** (1, 2, 3…) sur cette sélection. Un nageur dédupliqué n'apparaît donc que dans la catégorie où il a obtenu son meilleur score.
+L'écran n'affiche pas ce classement global tel quel : `filterByCategory` ne garde que les résultats dont la catégorie est celle de l'onglet actif et **recalcule le rang** (mêmes règles d'ex-aequo) sur cette sélection. Un nageur dédupliqué n'apparaît donc que dans la catégorie où il a obtenu son meilleur score.
 
 ### Badges de prix
 
-L'écran Individuels (`IndividualRankingTable`) affiche « 1er Prix » et « 2e Prix » sur les deux premiers nageurs de la vue affichée (donc de l'onglet de catégorie actif).
+L'écran Individuels (`IndividualRankingTable`) affiche « 1er Prix » et « 2e Prix » sur les nageurs de rang 1 et 2 de la vue affichée (donc de l'onglet de catégorie actif) : les ex-aequo reçoivent tous le même badge. Une égalité sur ces rangs ou sur le podium équipes déclenche un bandeau corail « à départager » (`TieBanner`, `findPodiumTies`).
 
 ### Recherche par nom ou club
 

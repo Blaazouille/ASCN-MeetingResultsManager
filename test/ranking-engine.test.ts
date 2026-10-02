@@ -63,7 +63,7 @@ describe('computeTeamRanking — Classement Mixte, top 5 (reference fixture)', (
     expect(result.map(stripSwimmerRank)).toEqual(expected);
   });
 
-  it('assigns 1-indexed ranks with no gaps', () => {
+  it('assigns 1-indexed ranks with no gaps when no club is tied', () => {
     expect(result.map((team) => team.rank)).toEqual(Array.from({ length: 38 }, (_, i) => i + 1));
   });
 

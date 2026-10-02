@@ -11,9 +11,11 @@ import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
 import { computeIndividualRanking, filterByCategory } from '@/lib/individual-ranking';
+import { findPodiumTies } from '@/lib/rank-ties';
 import { categoryShortLabel } from '@/lib/ui-labels';
 import { SearchField } from '@/components/ui/SearchField';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
+import { TieBanner } from '@/components/ranking/TieBanner';
 import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
 
@@ -65,6 +67,7 @@ export default function IndividualPage(): JSX.Element {
         </div>
       </FilterBar>
       {exportError && <p className="text-sm text-error">{exportError}</p>}
+      <TieBanner ranks={findPodiumTies(displayedResults, PRIZE_COUNT)} category={currentCategory} />
       <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} search={search} />
     </div>
   );

@@ -42,7 +42,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de nageurs), actions Excel/PDF.
 - `FilterBar` : `CategoryTabs` (catégories actives) + `SearchField` (recherche par nom ou club, alignée à droite).
 - Classement par points des nageurs de la catégorie active (`IndividualRankingTable`, rang recalculé par catégorie) : Rang (`RankChip`, couleurs médaille pour le top 3), Nom, Année de naissance, Club (+ `ClubTag` pour ASCN), Points (`font-display`, `formatPoints`).
-- Pastille corail « 1er Prix » / « 2e Prix » pour les deux premiers nageurs de la vue affichée.
+- Pastille corail « 1er Prix » / « 2e Prix » pour les nageurs de rang 1 et 2 (ex-aequo inclus). Rang partagé : marqueur « ex. » ; bandeau corail si l'égalité touche un prix ou le podium équipes.
 - Lignes `h-14` (≥56px), en-tête `h-11`.
 
 ## Palmarès (`/palmares`)

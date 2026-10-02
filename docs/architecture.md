@@ -103,6 +103,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── lib/                       # Logique pure, indépendante de React
 │   │   ├── csv-parser.ts          # Parseur CSV FFN extraNat
 │   │   ├── ranking-engine.ts      # Classement par équipes
+│   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
