@@ -7,6 +7,7 @@ import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer
 import type { FunAward } from './fun-awards';
 import type { ExportMeta, ExportSection } from './export-data';
 import { categoryShortLabel } from './ui-labels';
+import { PdfExportNotice } from './pdf-export-notice';
 
 // Same palette and spacing as the ranking PDFs so the pack reads as one set of documents.
 const styles = StyleSheet.create({
@@ -28,6 +29,7 @@ interface PalmaresPdfPageProps extends ExportSection<FunAward> {
 function PalmaresPdfPage({ meta, category, results }: PalmaresPdfPageProps): JSX.Element {
   return (
     <Page size="A4" style={styles.page}>
+      <PdfExportNotice meta={meta} />
       <Text style={styles.title}>{meta.meetingName}</Text>
       <Text style={styles.subtitle}>Palmarès des rigolos — {categoryShortLabel(category)}</Text>
 

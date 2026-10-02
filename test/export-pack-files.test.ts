@@ -26,6 +26,7 @@ const TEST_MEETING = {
   lastImportedAt: null,
   clubCount: 0,
   swimmerCount: 0,
+  isDemo: false,
 };
 
 const rows = parseCsv(new Uint8Array(readFileSync(path.join(__dirname, 'fixtures', 'sample.csv')))).rows;

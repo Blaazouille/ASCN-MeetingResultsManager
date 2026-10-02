@@ -10,7 +10,7 @@ Les fichiers de ce dossier sont tous dérivés de `test/fixtures/sample.csv` (La
 3. Paramètres → Sauvegardes automatiques : noter le dossier (par défaut `Documents\MDLM Ranking\Sauvegardes`), le vider, laisser le nombre à 5.
 4. Pour chaque scénario : glisser le fichier dans la zone de dépôt de l'écran Import (ou « Parcourir… »).
 
-**Remise à zéro** : après les scénarios C, D et I, réimporter `01-baseline.csv` (une confirmation peut s'afficher, l'accepter) pour retrouver l'état de départ. Les scénarios B, E, F, G et H annulés ne touchent pas la base.
+**Remise à zéro** : après les scénarios C, D, I et Q, réimporter `01-baseline.csv` (une confirmation peut s'afficher, l'accepter) pour retrouver l'état de départ. Les scénarios B, E, F, G et H annulés ne touchent pas la base.
 
 ## Scénarios d'import
 
@@ -25,7 +25,10 @@ Les fichiers de ce dossier sont tous dérivés de `test/fixtures/sample.csv` (La
 | G | `07-wrong-file-small.csv` (5 nageurs Mixte inconnus) | Modale avec 5 lignes : Dames absent, Messieurs absent (info), 5 nageurs en Mixte contre 211, 211 nageurs retirés du classement Mixte, nageurs différents. | Non tant que rien n'est confirmé |
 | H | `08-header-only.csv`, puis `09-no-points-column.csv` | Message rouge **dans la zone de dépôt** (bordure et fond rouges, icône) « Aucune ligne exploitable dans ce fichier… », la zone tremble. Pas de carte de succès, pas de modale. | Non, aucune sauvegarde créée |
 | I | `10-ignored-and-duplicates.csv` | **Pas de modale.** Encart « Avant d'importer » : « 3 nageurs absents du nouveau fichier seront retirés du classement Dames. », puis « Importer » : carte de succès + « À savoir » : « Lignes sans points, non importées : 3. » et « Nageurs en double dans une catégorie (seul le dernier est gardé) : 2. » Les 3 nageurs sans points disparaissent de la base (absents du fichier), c'est normal. | Oui |
-| J | `11-not-a-csv.txt` | Même rendu rouge dans la zone : « Fichier non supporté (.csv attendu) ». Redéposer le même fichier fait trembler la zone à nouveau. | Non |
+| J | `11-not-a-csv.txt` | Même rendu rouge dans la zone : « Fichier non supporté (.csv attendu) ». Redéposer le même fichier fait trembler la zone à nouveau. Fait juste après A : la carte verte de `01-baseline.csv` disparaît (le bandeau « … résultats déjà importés » la remplace), elle ne reste pas à côté de l'erreur. | Non |
+| Q | `12-unreadable-cells.csv` (année de naissance « 19XX » pour Pascale CREANCE, vide pour Patrick SCHWING, place vide pour Beatrice COUSSIEU en Dames) | Encart « Avant d'importer » (CREANCE et SCHWING sont absents du fichier lu), puis « Importer » : « À savoir » affiche « 2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Pascale CREANCE, Patrick SCHWING. Leurs points ne comptent dans aucun classement. » COUSSIEU est importée, ses points comptent pour SN VERSAILLES ; l'avertissement « place vide » est dans le bloc replié. | Oui, après « Importer » |
+| R | `13-unreadable-points.csv` (« N/A » dans les points de COUSSIEU en Dames) | Message rouge dans la zone : « Ligne 4 : points illisibles (« N/A »). Est-ce bien un export de cotations extraNat ? » Pas de carte, pas de modale. | Non |
+| S | Glisser `01-baseline.csv` **et** `03-corrected.csv` ensemble | Message rouge dans la zone : « Un seul fichier à la fois : déposez uniquement le fichier CSV extraNat. » Aucun des deux n'est lu. | Non |
 
 ### Comportement de la modale (scénarios B, E, F, G)
 
@@ -43,6 +46,7 @@ Pour chacun, vérifier :
 - **Après une annulation** : annuler `05`, puis déposer `03-corrected.csv` : import normal, pas de reste de l'ancienne modale.
 - **Quitter l'écran pendant l'encart** : déposer `03-corrected.csv` sur la base de départ, laisser l'encart « Avant d'importer » affiché, cliquer « Par équipes » dans la barre latérale puis revenir sur Import : l'encart est toujours là (pas de coche verte « Fichier importé et enregistré »), le Classement n'a pas changé. « Importer » met le focus sur la carte de résultat ; « Annuler » (ou Échap) le met sur « Parcourir… ».
 - **Deuxième dépôt pendant l'encart** : encart « Avant d'importer » de `03-corrected.csv` affiché, déposer `01-baseline.csv` : à aucun moment une carte verte « Fichier importé et enregistré » n'apparaît pour `03-corrected.csv`.
+- **Fichier refusé pendant l'encart** : encart « Avant d'importer » de `03-corrected.csv` affiché, déposer `11-not-a-csv.txt` : l'erreur s'affiche dans la zone, l'encart reste en place et « Importer » fonctionne toujours.
 - **Échec d'enregistrement puis aller-retour** (base verrouillée : ouvrir le fichier de la base dans DB Browser for SQLite et y laisser une modification non enregistrée, puis importer `03-corrected.csv` et cliquer « Importer ») : après « Échec de l'enregistrement : … », aller sur « Par équipes » puis revenir : le message d'échec est toujours là, aucune coche verte.
 - **Quitter l'écran pendant l'enregistrement** : déposer un gros fichier, aller sur « Par équipes » aussitôt puis revenir : la carte indique « Enregistrement du fichier… » tant que ce n'est pas fini, puis la coche verte ; un dépôt fait avant la fin est ignoré.
 - **Même fichier redéposé** : après C, déposer à nouveau `03-corrected.csv`, confirmer « Importer quand même » : l'encart « Depuis l'import du … » affiche toujours les 2 nageurs en moins (et non « Aucun changement »), et les flèches du Classement sont toujours là.
@@ -52,7 +56,7 @@ Pour chacun, vérifier :
 
 | # | Scénario | Attendu |
 |---|---|---|
-| K | Faire les scénarios A, C, D, I : compter les fichiers du dossier de sauvegarde. | 1 fichier par import réussi, aucun pour un import annulé ou refusé (B, E, F, G, H, J). Aucune sauvegarde faite avant l'import : le dernier fichier contient l'état du dernier import. |
+| K | Faire les scénarios A, C, D, I : compter les fichiers du dossier de sauvegarde. | 1 fichier par import réussi, aucun pour un import annulé ou refusé (B, E, F, G, H, J, R, S). Aucune sauvegarde faite avant l'import : le dernier fichier contient l'état du dernier import. |
 | L | Paramètres : taper `1` dans « Nombre de sauvegardes automatiques conservées ». | La valeur remonte à 3. Enregistrer fonctionne, relancer l'app : 3 affiché. |
 | M | Avec 3 conservées, faire 4 imports réussis. | Il reste 3 fichiers, les plus anciens sont supprimés. |
 | N | Refuser l'écriture dans le dossier (PowerShell ; `GetFolderPath` suit la redirection éventuelle du dossier Documents, par exemple vers un autre disque) : `icacls "$([Environment]::GetFolderPath('MyDocuments'))\MDLM Ranking\Sauvegardes" /deny "$($env:USERNAME):(OI)(CI)W"`, puis importer `03-corrected.csv`. | L'import réussit (carte verte) **et** l'encart « À savoir » affiche « La sauvegarde automatique a échoué. Vérifiez le dossier de sauvegarde dans les Paramètres. » Aucun nouveau fichier dans le dossier. |
@@ -61,7 +65,7 @@ Pour chacun, vérifier :
 
 ## À cocher avant la fusion
 
-- [ ] A à J passés
+- [ ] A à J, Q à S passés
 - [ ] Comportement de la modale vérifié (clavier, tactile, texte)
 - [ ] Cas limites enchaînés
 - [ ] K à P passés

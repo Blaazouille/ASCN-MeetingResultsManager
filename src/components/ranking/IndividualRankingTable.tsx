@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
 import { tiedRanks } from '@/lib/rank-ties';
+import { prizeLabel } from '@/lib/ui-labels';
 import { swimmerIdentity, type Movement } from '@/lib/import-diff';
 import type { IndividualResult } from '@/lib/individual-ranking';
 import { RankChip } from '@/components/ui/RankChip';
@@ -69,7 +70,7 @@ export function IndividualRankingTable({ results, prizeCount, search, movements 
                     <MovementBadge movement={movements?.get(swimmerIdentity(r))} />
                     {r.rank <= prizeCount && (
                       <span className="whitespace-nowrap rounded-full bg-corail-soft px-2.5 py-0.5 text-xs font-bold text-corail-strong">
-                        {r.rank === 1 ? '1er Prix' : `${r.rank}e Prix`}
+                        {prizeLabel(r.rank)}
                       </span>
                     )}
                   </span>

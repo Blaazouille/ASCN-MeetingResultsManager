@@ -7,10 +7,14 @@ import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta, ExportSection } from './export-data';
-import { excelSheetName, individualExportFileName } from './export-data';
+import { addExportNotice, excelSheetName, individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 
-function addIndividualSheet(workbook: ExcelJS.Workbook, { category, results }: ExportSection<IndividualResult>): void {
+function addIndividualSheet(
+  workbook: ExcelJS.Workbook,
+  meta: ExportMeta,
+  { category, results }: ExportSection<IndividualResult>
+): void {
   const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
@@ -37,6 +41,8 @@ function addIndividualSheet(workbook: ExcelJS.Workbook, { category, results }: E
       tied: tied.has(r.rank) ? 'ex.' : '',
     });
   }
+
+  addExportNotice(sheet, meta);
 }
 
 /**
@@ -51,7 +57,7 @@ export async function buildIndividualWorkbookBuffer(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
   for (const section of sections) {
-    addIndividualSheet(workbook, section);
+    addIndividualSheet(workbook, meta, section);
   }
   return workbook.xlsx.writeBuffer();
 }

@@ -1,12 +1,15 @@
 /**
  * Responsabilité : calcul du classement individuel d'une catégorie.
- * Appelé par : IndividualPage.tsx (via hook) et les tests.
+ * Appelé par : IndividualPage.tsx (via hook), ceremony-script.ts et les tests.
  * Suppression casserait : la page de classement individuel.
  */
 import type { RawSwimmerRow } from './csv-parser';
 import { assignCompetitionRanks } from './rank-ties';
 
 export type Gender = 'F' | 'M' | null;
+
+/** Number of top swimmers per category who get a prize (1er Prix, 2e Prix), shared by the Individuels screen and the ceremony. */
+export const INDIVIDUAL_PRIZE_COUNT = 2;
 
 export interface IndividualResult {
   rank: number;

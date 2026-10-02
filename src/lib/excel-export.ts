@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta, ExportSection } from './export-data';
-import { excelSheetName, slugifyCategory } from './export-data';
+import { addExportNotice, excelSheetName, slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
 const COLUMN_HEADERS = ['Rang', 'Club', 'Points', 'Nageurs retenus'];
@@ -16,7 +16,7 @@ function formatSwimmerList(team: TeamResult): string {
   return team.swimmers.map((swimmer) => `${swimmer.lastname} ${swimmer.firstname}`).join(', ');
 }
 
-function addRankingSheet(workbook: ExcelJS.Workbook, { category, results }: ExportSection<TeamResult>): void {
+function addRankingSheet(workbook: ExcelJS.Workbook, meta: ExportMeta, { category, results }: ExportSection<TeamResult>): void {
   const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
@@ -39,6 +39,8 @@ function addRankingSheet(workbook: ExcelJS.Workbook, { category, results }: Expo
       swimmers: formatSwimmerList(team),
     });
   }
+
+  addExportNotice(sheet, meta);
 }
 
 /** One sheet per section: the single-category export and the full-meeting pack share one layout. */
@@ -47,7 +49,7 @@ export async function buildRankingWorkbookBuffer(meta: ExportMeta, sections: Exp
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
   for (const section of sections) {
-    addRankingSheet(workbook, section);
+    addRankingSheet(workbook, meta, section);
   }
   return workbook.xlsx.writeBuffer();
 }

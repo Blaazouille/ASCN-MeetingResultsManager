@@ -23,6 +23,8 @@ export interface Meeting {
   clubCount: number;
   /** Distinct swimmers (a swimmer listed in several categories counts once). */
   swimmerCount: number;
+  /** Training meeting built from the anonymized sample (see demo-meeting.ts): never backed up, deleted without confirmation. */
+  isDemo: boolean;
 }
 
 export interface MeetingInput {
@@ -44,6 +46,7 @@ interface MeetingRow {
   last_imported_at: string | null;
   club_count: number;
   swimmer_count: number;
+  is_demo: number;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -59,6 +62,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
     lastImportedAt: row.last_imported_at,
     clubCount: row.club_count,
     swimmerCount: row.swimmer_count,
+    isDemo: row.is_demo === 1,
   };
 }
 
@@ -142,7 +146,7 @@ interface SwimmerResultRow {
 function rowToRawSwimmerRow(row: SwimmerResultRow): RawSwimmerRow {
   return {
     name: row.category,
-    place: row.rank ?? 0,
+    place: row.rank,
     lastname: row.lastname,
     firstname: row.firstname,
     birthyear: row.birthyear ?? 0,
@@ -244,13 +248,14 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
   insertAll(rows);
 }
 
+/** A swimmer without a rank (empty place cell in the file) comes after the ranked ones, not first as SQLite sorts NULL. */
 export function getSwimmerResults(db: Database.Database, meetingId: number, category?: string): RawSwimmerRow[] {
   const rows = category
     ? (db
-        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? AND category = ? ORDER BY rank')
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? AND category = ? ORDER BY rank IS NULL, rank')
         .all(meetingId, category) as SwimmerResultRow[])
     : (db
-        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank')
+        .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank IS NULL, rank')
         .all(meetingId) as SwimmerResultRow[]);
   return rows.map(rowToRawSwimmerRow);
 }

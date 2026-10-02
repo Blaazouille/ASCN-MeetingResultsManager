@@ -2,7 +2,7 @@
 
 Application de bureau (Windows, macOS) qui calcule les classements par équipes du Meeting de la Mer (AS Cherbourg Natation). Elle importe le CSV de cotations FFN (extraNat), classe les clubs selon une règle configurable (les N meilleurs nageurs de chaque club) et exporte les résultats en PDF et Excel. Tout reste en local : aucun serveur, seule la recherche de mises à jour contacte GitHub.
 
-Écrans : Accueil (meetings), Import CSV, Classement par équipes, Individuels, Palmarès des « rigolos », Paramètres (règles de calcul, sauvegarde et restauration).
+Écrans : Accueil (meetings), Import CSV, Classement par équipes, Individuels, Palmarès des « rigolos », Cérémonie (déroulé de la remise des prix), Paramètres (règles de calcul, sauvegarde et restauration).
 
 ## Installer
 

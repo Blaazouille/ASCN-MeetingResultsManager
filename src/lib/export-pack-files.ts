@@ -41,11 +41,11 @@ function palmaresSections({ rows, categories }: ExportPackInput): ExportSection<
   return sections(categories, (category) => computeFunAwards(rows.filter((row) => row.name === category)));
 }
 
-async function blobBytes(blob: Promise<Blob>): Promise<Uint8Array> {
+async function blobBytes(blob: Promise<Blob>): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(await (await blob).arrayBuffer());
 }
 
-async function bufferBytes(buffer: Promise<ArrayBuffer>): Promise<Uint8Array> {
+async function bufferBytes(buffer: Promise<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(await buffer);
 }
 
@@ -54,7 +54,7 @@ async function bufferBytes(buffer: Promise<ArrayBuffer>): Promise<Uint8Array> {
  * generator with every active category as a section, so a pack file is laid
  * out exactly like the single-category export (acceptance criterion of #24).
  */
-const BUILDERS: Record<ExportPackFileKind, (input: ExportPackInput) => Promise<Uint8Array>> = {
+const BUILDERS: Record<ExportPackFileKind, (input: ExportPackInput) => Promise<Uint8Array<ArrayBuffer>>> = {
   'team-pdf': (input) => blobBytes(buildRankingPdfBlob(input.meta, teamSections(input))),
   'team-excel': (input) => bufferBytes(buildRankingWorkbookBuffer(input.meta, teamSections(input))),
   'individual-pdf': (input) => blobBytes(buildIndividualPdfBlob(input.meta, individualSections(input))),
@@ -63,6 +63,6 @@ const BUILDERS: Record<ExportPackFileKind, (input: ExportPackInput) => Promise<U
 };
 
 /** Bytes of one pack file; rejects if its generator fails, so the caller can skip just that file. */
-export function buildPackFile(kind: ExportPackFileKind, input: ExportPackInput): Promise<Uint8Array> {
+export function buildPackFile(kind: ExportPackFileKind, input: ExportPackInput): Promise<Uint8Array<ArrayBuffer>> {
   return BUILDERS[kind](input);
 }

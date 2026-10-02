@@ -1,6 +1,6 @@
 /**
  * Responsabilité : sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés).
- * Appelé par : CategoryTabs.tsx, RankingToolbar.tsx.
+ * Appelé par : CategoryTabs.tsx, RankingToolbar.tsx, CeremonyPreparation.tsx.
  * Suppression casserait : le choix de la catégorie, du nombre de nageurs comptés.
  */
 import { cn } from '@/lib/utils';

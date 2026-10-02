@@ -63,6 +63,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 | `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés) |
 | `MovementBadge` | Mouvement de rang depuis le dernier import : `↑2` en `success`, `↓1` en `corail-strong`, pastille « + » `bassin-strong` sur `bassin-soft` pour une entrée nouvelle (infobulle) ; la flèche et le chiffre portent le sens, la couleur ne fait que le renforcer |
 | `ImportPendingBadge` | Pastille « À importer » d'un meeting sans résultat importé |
+| `DemoBadge` | Pastille « Exemple » du meeting d'entraînement (tons `warning`/`warning-light`, pas corail qui signifie « Notre club ») ; toujours accompagnée d'une bordure pointillée sur la carte du meeting |
 
 ## Formatage des nombres
 

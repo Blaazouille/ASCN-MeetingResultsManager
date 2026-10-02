@@ -11,8 +11,11 @@ export interface UseMeetingResult {
   currentMeeting: Meeting | null;
   isLoading: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  /** Reloads the meeting list. Resolves to false when it failed (the message is in `error`), so a caller elsewhere than Accueil can say so where the volunteer is. */
+  refresh: () => Promise<boolean>;
   createMeeting: (input: MeetingInput) => Promise<Meeting>;
+  /** (Re)creates the training meeting from the embedded sample; replaces any previous one. */
+  createDemoMeeting: () => Promise<Meeting>;
   updateMeeting: (id: number, input: Partial<MeetingInput>) => Promise<Meeting>;
   deleteMeeting: (id: number) => Promise<void>;
   selectMeeting: (id: number | null) => void;
@@ -25,7 +28,7 @@ export function useMeeting(): UseMeetingResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -36,8 +39,10 @@ export function useMeeting(): UseMeetingResult {
       // reading currentMeeting would silently fall back to null with no
       // indication why the meeting they had open "disappeared".
       setCurrentMeetingId((current) => (current !== null && !fetched.some((m) => m.id === current) ? null : current));
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -56,6 +61,21 @@ export function useMeeting(): UseMeetingResult {
       return meeting;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    }
+  }, []);
+
+  const createDemoMeeting = useCallback(async (): Promise<Meeting> => {
+    try {
+      const meeting = await window.electronAPI.createDemoMeeting();
+      // The main process deleted the previous training meeting: drop it here too.
+      setMeetings((current) => [meeting, ...current.filter((existing) => !existing.isDemo)].sort((a, b) => b.id - a.id));
+      setError(null);
+      return meeting;
+    } catch (err) {
+      // A fixed sentence: Electron prefixes errors crossing IPC with "Error
+      // invoking remote method…", which a volunteer should never read.
+      setError("Le meeting d'exemple n'a pas pu être créé. Réinstallez l'application si le problème persiste.");
       throw err;
     }
   }, []);
@@ -91,5 +111,16 @@ export function useMeeting(): UseMeetingResult {
 
   const currentMeeting = meetings.find((meeting) => meeting.id === currentMeetingId) ?? null;
 
-  return { meetings, currentMeeting, isLoading, error, refresh, createMeeting, updateMeeting, deleteMeeting, selectMeeting };
+  return {
+    meetings,
+    currentMeeting,
+    isLoading,
+    error,
+    refresh,
+    createMeeting,
+    createDemoMeeting,
+    updateMeeting,
+    deleteMeeting,
+    selectMeeting,
+  };
 }
