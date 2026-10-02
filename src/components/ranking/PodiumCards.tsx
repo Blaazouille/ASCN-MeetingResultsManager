@@ -25,7 +25,15 @@ export function PodiumCards({ results }: PodiumCardsProps): JSX.Element | null {
   const leaderPoints = podium[0]!.totalPoints;
 
   return (
-    <section aria-label="Podium" className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+    <section
+      aria-label="Podium"
+      className={cn(
+        'grid gap-4',
+        // Equal columns on a tie: the wide 1st column only makes sense for a single leader, and
+        // 4+ cards wrap onto a second row without landing in an oversized column.
+        tied.size > 0 ? 'grid-cols-3' : 'grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]'
+      )}
+    >
       {podium.map((team) => {
         const featured = team.rank === 1;
         return (

@@ -29,7 +29,7 @@ export interface TeamRankingTableProps {
 const columnHelper = createColumnHelper<TeamResult>();
 
 const COLUMN_WIDTHS: Record<string, string> = {
-  rank: 'w-[72px]',
+  rank: 'w-[116px]',
   swimmerCount: 'w-[170px]',
   gap: 'w-[110px]',
   totalPoints: 'w-[240px]',

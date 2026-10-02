@@ -78,3 +78,20 @@ describe('buildRankingWorkbookBuffer', () => {
     expect(sheet.name).toBe('100m Dames');
   });
 });
+
+describe('buildRankingWorkbookBuffer ties', () => {
+  it('keeps the rank numeric and flags tied clubs in the "Ex æquo" column', async () => {
+    const row = (club: string, points: number) => ({
+      name: 'Classement Mixte', place: 1, lastname: club, firstname: 'X', birthyear: 2000, nation: 'FRA', club, points, comment: '',
+    });
+    const results = computeTeamRanking([row('A', 100), row('B', 100), row('C', 50)], { category: 'Classement Mixte', topN: 5 });
+
+    const buffer = await buildRankingWorkbookBuffer(buildPrintMeta(TEST_MEETING), 'Classement Mixte', results);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
+    const sheet = workbook.worksheets[0]!;
+
+    expect([2, 3, 4].map((r) => sheet.getRow(r).getCell(1).value)).toEqual([1, 1, 3]);
+    expect([2, 3, 4].map((r) => sheet.getRow(r).getCell(5).value ?? '')).toEqual(['ex.', 'ex.', '']);
+  });
+});

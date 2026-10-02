@@ -6,7 +6,6 @@
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
-import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { downloadBlob } from './download';
 
@@ -35,18 +34,21 @@ export async function exportIndividualToExcel(
   if (showCategory) {
     columns.push({ header: 'Catégorie', key: 'category', width: 16 });
   }
+  // Last column: the rank stays a number so sorting and formulas keep working.
+  columns.push({ header: 'Ex æquo', key: 'tied', width: 10 });
   sheet.columns = columns as ExcelJS.Column[];
   sheet.getRow(1).font = { bold: true };
 
   const tied = tiedRanks(results);
   for (const r of results) {
     const row: Record<string, unknown> = {
-      rank: rankText(r.rank, tied.has(r.rank)),
+      rank: r.rank,
       lastname: r.lastname,
       firstname: r.firstname,
       birthyear: r.birthyear,
       club: r.club,
       points: r.points,
+      tied: tied.has(r.rank) ? 'ex.' : '',
     };
     if (showCategory) {
       row['category'] = r.category.replace(/^Classement\s+/i, '');

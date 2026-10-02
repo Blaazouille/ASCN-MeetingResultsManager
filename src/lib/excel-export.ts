@@ -6,7 +6,6 @@
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
-import { rankText } from './ui-labels';
 import type { PrintMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
@@ -40,13 +39,16 @@ export async function buildRankingWorkbookBuffer(
     { header: COLUMN_HEADERS[1], key: 'club', width: 36 },
     { header: COLUMN_HEADERS[2], key: 'points', width: 12 },
     { header: COLUMN_HEADERS[3], key: 'swimmers', width: 60 },
+    // Separate column: the rank stays a number so sorting and formulas keep working.
+    { header: 'Ex æquo', key: 'tied', width: 10 },
   ];
   sheet.getRow(1).font = { bold: true };
 
   const tied = tiedRanks(results);
   for (const team of results) {
     sheet.addRow({
-      rank: rankText(team.rank, tied.has(team.rank)),
+      rank: team.rank,
+      tied: tied.has(team.rank) ? 'ex.' : '',
       club: team.club,
       points: team.totalPoints,
       swimmers: formatSwimmerList(team),
