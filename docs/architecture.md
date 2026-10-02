@@ -151,6 +151,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
 │   │   ├── import-card-state.ts   # Carte de l'écran Import : masquée, en cours ou importé (jamais de coche sans enregistrement)
+│   │   ├── import-run.ts          # Écarte le résultat d'un import lancé avant un changement de meeting
 │   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
 │   │   ├── backup.ts              # Export/restauration complète de la base en JSON
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe

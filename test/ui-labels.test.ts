@@ -215,15 +215,29 @@ describe('import summary labels', () => {
 });
 
 describe('excludedSwimmersNotice', () => {
-  it('names one swimmer left out and says their points do not count', () => {
-    expect(excludedSwimmersNotice(['Bob MARTIN'])).toBe(
-      '1 nageur non importé (année de naissance vide ou illisible dans le fichier) : Bob MARTIN. Ses points ne comptent dans aucun classement.'
+  const bob = { firstname: 'Bob', lastname: 'MARTIN', club: 'CN TEST', categories: ['Classement Mixte'] };
+
+  it('names one swimmer left out, with club and category, and says their points do not count there', () => {
+    expect(excludedSwimmersNotice([bob])).toBe(
+      '1 nageur non importé (année de naissance vide ou illisible dans le fichier) : Bob MARTIN (CN TEST) en Mixte. Ses points ne comptent pas dans ce classement.'
     );
   });
 
-  it('names several swimmers left out, in plural', () => {
-    expect(excludedSwimmersNotice(['Bob MARTIN', 'Eve DURAND'])).toBe(
-      '2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement.'
+  it('lists every category a swimmer was left out of', () => {
+    const eve = { firstname: 'Eve', lastname: 'DURAND', club: 'CN TEST', categories: ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'] };
+    expect(excludedSwimmersNotice([eve])).toBe(
+      '1 nageur non importé (année de naissance vide ou illisible dans le fichier) : Eve DURAND (CN TEST) en Dames, Messieurs et Mixte. Ses points ne comptent pas dans ces classements.'
     );
+  });
+
+  it('tells namesakes apart by their club, in plural', () => {
+    const otherBob = { ...bob, club: 'EN CAEN ', categories: ['Classement Dames'] };
+    expect(excludedSwimmersNotice([bob, otherBob])).toBe(
+      '2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN (CN TEST) en Mixte ; Bob MARTIN (EN CAEN) en Dames. Leurs points ne comptent pas dans ces classements.'
+    );
+  });
+
+  it('never claims the points count in no ranking at all', () => {
+    expect(excludedSwimmersNotice([bob])).not.toContain('aucun classement');
   });
 });

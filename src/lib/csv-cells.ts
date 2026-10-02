@@ -1,6 +1,6 @@
 /**
  * Responsabilité : convertit une cellule texte du CSV extraNat en nombre (points « 1274 Pts », place, année de naissance) et décrit une cellule refusée dans les avertissements.
- * Appelé par : csv-parser.ts (parseCsv) et les tests.
+ * Appelé par : csv-row.ts (readSwimmerRow) et les tests.
  * Suppression casserait : la lecture des valeurs numériques de chaque ligne importée.
  */
 

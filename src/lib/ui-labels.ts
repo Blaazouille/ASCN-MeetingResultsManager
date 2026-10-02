@@ -3,6 +3,7 @@
  * Appelé par : les composants de classement, d'accueil, d'import et la barre latérale.
  * Suppression casserait : les textes calculés de l'interface (« 1re place », « −477 », « À importer »…).
  */
+import type { ExcludedSwimmer } from './csv-parser';
 import type { Gender } from './individual-ranking';
 import type { ImportChanges, Movement } from './import-diff';
 import { formatPoints } from './utils';
@@ -136,10 +137,21 @@ export function importChangeParts(changes: ImportChanges): string[] {
   return parts;
 }
 
-/** « À savoir » line naming the swimmers left out of an import for an unreadable birth year, and what it costs them. */
-export function excludedSwimmersNotice(names: string[]): string {
-  const several = names.length >= 2;
+/** « Dames », « Dames et Mixte », « Dames, Messieurs et Mixte ». */
+function joinCategories(categories: string[]): string {
+  const labels = categories.map(categoryShortLabel);
+  return labels.length < 2 ? labels.join('') : `${labels.slice(0, -1).join(', ')} et ${labels.at(-1)}`;
+}
+
+/**
+ * « À savoir » line naming the swimmers left out of an import for an unreadable birth year, and what it costs them.
+ * Each one comes with their club (namesakes from two clubs are two swimmers) and the categories they were left out of:
+ * a swimmer can be left out of one category and imported in another, so « aucun classement » would be false.
+ */
+export function excludedSwimmersNotice(swimmers: ExcludedSwimmer[]): string {
+  const several = swimmers.length >= 2;
   const what = several ? 'non importés' : 'non importé';
-  const consequence = several ? 'Leurs points ne comptent' : 'Ses points ne comptent';
-  return `${swimmerCountLabel(names.length)} ${what} (année de naissance vide ou illisible dans le fichier) : ${names.join(', ')}. ${consequence} dans aucun classement.`;
+  const list = swimmers.map((s) => `${s.firstname} ${s.lastname} (${s.club.trim()}) en ${joinCategories(s.categories)}`).join(' ; ');
+  const rankings = new Set(swimmers.flatMap((s) => s.categories)).size >= 2 ? 'ces classements' : 'ce classement';
+  return `${swimmerCountLabel(swimmers.length)} ${what} (année de naissance vide ou illisible dans le fichier) : ${list}. ${several ? 'Leurs' : 'Ses'} points ne comptent pas dans ${rankings}.`;
 }

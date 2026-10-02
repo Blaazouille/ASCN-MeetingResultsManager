@@ -3,8 +3,9 @@
  * Appelé par : AppShell.tsx (contexte partagé), consommé par ImportPage.
  * Suppression casserait : l'import et la preview de fichiers CSV.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { parseCsv, type CsvParseResult } from '@/lib/csv-parser';
+import { isCurrentImportRun } from '@/lib/import-run';
 import type { ImportChanges } from '@/lib/import-diff';
 import type { ImportWarning } from '@/lib/import-check';
 import type { FileRejectionReason } from '@/components/import/DropZone';
@@ -50,6 +51,13 @@ export interface UseImportResult {
   setPersistError: (message: string | null) => void;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: (reason: FileRejectionReason) => void;
+  /** Removes a refused file's message once the file in question is answered for, so it does not sit next to the result. */
+  clearError: () => void;
+  /**
+   * Marks the start of an import step that awaits (reading, checking, saving). The returned function tells,
+   * after each await, whether the step still belongs to the screen: false once reset() ran (meeting changed).
+   */
+  beginRun: () => () => boolean;
   reset: () => void;
 }
 
@@ -63,25 +71,38 @@ export function useImport(): UseImportResult {
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
   const [persistError, setPersistError] = useState<string | null>(null);
+  // A ref, not state: the steps that read it are closures started before the reset.
+  const generation = useRef(0);
   const setError = useCallback((message: string | null): void => {
     setErrorMessage(message);
     if (message !== null) setErrorId((id) => id + 1);
   }, []);
 
+  const beginRun = useCallback((): (() => boolean) => {
+    const startedAt = generation.current;
+    return () => isCurrentImportRun(startedAt, generation.current);
+  }, []);
+
+  const clearError = useCallback((): void => setError(null), [setError]);
+
   const handleFileAccepted = useCallback(async (file: File): Promise<CsvParseResult | null> => {
     setError(null);
+    const isCurrent = beginRun();
     try {
       const buffer = await file.arrayBuffer();
+      // Read for a meeting that is no longer open: showing it would present it as this meeting's file.
+      if (!isCurrent()) return null;
       const parsed = parseCsv(buffer);
       setResult(parsed);
       setFileName(file.name);
       return parsed;
     } catch (err) {
+      if (!isCurrent()) return null;
       setResult(null);
       setError(err instanceof Error ? err.message : String(err));
       return null;
     }
-  }, [setError]);
+  }, [setError, beginRun]);
 
   const handleFileRejected = useCallback(
     (reason: FileRejectionReason): void => {
@@ -99,6 +120,7 @@ export function useImport(): UseImportResult {
 
   /** Clears the import state. Called when the selected meeting changes, so one meeting's imported data never leaks into another's screens. */
   const reset = useCallback((): void => {
+    generation.current += 1;
     setResult(null);
     setFileName(null);
     setOutcome(null);
@@ -123,6 +145,8 @@ export function useImport(): UseImportResult {
     setPersistError,
     handleFileAccepted,
     handleFileRejected,
+    clearError,
+    beginRun,
     reset,
   };
 }
