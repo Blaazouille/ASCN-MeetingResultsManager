@@ -18,7 +18,7 @@ import { countRowsByCategory, type CsvParseResult } from '@/lib/csv-parser';
 import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '@/lib/import-check';
 import { summarizeImportChanges } from '@/lib/import-diff';
 import { importCardState } from '@/lib/import-card-state';
-import { categoryShortLabel, resultCountLabel } from '@/lib/ui-labels';
+import { categoryShortLabel, excludedSwimmersNotice, resultCountLabel } from '@/lib/ui-labels';
 import { cn } from '@/lib/utils';
 import type { ImportOutcome } from '@/hooks/use-import';
 
@@ -57,7 +57,10 @@ export default function ImportPage(): JSX.Element {
       let changes: ImportOutcome['changes'] = null;
       try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
-        await refresh();
+        // refresh() reports its own failure only on Accueil, hence the notice here.
+        if (!(await refresh())) {
+          found.push("Les résultats sont enregistrés, mais la liste des meetings n'a pas pu être rechargée : la barre latérale et l'Accueil peuvent afficher l'état d'avant l'import. Redémarrez l'application si cela persiste.");
+        }
         // No snapshot = first import of this meeting: nothing to compare with.
         const [snapshot, current] = await Promise.all([
           window.electronAPI.getImportSnapshot(meetingId),
@@ -201,7 +204,7 @@ export default function ImportPage(): JSX.Element {
             </StatTile>
           </div>
 
-          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
+          {isDone && ((outcome?.notices.length ?? 0) > 0 || result.ignoredRowCount > 0 || result.excludedSwimmers.length > 0 || result.duplicateRowCount > 0) && (
             <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
               <p className="font-semibold">À savoir</p>
               <ul className="list-disc space-y-1 pl-5">
@@ -209,6 +212,7 @@ export default function ImportPage(): JSX.Element {
                   <li key={notice}>{notice}</li>
                 ))}
                 {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}
+                {result.excludedSwimmers.length > 0 && <li>{excludedSwimmersNotice(result.excludedSwimmers)}</li>}
                 {result.duplicateRowCount > 0 && <li>Nageurs en double dans une catégorie (seul le dernier est gardé)&nbsp;: {result.duplicateRowCount}.</li>}
               </ul>
             </div>

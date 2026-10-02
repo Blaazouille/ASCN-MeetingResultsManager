@@ -115,6 +115,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── App.tsx                    # Routeur principal
 │   ├── lib/                       # Logique pure, indépendante de React
 │   │   ├── csv-parser.ts          # Parseur CSV FFN extraNat
+│   │   ├── csv-cells.ts           # Lecture des cellules numériques (points, place, année de naissance)
+│   │   ├── csv-row.ts             # Lecture et validation d'une ligne du CSV (gardée, ignorée ou écartée)
 │   │   ├── ranking-engine.ts      # Classement par équipes
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre

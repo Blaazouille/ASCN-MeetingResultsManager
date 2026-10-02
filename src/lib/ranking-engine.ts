@@ -50,8 +50,8 @@ export interface SwimmerEntry {
   firstname: string;
   birthyear: number;
   points: number;
-  /** Individual rank in category (the source file's "place" column). */
-  rank: number;
+  /** Individual rank in category (the source file's "place" column); null when the file left it empty or unreadable. */
+  rank: number | null;
 }
 
 export interface TeamResult {

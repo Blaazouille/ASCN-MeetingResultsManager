@@ -73,7 +73,7 @@ interface MeetingInput {
 // src/lib/csv-parser.ts
 interface RawSwimmerRow {
   name: string;       // catégorie (ex: "Classement Mixte")
-  place: number;
+  place: number | null; // rang du fichier ; null si la cellule est vide ou illisible
   lastname: string;
   firstname: string;
   birthyear: number;
@@ -91,7 +91,7 @@ interface SwimmerEntry {
   firstname: string;
   birthyear: number;
   points: number;
-  rank: number; // rang individuel dans la catégorie source
+  rank: number | null; // rang individuel dans la catégorie source (null si absent du fichier)
 }
 
 interface TeamResult {

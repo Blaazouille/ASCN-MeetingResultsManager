@@ -4,6 +4,7 @@
  * Suppression casserait : l'import de fichiers CSV.
  */
 import Papa from 'papaparse';
+import { readSwimmerRow } from './csv-row';
 
 export interface CsvParseOptions {
   /** Character encoding used to decode the raw bytes. Default: 'auto'. */
@@ -17,8 +18,8 @@ export interface CsvParseOptions {
 export interface RawSwimmerRow {
   /** Category name, e.g. "Classement Mixte". */
   name: string;
-  /** Rank in category, as printed in the source file. */
-  place: number;
+  /** Rank in category, as printed in the source file; null when that cell is empty or unreadable. */
+  place: number | null;
   lastname: string;
   firstname: string;
   birthyear: number;
@@ -45,6 +46,8 @@ export interface CsvParseResult {
   ignoredRowCount: number;
   /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
   duplicateRowCount: number;
+  /** "Prénom NOM" of the swimmers left out because their birth year is empty or not a whole number (they never reach the database), each named once even if left out of several categories. */
+  excludedSwimmers: string[];
 }
 
 export interface SwimmerRowsSummary {
@@ -99,22 +102,6 @@ const REQUIRED_COLUMNS = [
   'points',
   'comment',
 ] as const;
-
-const PLAUSIBLE_POINTS_MIN = 0;
-const PLAUSIBLE_POINTS_MAX = 1500;
-
-/**
- * Extracts the numeric value out of a points cell formatted as "1274 Pts".
- * Throws if no numeric value can be found — an unparseable points cell
- * means the source file does not match the expected FFN extraNat format.
- */
-export function parsePoints(raw: string): number {
-  const match = raw.match(/(\d+(?:[.,]\d+)?)/);
-  if (!match) {
-    throw new Error(`Cannot parse points: "${raw}"`);
-  }
-  return parseFloat(match[1]!.replace(',', '.'));
-}
 
 /**
  * Decodes raw CSV bytes to text, auto-detecting the encoding when requested.
@@ -172,11 +159,12 @@ export function parseCsv(
   }
 
   const headerFields = parsed.meta.fields ?? [];
-  for (const column of REQUIRED_COLUMNS) {
-    if (!headerFields.includes(column)) {
-      warnings.push(`Colonne manquante dans le fichier : « ${column} »`);
-    }
+  const missingColumns = REQUIRED_COLUMNS.filter((column) => !headerFields.includes(column));
+  for (const column of missingColumns) {
+    warnings.push(`Colonne manquante dans le fichier : « ${column} »`);
   }
+  // Without a place column every line would repeat the same warning: the one above is enough.
+  const hasPlaceColumn = headerFields.includes('place');
 
   const categories: string[] = [];
   const clubs = new Set<string>();
@@ -189,37 +177,22 @@ export function parseCsv(
   const rows: RawSwimmerRow[] = [];
   let ignoredRowCount = 0;
   let duplicateRowCount = 0;
+  const excludedSwimmers: string[] = [];
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
 
-    // Field values are kept verbatim (no trimming): the source FFN export
-    // occasionally has trailing spaces in club names (e.g. "EXOCET MASTER
-    // CLUB "), and altering them would break exact matching against
-    // downstream references (grouping, exports, reference fixtures).
-    const name = raw.name ?? '';
-    const club = raw.club ?? '';
-    const lastname = raw.lastname ?? '';
-    const firstname = raw.firstname ?? '';
-    const birthyear = Number.parseInt(raw.birthyear ?? '', 10);
-    const pointsRaw = raw.points ?? '';
-
-    if (!name.trim()) {
-      warnings.push(`Ligne ${rowNumber} : catégorie manquante`);
-    }
-    if (!club.trim()) {
-      warnings.push(`Ligne ${rowNumber} : club manquant`);
-    }
-    if (!pointsRaw.trim()) {
-      warnings.push(`Ligne ${rowNumber} : points manquants (ligne ignorée)`);
+    const reading = readSwimmerRow(raw, rowNumber, hasPlaceColumn, warnings);
+    if (reading.kind === 'no-points') {
       ignoredRowCount += 1;
       return;
     }
-
-    const points = parsePoints(pointsRaw);
-    if (points < PLAUSIBLE_POINTS_MIN || points > PLAUSIBLE_POINTS_MAX) {
-      warnings.push(`Ligne ${rowNumber} : nombre de points inhabituel (${points})`);
+    if (reading.kind === 'no-birthyear') {
+      if (!excludedSwimmers.includes(reading.swimmer)) excludedSwimmers.push(reading.swimmer);
+      return;
     }
+    const { row } = reading;
+    const { name, club, lastname, firstname, birthyear } = row;
 
     if (!categories.includes(name)) {
       categories.push(name);
@@ -245,22 +218,13 @@ export function parseCsv(
     }
     seenInCategory.add(swimmerKey);
 
-    rows.push({
-      name,
-      place: Number.parseInt(raw.place ?? '', 10),
-      lastname,
-      firstname,
-      birthyear,
-      nation: raw.nation ?? '',
-      club,
-      points,
-      comment: raw.comment ?? '',
-    });
+    rows.push(row);
   });
 
-  // A header-only file, or one whose points column is missing, yields no row: importing it would change nothing yet look like a success.
+  // A header-only file, or one missing the points or birthyear column, yields no row: importing it would change nothing yet look like a success.
   if (rows.length === 0) {
-    throw new Error('Aucune ligne exploitable dans ce fichier. Est-ce bien un export de cotations extraNat ?');
+    const cause = missingColumns.length > 0 ? ` (colonne${missingColumns.length > 1 ? 's' : ''} absente${missingColumns.length > 1 ? 's' : ''} : ${missingColumns.join(', ')})` : '';
+    throw new Error(`Aucune ligne exploitable dans ce fichier${cause}. Est-ce bien un export de cotations extraNat ?`);
   }
 
   return {
@@ -273,5 +237,6 @@ export function parseCsv(
     warnings,
     ignoredRowCount,
     duplicateRowCount,
+    excludedSwimmers,
   };
 }
