@@ -86,5 +86,6 @@ describe('labels', () => {
   it('words the banner for one or several tied places', () => {
     expect(tieAlertLabel([3], 'Classement Mixte')).toBe('Égalité pour la 3e place en Mixte : à départager');
     expect(tieAlertLabel([1, 3], 'Classement Dames')).toContain('les places 1 et 3');
+    expect(tieAlertLabel([1, 2, 3], 'Classement Dames')).toContain('les places 1, 2 et 3');
   });
 });
