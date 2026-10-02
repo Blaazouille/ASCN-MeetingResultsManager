@@ -22,6 +22,7 @@
 - [ ] Tests exist and assert expected behavior, not just implementation
 - [ ] AI-generated explanation is included and makes sense
 - [ ] Linter and formatter pass with zero warnings
+- [ ] `docs/` updated if behavior, screens, schema or algorithms changed
 
 ## PR / Merge Discipline
 

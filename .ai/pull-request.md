@@ -22,6 +22,7 @@ Règles obligatoires pour toute PR sur ce projet. Aucun merge sans validation co
 - [ ] `npm run test` passe à 100 %.
 - [ ] `npx tsc --noEmit` ne retourne aucune erreur.
 - [ ] **Aucun Dead Code** — Aucun import inutilisé, variable fantôme ou fonction orpheline.
+- [ ] **Documentation vivante** — Si le comportement, un écran, le schéma ou un algorithme change, le fichier concerné de `docs/` est mis à jour dans la même PR (`test/docs-architecture.test.ts` impose que tout nouveau fichier de `src/lib/`, `src/hooks/` ou `electron/` figure dans `docs/architecture.md`).
 - [ ] **Documentation** — Chaque nouveau fichier possède son en-tête standardisé (Responsabilité, Appelant, Impact de suppression).
 
 ### 🎨 UI / Textes & Internationalisation
