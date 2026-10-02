@@ -9,39 +9,33 @@ import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
 
-export async function exportIndividualToExcel(
+/** Builds the workbook without downloading it, so tests can inspect its content. */
+export async function buildIndividualWorkbookBuffer(
   meta: ExportMeta,
   category: string,
   results: IndividualResult[]
-): Promise<void> {
+): Promise<ArrayBuffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetLabel = category === 'Tous' ? 'Toutes catégories' : category.replace(/^Classement\s+/i, '');
-  const sheet = workbook.addWorksheet(sheetLabel);
+  const sheet = workbook.addWorksheet(category.replace(/^Classement\s+/i, ''));
 
-  const showCategory = category === 'Tous';
-
-  const columns: Partial<ExcelJS.Column>[] = [
+  sheet.columns = [
     { header: 'Rang', key: 'rank', width: 8 },
     { header: 'Nom', key: 'lastname', width: 18 },
     { header: 'Prénom', key: 'firstname', width: 16 },
     { header: 'Naissance', key: 'birthyear', width: 12 },
     { header: 'Club', key: 'club', width: 36 },
     { header: 'Points', key: 'points', width: 10 },
+    // Last column: the rank stays a number so sorting and formulas keep working.
+    { header: 'Ex æquo', key: 'tied', width: 10 },
   ];
-  if (showCategory) {
-    columns.push({ header: 'Catégorie', key: 'category', width: 16 });
-  }
-  // Last column: the rank stays a number so sorting and formulas keep working.
-  columns.push({ header: 'Ex æquo', key: 'tied', width: 10 });
-  sheet.columns = columns as ExcelJS.Column[];
   sheet.getRow(1).font = { bold: true };
 
   const tied = tiedRanks(results);
   for (const r of results) {
-    const row: Record<string, unknown> = {
+    sheet.addRow({
       rank: r.rank,
       lastname: r.lastname,
       firstname: r.firstname,
@@ -49,18 +43,23 @@ export async function exportIndividualToExcel(
       club: r.club,
       points: r.points,
       tied: tied.has(r.rank) ? 'ex.' : '',
-    };
-    if (showCategory) {
-      row['category'] = r.category.replace(/^Classement\s+/i, '');
-    }
-    sheet.addRow(row);
+    });
   }
 
-  const buffer = await workbook.xlsx.writeBuffer();
+  return workbook.xlsx.writeBuffer();
+}
+
+/** Builds the individual ranking workbook and triggers a browser download. */
+export async function exportIndividualToExcel(
+  meta: ExportMeta,
+  category: string,
+  results: IndividualResult[]
+): Promise<void> {
+  const buffer = await buildIndividualWorkbookBuffer(meta, category, results);
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
   const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-') || 'tous';
+  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-');
   downloadBlob(blob, `classement-individuel-${slug}-${today}.xlsx`);
 }
