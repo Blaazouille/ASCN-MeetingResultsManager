@@ -3,7 +3,7 @@
  * Appelé par : ImportPage.tsx.
  * Suppression casserait : l'entrée du flux d'import CSV.
  */
-import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent, type Ref } from 'react';
 import { AlertTriangle, FileUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,8 @@ export interface DropZoneProps {
   error?: string | null;
   /** Changes on every error so the zone shakes again even when the message is the same. */
   errorId?: number;
+  /** The « Parcourir… » button, for a screen that hands focus back to it (cancelled import). */
+  browseRef?: Ref<HTMLButtonElement>;
   className?: string;
 }
 
@@ -39,7 +41,7 @@ function isCsvFile(file: File): boolean {
   return file.name.toLowerCase().endsWith('.csv');
 }
 
-export function DropZone({ onFileAccepted, onFileRejected, compact = false, error = null, errorId = 0, className }: DropZoneProps): JSX.Element {
+export function DropZone({ onFileAccepted, onFileRejected, compact = false, error = null, errorId = 0, browseRef, className }: DropZoneProps): JSX.Element {
   const [state, setState] = useState<DropZoneState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
   const zoneRef = useRef<HTMLDivElement>(null);
@@ -167,6 +169,7 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, erro
               </span>
             </span>
             <Button
+              ref={browseRef}
               onClick={(event) => {
                 event.stopPropagation();
                 handleBrowseClick();

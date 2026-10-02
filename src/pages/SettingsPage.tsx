@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { SettingsForm } from '@/components/settings/SettingsForm';
 import { BackupSection } from '@/components/settings/BackupSection';
 import { BackupConfigSection } from '@/components/settings/BackupConfigSection';
+import { UpdateSection } from '@/components/settings/UpdateSection';
 
 export default function SettingsPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -32,6 +33,7 @@ export default function SettingsPage(): JSX.Element {
       )}
       <BackupSection onRestored={meetingState.refresh} />
       <BackupConfigSection />
+      <UpdateSection />
     </div>
   );
 }
