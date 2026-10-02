@@ -35,7 +35,7 @@ export function resolveActiveCategories(present: string[], active: string[] | nu
   return intersection.length > 0 ? intersection : present;
 }
 
-export interface RankingParams {
+interface RankingParams {
   /** Category to compute, e.g. "Classement Mixte". */
   category: string;
   /** Number of top swimmers per club to retain. */
