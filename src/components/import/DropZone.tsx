@@ -44,9 +44,13 @@ export function DropZone({ onFileAccepted, onFileRejected, compact = false, erro
   const inputRef = useRef<HTMLInputElement>(null);
   const zoneRef = useRef<HTMLDivElement>(null);
 
+  // errorId lives in AppShell and survives navigation: only a new error shakes, not a remount showing an old one.
+  const lastShakenId = useRef(errorId);
   useEffect(() => {
+    if (errorId === lastShakenId.current) return;
+    lastShakenId.current = errorId;
     // Respects the OS setting: the global CSS rule only covers CSS animations, not this one.
-    if (errorId === 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     zoneRef.current?.animate(SHAKE_KEYFRAMES, { duration: 450, easing: 'ease-in-out' });
   }, [errorId]);
 
