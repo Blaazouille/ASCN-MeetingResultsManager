@@ -1,13 +1,13 @@
 /**
- * Responsabilité : génère et télécharge le PDF du classement par équipes.
- * Appelé par : use-ranking-export.ts (bouton "Export PDF" de RankingPage).
- * Suppression casserait : l'export PDF du classement.
+ * Responsabilité : génère et télécharge le PDF du classement par équipes (une page par catégorie).
+ * Appelé par : use-ranking-export.ts (bouton "Export PDF" de RankingPage), export-pack-files.ts (« Tout exporter »).
+ * Suppression casserait : l'export PDF du classement et le pack de fin de meeting.
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
 import { rankText } from './ui-labels';
-import type { ExportMeta } from './export-data';
+import type { ExportMeta, ExportSection } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
@@ -28,61 +28,63 @@ const styles = StyleSheet.create({
   footer: { marginTop: 24, fontSize: 9, color: '#5B6B7D', flexDirection: 'row', justifyContent: 'space-between' },
 });
 
-interface RankingPdfDocumentProps {
+interface RankingPdfPageProps extends ExportSection<TeamResult> {
   meta: ExportMeta;
-  category: string;
-  results: TeamResult[];
 }
 
-function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps): JSX.Element {
+function RankingPdfPage({ meta, category, results }: RankingPdfPageProps): JSX.Element {
   const tied = tiedRanks(results);
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>{meta.meetingName}</Text>
-        <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.title}>{meta.meetingName}</Text>
+      <Text style={styles.subtitle}>Classement par équipes : {category.replace(/^Classement\s+/i, '')}</Text>
 
-        {results.length === 0 ? (
-          <Text style={styles.empty}>Aucun club classé pour cette catégorie.</Text>
-        ) : (
-          <View>
-            <View style={styles.headerRow}>
-              <Text style={[styles.headerCell, styles.rank]}>Rang</Text>
-              <Text style={[styles.headerCell, styles.club]}>Club</Text>
-              <Text style={[styles.headerCell, styles.points]}>Points</Text>
-            </View>
-            {results.map((team) => (
-              <View
-                key={team.club}
-                style={team.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
-              >
-                <Text style={styles.rank}>{rankText(team.rank, tied.has(team.rank))}</Text>
-                <View style={styles.club}>
-                  <Text>{team.club}</Text>
-                  <Text style={styles.swimmers}>
-                    {team.swimmers.map((swimmer) => `${swimmer.lastname} ${swimmer.firstname}`).join(', ')}
-                  </Text>
-                </View>
-                <Text style={styles.points}>{formatPoints(team.totalPoints)}</Text>
-              </View>
-            ))}
+      {results.length === 0 ? (
+        <Text style={styles.empty}>Aucun club classé pour cette catégorie.</Text>
+      ) : (
+        <View>
+          <View style={styles.headerRow}>
+            <Text style={[styles.headerCell, styles.rank]}>Rang</Text>
+            <Text style={[styles.headerCell, styles.club]}>Club</Text>
+            <Text style={[styles.headerCell, styles.points]}>Points</Text>
           </View>
-        )}
-
-        <View style={styles.footer}>
-          <Text>Calculé le {meta.computedAt}</Text>
+          {results.map((team) => (
+            <View
+              key={team.club}
+              style={team.club === ASCN_CLUB_NAME ? [styles.row, styles.rowAscn] : styles.row}
+            >
+              <Text style={styles.rank}>{rankText(team.rank, tied.has(team.rank))}</Text>
+              <View style={styles.club}>
+                <Text>{team.club}</Text>
+                <Text style={styles.swimmers}>
+                  {team.swimmers.map((swimmer) => `${swimmer.lastname} ${swimmer.firstname}`).join(', ')}
+                </Text>
+              </View>
+              <Text style={styles.points}>{formatPoints(team.totalPoints)}</Text>
+            </View>
+          ))}
         </View>
-      </Page>
-    </Document>
+      )}
+
+      <View style={styles.footer}>
+        <Text>Calculé le {meta.computedAt}</Text>
+      </View>
+    </Page>
   );
 }
 
-export async function buildRankingPdfBlob(
-  meta: ExportMeta,
-  category: string,
-  results: TeamResult[]
-): Promise<Blob> {
-  return pdf(<RankingPdfDocument meta={meta} category={category} results={results} />).toBlob();
+/**
+ * One page per section, so the full-meeting pack and the single-category
+ * export share the exact same layout (each category starts on a fresh page).
+ */
+export async function buildRankingPdfBlob(meta: ExportMeta, sections: ExportSection<TeamResult>[]): Promise<Blob> {
+  return pdf(
+    <Document>
+      {sections.map((section) => (
+        <RankingPdfPage key={section.category} meta={meta} {...section} />
+      ))}
+    </Document>
+  ).toBlob();
 }
 
 /** Builds the ranking PDF and triggers a browser download. */
@@ -91,7 +93,7 @@ export async function exportRankingToPdf(
   category: string,
   results: TeamResult[]
 ): Promise<void> {
-  const blob = await buildRankingPdfBlob(meta, category, results);
+  const blob = await buildRankingPdfBlob(meta, [{ category, results }]);
   const today = new Date().toISOString().slice(0, 10);
   downloadBlob(blob, `classement-${slugifyCategory(category)}-${today}.pdf`);
 }

@@ -1,25 +1,16 @@
 /**
- * Responsabilité : génère et télécharge le classeur Excel du classement individuel.
- * Appelé par : use-individual-export.ts (bouton "Export Excel" de IndividualPage).
- * Suppression casserait : l'export Excel du classement individuel.
+ * Responsabilité : génère et télécharge le classeur Excel du classement individuel (une feuille par catégorie).
+ * Appelé par : use-individual-export.ts (bouton "Export Excel" de IndividualPage), export-pack-files.ts (« Tout exporter »).
+ * Suppression casserait : l'export Excel du classement individuel et le pack de fin de meeting.
  */
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
-import type { ExportMeta } from './export-data';
+import type { ExportMeta, ExportSection } from './export-data';
 import { excelSheetName, individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 
-/** Builds the workbook without downloading it, so tests can inspect its content. */
-export async function buildIndividualWorkbookBuffer(
-  meta: ExportMeta,
-  category: string,
-  results: IndividualResult[]
-): Promise<ArrayBuffer> {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = meta.meetingName;
-  workbook.created = new Date();
-
+function addIndividualSheet(workbook: ExcelJS.Workbook, { category, results }: ExportSection<IndividualResult>): void {
   const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
@@ -46,7 +37,22 @@ export async function buildIndividualWorkbookBuffer(
       tied: tied.has(r.rank) ? 'ex.' : '',
     });
   }
+}
 
+/**
+ * Builds the workbook without downloading it (tests inspect its content), one
+ * sheet per section so the single-category export and the full-meeting pack share one layout.
+ */
+export async function buildIndividualWorkbookBuffer(
+  meta: ExportMeta,
+  sections: ExportSection<IndividualResult>[]
+): Promise<ArrayBuffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = meta.meetingName;
+  workbook.created = new Date();
+  for (const section of sections) {
+    addIndividualSheet(workbook, section);
+  }
   return workbook.xlsx.writeBuffer();
 }
 
@@ -56,7 +62,7 @@ export async function exportIndividualToExcel(
   category: string,
   results: IndividualResult[]
 ): Promise<void> {
-  const buffer = await buildIndividualWorkbookBuffer(meta, category, results);
+  const buffer = await buildIndividualWorkbookBuffer(meta, [{ category, results }]);
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });

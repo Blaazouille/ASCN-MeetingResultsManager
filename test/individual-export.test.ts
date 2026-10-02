@@ -36,11 +36,7 @@ async function loadSheet(buffer: ArrayBuffer): Promise<ExcelJS.Worksheet> {
 
 describe('buildIndividualWorkbookBuffer', () => {
   it('names the sheet after the exported category, without the "Classement" prefix', async () => {
-    const buffer = await buildIndividualWorkbookBuffer(
-      buildExportMeta(TEST_MEETING),
-      'Classement Dames',
-      loadDamesRanking()
-    );
+    const buffer = await buildIndividualWorkbookBuffer(buildExportMeta(TEST_MEETING), [{ category: 'Classement Dames', results: loadDamesRanking() }]);
     const sheet = await loadSheet(buffer);
 
     expect(sheet.name).toBe('Dames');
@@ -48,7 +44,7 @@ describe('buildIndividualWorkbookBuffer', () => {
 
   it('lists one row per swimmer of the category, without a "Catégorie" column', async () => {
     const results = loadDamesRanking();
-    const buffer = await buildIndividualWorkbookBuffer(buildExportMeta(TEST_MEETING), 'Classement Dames', results);
+    const buffer = await buildIndividualWorkbookBuffer(buildExportMeta(TEST_MEETING), [{ category: 'Classement Dames', results }]);
     const sheet = await loadSheet(buffer);
 
     expect(sheet.rowCount).toBe(results.length + 1);
@@ -61,14 +57,14 @@ describe('buildIndividualWorkbookBuffer', () => {
 
 describe('buildIndividualPdfBlob', () => {
   it('produces a non-empty application/pdf blob for a category ranking', async () => {
-    const blob = await buildIndividualPdfBlob(buildExportMeta(TEST_MEETING), 'Classement Dames', loadDamesRanking());
+    const blob = await buildIndividualPdfBlob(buildExportMeta(TEST_MEETING), [{ category: 'Classement Dames', results: loadDamesRanking() }]);
 
     expect(blob.type).toBe('application/pdf');
     expect(blob.size).toBeGreaterThan(0);
   });
 
   it('resolves without throwing when there are no results', async () => {
-    const blob = await buildIndividualPdfBlob(buildExportMeta(TEST_MEETING), 'Classement Dames', []);
+    const blob = await buildIndividualPdfBlob(buildExportMeta(TEST_MEETING), [{ category: 'Classement Dames', results: [] }]);
     expect(blob.size).toBeGreaterThan(0);
   });
 });
