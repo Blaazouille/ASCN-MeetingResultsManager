@@ -4,7 +4,7 @@
  * Suppression casserait : l'import de fichiers CSV.
  */
 import Papa from 'papaparse';
-import { describeCellProblem, parsePoints, parseWholeNumber } from './csv-cells';
+import { readSwimmerRow } from './csv-row';
 
 export interface CsvParseOptions {
   /** Character encoding used to decode the raw bytes. Default: 'auto'. */
@@ -46,9 +46,7 @@ export interface CsvParseResult {
   ignoredRowCount: number;
   /** Rows repeating a swimmer already seen in the same category — the database keeps only the last one. */
   duplicateRowCount: number;
-  /** Lines left out because their birth year is empty or not a whole number — they never reach the database. */
-  invalidRowCount: number;
-  /** "Prénom NOM" of the swimmers behind those lines, each named once even if left out of several categories. */
+  /** "Prénom NOM" of the swimmers left out because their birth year is empty or not a whole number (they never reach the database), each named once even if left out of several categories. */
   excludedSwimmers: string[];
 }
 
@@ -104,9 +102,6 @@ const REQUIRED_COLUMNS = [
   'points',
   'comment',
 ] as const;
-
-const PLAUSIBLE_POINTS_MIN = 0;
-const PLAUSIBLE_POINTS_MAX = 1500;
 
 /**
  * Decodes raw CSV bytes to text, auto-detecting the encoding when requested.
@@ -182,61 +177,22 @@ export function parseCsv(
   const rows: RawSwimmerRow[] = [];
   let ignoredRowCount = 0;
   let duplicateRowCount = 0;
-  let invalidRowCount = 0;
   const excludedSwimmers: string[] = [];
 
   parsed.data.forEach((raw, index) => {
     const rowNumber = index + 2; // +1 for 0-index, +1 for header line
 
-    // Field values are kept verbatim (no trimming): the source FFN export
-    // occasionally has trailing spaces in club names (e.g. "EXOCET MASTER
-    // CLUB "), and altering them would break exact matching against
-    // downstream references (grouping, exports, reference fixtures).
-    const name = raw.name ?? '';
-    const club = raw.club ?? '';
-    const lastname = raw.lastname ?? '';
-    const firstname = raw.firstname ?? '';
-    const pointsRaw = raw.points ?? '';
-
-    if (!name.trim()) {
-      warnings.push(`Ligne ${rowNumber} : catégorie manquante`);
-    }
-    if (!club.trim()) {
-      warnings.push(`Ligne ${rowNumber} : club manquant`);
-    }
-    if (!pointsRaw.trim()) {
-      warnings.push(`Ligne ${rowNumber} : points manquants (ligne ignorée)`);
+    const reading = readSwimmerRow(raw, rowNumber, hasPlaceColumn, warnings);
+    if (reading.kind === 'no-points') {
       ignoredRowCount += 1;
       return;
     }
-
-    const points = parsePoints(pointsRaw);
-    // Points are what the ranking is computed from: a non-numeric points cell
-    // means the file is not the expected export, so the import stops here.
-    if (points === null) {
-      throw new Error(`Ligne ${rowNumber} : points illisibles (« ${pointsRaw} »). Est-ce bien un export de cotations extraNat ?`);
-    }
-    // The birth year is part of the swimmer's identity, the UNIQUE key of
-    // swimmer_result: stored as NULL it would escape that key and duplicate the
-    // swimmer at every re-import. The line is left out rather than blocking the
-    // whole import, and the swimmer is named under « À savoir ».
-    const birthyear = parseWholeNumber(raw.birthyear ?? '');
-    if (birthyear === null) {
-      const swimmer = `${firstname} ${lastname}`;
-      warnings.push(`Ligne ${rowNumber} : année de naissance ${describeCellProblem(raw.birthyear)} pour « ${swimmer} » (nageur non importé)`);
-      invalidRowCount += 1;
-      if (!excludedSwimmers.includes(swimmer)) excludedSwimmers.push(swimmer);
+    if (reading.kind === 'no-birthyear') {
+      if (!excludedSwimmers.includes(reading.swimmer)) excludedSwimmers.push(reading.swimmer);
       return;
     }
-    // The place is displayed information only, outside any key: an unreadable
-    // one is stored empty and the swimmer's points still count.
-    const place = parseWholeNumber(raw.place ?? '');
-    if (place === null && hasPlaceColumn) {
-      warnings.push(`Ligne ${rowNumber} : place ${describeCellProblem(raw.place)} pour « ${firstname} ${lastname} » (points comptés quand même)`);
-    }
-    if (points < PLAUSIBLE_POINTS_MIN || points > PLAUSIBLE_POINTS_MAX) {
-      warnings.push(`Ligne ${rowNumber} : nombre de points inhabituel (${points})`);
-    }
+    const { row } = reading;
+    const { name, club, lastname, firstname, birthyear } = row;
 
     if (!categories.includes(name)) {
       categories.push(name);
@@ -262,17 +218,7 @@ export function parseCsv(
     }
     seenInCategory.add(swimmerKey);
 
-    rows.push({
-      name,
-      place,
-      lastname,
-      firstname,
-      birthyear,
-      nation: raw.nation ?? '',
-      club,
-      points,
-      comment: raw.comment ?? '',
-    });
+    rows.push(row);
   });
 
   // A header-only file, or one missing the points or birthyear column, yields no row: importing it would change nothing yet look like a success.
@@ -291,7 +237,6 @@ export function parseCsv(
     warnings,
     ignoredRowCount,
     duplicateRowCount,
-    invalidRowCount,
     excludedSwimmers,
   };
 }

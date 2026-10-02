@@ -2,13 +2,13 @@
 
 ## Lecture du fichier CSV : lignes écartées
 
-Implémenté dans `src/lib/csv-parser.ts` (`parseCsv`) et `src/lib/csv-cells.ts`. Chaque cas est signalé avec son numéro de ligne dans le fichier (ligne 1 = en-tête).
+Implémenté dans `src/lib/csv-parser.ts` (`parseCsv`), `src/lib/csv-row.ts` (`readSwimmerRow`, une ligne) et `src/lib/csv-cells.ts` (une cellule). Chaque cas est signalé avec son numéro de ligne dans le fichier (ligne 1 = en-tête).
 
 | Cellule | Contenu | Effet |
 |---|---|---|
 | `points` | vide | Ligne ignorée, comptée dans `ignoredRowCount` (« Lignes sans points » dans « À savoir ») |
 | `points` | sans aucun chiffre (« N/A ») | **Import bloqué** : « Ligne N : points illisibles… ». Les points sont la donnée du classement : une cellule illisible signale un fichier qui n'est pas l'export attendu. |
-| `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne écartée, comptée dans `invalidRowCount` ; le nageur est ajouté à `excludedSwimmers` (une seule fois même s'il est écarté de plusieurs catégories) |
+| `birthyear` | vide ou pas un entier (« 19XX », « 1990.5 ») | Ligne écartée ; le nageur est ajouté à `excludedSwimmers` (une seule fois même s'il est écarté de plusieurs catégories) |
 | `place` | vide ou pas un entier (« 2e ») | Ligne **gardée** avec `place: null` (rang `NULL` en base), avertissement simple ; les points comptent |
 
 Pourquoi l'année de naissance écarte la ligne : elle fait partie de l'identité du nageur, la clé `UNIQUE (meeting_id, category, lastname, firstname, birthyear, club)` de `swimmer_result`. Enregistrée à `NULL`, elle échapperait à cette clé (deux `NULL` ne sont jamais égaux en SQLite) et dupliquerait le nageur à chaque réimport. Bloquer tout l'import pour une ligne laisserait le bénévole sans aucun classement, alors qu'il ne peut pas corriger le fichier au bord du bassin. Les nageurs écartés sont donc nommés directement dans « À savoir » (« 2 nageurs non importés (année de naissance vide ou illisible dans le fichier) : Bob MARTIN, Eve DURAND. Leurs points ne comptent dans aucun classement. »).

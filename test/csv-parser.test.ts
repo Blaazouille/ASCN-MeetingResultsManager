@@ -65,7 +65,7 @@ describe('parseCsv — real FFN extraNat fixture (Latin-1, semicolon)', () => {
   });
 
   it('leaves no row out of the reference file', () => {
-    expect([result.ignoredRowCount, result.invalidRowCount, result.duplicateRowCount]).toEqual([0, 0, 0]);
+    expect([result.ignoredRowCount, result.duplicateRowCount]).toEqual([0, 0]);
     expect(result.excludedSwimmers).toEqual([]);
     expect(result.rows.every((row) => row.place !== null)).toBe(true);
   });
@@ -134,7 +134,6 @@ describe('parseCsv — encoding and validation edge cases', () => {
     ].join('\n');
     const result = parseCsv(new TextEncoder().encode(csv));
     expect(result.rows.map((row) => row.lastname)).toEqual(['DUPONT']);
-    expect(result.invalidRowCount).toBe(4);
     expect(result.excludedSwimmers).toEqual(['Bob MARTIN', 'Eve DURAND', 'Tom PETIT']);
     expect(result.ignoredRowCount).toBe(0);
     expect(result.warnings).toEqual([
@@ -156,7 +155,7 @@ describe('parseCsv — encoding and validation edge cases', () => {
       ['DUPONT', null, 100],
       ['MARTIN', null, 90],
     ]);
-    expect([result.invalidRowCount, result.excludedSwimmers]).toEqual([0, []]);
+    expect(result.excludedSwimmers).toEqual([]);
     expect(result.warnings).toEqual([
       'Ligne 2 : place vide pour « Lea DUPONT » (points comptés quand même)',
       'Ligne 3 : place illisible (« 2e ») pour « Bob MARTIN » (points comptés quand même)',
