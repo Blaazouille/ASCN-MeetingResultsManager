@@ -1,11 +1,10 @@
 /**
- * Responsabilité : opérations CRUD SQLite (meetings, swimmer_result, team_ranking).
+ * Responsabilité : opérations CRUD SQLite (meetings, swimmer_result).
  * Appelé par : electron/ipc-handlers.ts (main process uniquement).
  * Suppression casserait : toute la persistance de données.
  */
 import type Database from 'better-sqlite3';
 import type { RawSwimmerRow } from './csv-parser';
-import type { TeamResult } from './ranking-engine';
 import { saveImportSnapshot } from './import-snapshot';
 
 export interface Meeting {
@@ -252,34 +251,4 @@ export function getSwimmerResults(db: Database.Database, meetingId: number, cate
         .prepare('SELECT * FROM swimmer_result WHERE meeting_id = ? ORDER BY category, rank')
         .all(meetingId) as SwimmerResultRow[]);
   return rows.map(rowToRawSwimmerRow);
-}
-
-/** Replaces the stored ranking for (meetingId, category) with the freshly computed one. */
-export function saveTeamRanking(
-  db: Database.Database,
-  meetingId: number,
-  category: string,
-  topN: number,
-  results: TeamResult[]
-): void {
-  const del = db.prepare('DELETE FROM team_ranking WHERE meeting_id = ? AND category = ?');
-  const stmt = db.prepare(`
-    INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers)
-    VALUES (@meetingId, @category, @club, @rank, @totalPts, @topN, @swimmers)
-  `);
-  const saveAll = db.transaction((teams: TeamResult[]) => {
-    del.run(meetingId, category);
-    for (const team of teams) {
-      stmt.run({
-        meetingId,
-        category,
-        club: team.club,
-        rank: team.rank,
-        totalPts: team.totalPoints,
-        topN,
-        swimmers: JSON.stringify(team.swimmers),
-      });
-    }
-  });
-  saveAll(results);
 }
