@@ -86,11 +86,19 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 - Export complet de la base de données en fichier JSON (`BackupData`) : enregistrement du nom du meeting, des nageurs et des classements.
 - Import = restauration à l'identique : la base est remplacée entièrement par le contenu du fichier, exactement comme elle était au moment de l'export. Tous les meetings actuellement présents sont supprimés au profit de ceux du fichier, y compris un meeting créé après la sauvegarde et absent du fichier — ce n'est pas une fusion.
 - Aperçu préalable avant d'écrire la base : nombre de meetings et de lignes de résultats dans le fichier (une ligne par nageur et par catégorie — un nageur compte donc plusieurs fois s'il apparaît en Dames/Messieurs et en Mixte), et nombre de meetings actuellement dans la base qui seront supprimés. Confirmation explicite requise.
+- Copie de sécurité avant restauration : à la confirmation, si la base contient au moins un meeting, elle est d'abord enregistrée dans le dossier de sauvegarde sous le nom `mdlm-pre-restore-<horodatage>.json` (l'aperçu l'annonce). Sur une base vide (installation neuve), aucune copie n'est faite ni annoncée, pour qu'un dossier de sauvegarde inaccessible ne bloque pas la récupération des données. Après la restauration, le message de succès indique le chemin de la copie quand il y en a une ; l'importer annule la restauration. Si la copie ne peut pas être écrite, la restauration n'a pas lieu et un message demande de vérifier le dossier de sauvegarde. Ces copies ne sont jamais supprimées par la rotation des sauvegardes automatiques.
 
 ### Sauvegardes automatiques
 
 - Dossier de sauvegarde configurable (bouton parcourir), par défaut `Documents/MDLM Ranking/Sauvegardes` — un emplacement que le bénévole sait déjà retrouver, contrairement au dossier de données d'Electron. Ce choix est stocké dans `backup-config.json` sous `app.getPath('userData')`.
 - Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5, minimum 3 : une valeur plus basse est relevée à 3) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
 - Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur : l'import continue et un échec de sauvegarde est signalé dans l'encart « À savoir » de l'écran Import.
+
+### Mises à jour
+
+- Version installée, date et heure de la dernière vérification (ligne masquée avant la première vérification, le statut indiquant alors « Pas encore vérifié »), et statut en français simple : « À jour », « Mise à jour prête — redémarrez l'application », « Impossible de vérifier (pas de connexion ?) » quand le poste est hors ligne, ou « La mise à jour a échoué. Réessayez plus tard. » pour un autre échec (release cassée, téléchargement interrompu), suivi d'une ligne « Détail : » avec le message technique court.
+- Bouton « Vérifier maintenant » : affiche « Vérification en cours… » jusqu'à la fin de la vérification et de l'éventuel téléchargement, puis le nouveau statut.
+- Hors ligne au démarrage, rien ne s'affiche ailleurs : pas de toast d'erreur, seulement ce statut. Le toast « Une mise à jour est prête. » reste réservé au téléchargement réussi.
+- Chaque vérification est aussi consignée dans `update-log.txt` (200 dernières lignes) sous le dossier de données de l'application, pour diagnostiquer un échec à distance.
 
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.

@@ -2,12 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import { createDatabase } from '../src/lib/db-schema';
 import { createMeeting, getAllMeetings, insertSwimmerResults } from '../src/lib/db';
-import {
-  exportDatabase,
-  validateBackup,
-  restoreDatabase,
-  type TeamRankingBackup,
-} from '../src/lib/backup';
+import { exportDatabase, validateBackup, restoreDatabase } from '../src/lib/backup';
 
 function freshDb(): Database.Database {
   return createDatabase(':memory:');
@@ -28,10 +23,6 @@ function seedDb(db: Database.Database): void {
     `INSERT INTO swimmer_result (meeting_id, category, rank, lastname, firstname, birthyear, nation, club, points, raw_line)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(meeting.id, 'Classement Mixte', 2, 'MARTIN', 'Marie', 1995, 'FRA', 'CN TEST', 750, null);
-  db.prepare(
-    `INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(meeting.id, 'Classement Mixte', 'CN TEST', 1, 1550, 5, JSON.stringify(['DUPONT Jean', 'MARTIN Marie']));
 }
 
 describe('exportDatabase', () => {
@@ -54,7 +45,7 @@ describe('exportDatabase', () => {
     expect(backup.meetings).toHaveLength(1);
   });
 
-  it('exports meeting with its swimmers, rankings, and ranking-rule columns', () => {
+  it('exports meeting with its swimmers and ranking-rule columns', () => {
     const backup = exportDatabase(db);
     const meeting = backup.meetings[0]!;
     expect(meeting.name).toBe('Test Meeting');
@@ -63,8 +54,6 @@ describe('exportDatabase', () => {
     expect(meeting.activeCategories).toEqual(['Classement Mixte']);
     expect(meeting.swimmers).toHaveLength(2);
     expect(meeting.swimmers[0]!.lastname).toBe('DUPONT');
-    expect(meeting.teamRankings).toHaveLength(1);
-    expect(meeting.teamRankings[0]!.totalPoints).toBe(1550);
   });
 
   it('exports an empty database as empty meetings array', () => {
@@ -143,12 +132,6 @@ describe('validateBackup', () => {
     expect(() => validateBackup(backup)).toThrow();
   });
 
-  it('rejects malformed teamRankings', () => {
-    const backup = exportDatabase(db);
-    backup.meetings[0]!.teamRankings = null as unknown as TeamRankingBackup[];
-    expect(() => validateBackup(backup)).toThrow();
-  });
-
   it('accepts a legacy backup that still carries meeting.status', () => {
     const legacy = exportDatabase(db);
     (legacy.meetings[0] as unknown as Record<string, unknown>).status = 'final';
@@ -176,7 +159,7 @@ describe('restoreDatabase', () => {
     targetDb.close();
   });
 
-  it('imports meetings, swimmers, and rankings into an empty database', () => {
+  it('imports meetings and swimmers into an empty database', () => {
     const backup = exportDatabase(sourceDb);
     const result = restoreDatabase(targetDb, backup);
     expect(result.meetingsRemoved).toBe(0);
@@ -216,7 +199,6 @@ describe('restoreDatabase', () => {
     expect(reExported.meetings[0]!.name).toBe(backup.meetings[0]!.name);
     expect(reExported.meetings[0]!.defaultTopN).toBe(backup.meetings[0]!.defaultTopN);
     expect(reExported.meetings[0]!.activeCategories).toEqual(backup.meetings[0]!.activeCategories);
-    expect(reExported.meetings[0]!.teamRankings[0]!.totalPoints).toBe(backup.meetings[0]!.teamRankings[0]!.totalPoints);
   });
 
   it('rolls back on error (transactional)', () => {

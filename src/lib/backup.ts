@@ -1,6 +1,6 @@
 /**
  * Responsabilité : export / import complet de la base de données en JSON.
- * Appelé par : electron/ipc-handlers.ts (export/import), electron/auto-backup.ts, tests.
+ * Appelé par : electron/ipc-handlers.ts (export), electron/auto-backup.ts, electron/pre-restore-backup.ts (restauration), tests.
  * Suppression casserait : la fonctionnalité de sauvegarde et restauration.
  */
 import type Database from 'better-sqlite3';
@@ -9,7 +9,7 @@ import { validateBackup, type BackupData, type MeetingBackup, type RestoreResult
 // Re-exported so existing callers (ipc-handlers.ts, tests) can keep importing
 // everything backup-related from this one module.
 export { validateBackup };
-export type { BackupData, MeetingBackup, SwimmerBackup, TeamRankingBackup, RestoreResult } from './backup-validation';
+export type { BackupData, MeetingBackup, SwimmerBackup, RestoreResult } from './backup-validation';
 
 /**
  * Filename-safe timestamp for backup files, down to the second plus a short
@@ -47,16 +47,6 @@ interface SwimmerRow {
   raw_line: string | null;
 }
 
-interface TeamRankingRow {
-  category: string;
-  club: string;
-  rank: number;
-  total_pts: number;
-  top_n: number;
-  swimmers: string;
-  computed_at: string;
-}
-
 export function exportDatabase(db: Database.Database): BackupData {
   const meetings = db.prepare('SELECT * FROM meeting ORDER BY id').all() as MeetingRow[];
 
@@ -66,13 +56,9 @@ export function exportDatabase(db: Database.Database): BackupData {
   const selectSwimmers = db.prepare(
     'SELECT category, rank, lastname, firstname, birthyear, nation, club, points, raw_line FROM swimmer_result WHERE meeting_id = ? ORDER BY id'
   );
-  const selectRankings = db.prepare(
-    'SELECT category, club, rank, total_pts, top_n, swimmers, computed_at FROM team_ranking WHERE meeting_id = ? ORDER BY id'
-  );
 
   const meetingBackups: MeetingBackup[] = meetings.map((m) => {
     const swimmers = selectSwimmers.all(m.id) as SwimmerRow[];
-    const rankings = selectRankings.all(m.id) as TeamRankingRow[];
 
     return {
       name: m.name,
@@ -93,15 +79,10 @@ export function exportDatabase(db: Database.Database): BackupData {
         points: s.points,
         rawLine: s.raw_line,
       })),
-      teamRankings: rankings.map((r) => ({
-        category: r.category,
-        club: r.club,
-        rank: r.rank,
-        totalPoints: r.total_pts,
-        topN: r.top_n,
-        swimmers: r.swimmers,
-        computedAt: r.computed_at,
-      })),
+      // Always empty: rankings are no longer stored (issue #31). Still written so
+      // an older version of the app, whose validateBackup requires this array,
+      // can restore a backup made by this one.
+      teamRankings: [],
     };
   });
 
@@ -116,8 +97,8 @@ export function exportDatabase(db: Database.Database): BackupData {
 /**
  * A backup is a snapshot: restoring one puts the database back exactly as it
  * was at export time, nothing more, nothing less. Every meeting currently in
- * the database is deleted first (cascading to its swimmers/rankings via the
- * ON DELETE CASCADE foreign keys in db-schema.ts) — including meetings the
+ * the database is deleted first (cascading to its swimmers and import
+ * snapshot via the ON DELETE CASCADE foreign keys in db-schema.ts) — including meetings the
  * backup file never mentions — and the backup's meetings are inserted fresh.
  * Whole operation runs in one transaction, so a failure partway through
  * leaves the pre-restore database untouched rather than half-wiped.
@@ -143,13 +124,6 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
      DO UPDATE SET rank = excluded.rank, nation = excluded.nation,
        points = excluded.points, raw_line = excluded.raw_line`
   );
-  const insertRanking = db.prepare(
-    `INSERT INTO team_ranking (meeting_id, category, club, rank, total_pts, top_n, swimmers, computed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(meeting_id, category, club)
-     DO UPDATE SET rank = excluded.rank, total_pts = excluded.total_pts,
-       top_n = excluded.top_n, swimmers = excluded.swimmers, computed_at = excluded.computed_at`
-  );
 
   const transaction = db.transaction(() => {
     result.meetingsRemoved = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
@@ -173,10 +147,6 @@ export function restoreDatabase(db: Database.Database, data: BackupData): Restor
       for (const s of meeting.swimmers) {
         insertSwimmer.run(meetingId, s.category, s.rank, s.lastname, s.firstname, s.birthyear, s.nation, s.club, s.points, s.rawLine);
         result.swimmersImported++;
-      }
-
-      for (const r of meeting.teamRankings) {
-        insertRanking.run(meetingId, r.category, r.club, r.rank, r.totalPoints, r.topN, r.swimmers, r.computedAt);
       }
     }
   });

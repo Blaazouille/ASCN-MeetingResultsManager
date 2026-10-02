@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, formatMeetingCreatedAt, formatMeetingImportedAt, parseSqliteTimestamp, slugifyCategory } from '../src/lib/export-data';
+import {
+  buildExportMeta,
+  excelSheetName,
+  formatMeetingCreatedAt,
+  formatMeetingImportedAt,
+  individualExportFileName,
+  parseSqliteTimestamp,
+  slugifyCategory,
+} from '../src/lib/export-data';
 
 describe('parseSqliteTimestamp', () => {
   it('reads a SQLite datetime as UTC, not local time', () => {
@@ -25,9 +33,9 @@ describe('slugifyCategory', () => {
   });
 });
 
-describe('buildPrintMeta', () => {
+describe('buildExportMeta', () => {
   it('maps the meeting name and a computation timestamp', () => {
-    const meta = buildPrintMeta({
+    const meta = buildExportMeta({
       id: 1,
       name: 'Meeting de la Mer 2026',
       createdAt: '2026-01-01 00:00:00',
@@ -94,5 +102,39 @@ describe('formatMeetingImportedAt', () => {
     const hh = String(local.getHours()).padStart(2, '0');
     const mm = String(local.getMinutes()).padStart(2, '0');
     expect(formatted).toMatch(new RegExp(`^27\\s+sept\\.?\\s+2026 à ${hh}\\u00a0h\\u00a0${mm}$`));
+  });
+});
+
+describe('excelSheetName', () => {
+  it('drops the "Classement" prefix', () => {
+    expect(excelSheetName('Classement Mixte')).toBe('Mixte');
+  });
+
+  it('replaces the characters Excel forbids in sheet names', () => {
+    expect(excelSheetName('Classement 100m [Dames]')).toBe('100m Dames');
+    expect(excelSheetName('Classement A/B: C*D?')).toBe('A B C D');
+  });
+
+  it('cuts the name to the 31 characters Excel allows', () => {
+    expect(excelSheetName(`Classement ${'x'.repeat(40)}`)).toHaveLength(31);
+  });
+
+  it('falls back to "Classement" when nothing is left', () => {
+    expect(excelSheetName('Classement ???')).toBe('Classement');
+  });
+});
+
+describe('individualExportFileName', () => {
+  const day = new Date('2026-11-16T12:00:00Z');
+
+  it('names the file after the category without its "Classement" prefix', () => {
+    expect(individualExportFileName('Classement Dames', 'pdf', day)).toBe('classement-individuel-dames-2026-11-16.pdf');
+    expect(individualExportFileName('Classement Mixte', 'xlsx', day)).toBe('classement-individuel-mixte-2026-11-16.xlsx');
+  });
+
+  it('strips accents and special characters from the category', () => {
+    expect(individualExportFileName('Classement Été — Benjamins', 'pdf', day)).toBe(
+      'classement-individuel-ete-benjamins-2026-11-16.pdf'
+    );
   });
 });

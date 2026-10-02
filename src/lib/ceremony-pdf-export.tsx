@@ -6,7 +6,7 @@
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { CeremonyStep } from './ceremony-script';
 import { gapLabel, stepContext, stepCountLabel, stepHeading, winnerLine } from './ceremony-labels';
-import type { PrintMeta } from './export-data';
+import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME } from './utils';
 
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
 });
 
 interface CeremonyPdfDocumentProps {
-  meta: PrintMeta;
+  meta: ExportMeta;
   steps: CeremonyStep[];
 }
 
@@ -72,12 +72,12 @@ function CeremonyPdfDocument({ meta, steps }: CeremonyPdfDocumentProps): JSX.Ele
   );
 }
 
-export async function buildCeremonyPdfBlob(meta: PrintMeta, steps: CeremonyStep[]): Promise<Blob> {
+export async function buildCeremonyPdfBlob(meta: ExportMeta, steps: CeremonyStep[]): Promise<Blob> {
   return pdf(<CeremonyPdfDocument meta={meta} steps={steps} />).toBlob();
 }
 
 /** Builds the proclamation sheet and triggers its download. */
-export async function exportCeremonyToPdf(meta: PrintMeta, steps: CeremonyStep[]): Promise<void> {
+export async function exportCeremonyToPdf(meta: ExportMeta, steps: CeremonyStep[]): Promise<void> {
   const blob = await buildCeremonyPdfBlob(meta, steps);
   const today = new Date().toISOString().slice(0, 10);
   downloadBlob(blob, `deroule-ceremonie-${today}.pdf`);

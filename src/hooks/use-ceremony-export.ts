@@ -4,7 +4,7 @@
  * Suppression casserait : la fiche de proclamation PDF.
  */
 import { useState } from 'react';
-import { buildPrintMeta } from '@/lib/export-data';
+import { buildExportMeta } from '@/lib/export-data';
 import { exportCeremonyToPdf } from '@/lib/ceremony-pdf-export';
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import type { Meeting } from '@/lib/db';
@@ -23,7 +23,7 @@ export function useCeremonyExport(): UseCeremonyExportResult {
     setIsExporting(true);
     setError(null);
     try {
-      await exportCeremonyToPdf(buildPrintMeta(meeting), steps);
+      await exportCeremonyToPdf(buildExportMeta(meeting), steps);
     } catch {
       setError("Échec de l'impression du déroulé. Vous pouvez réessayer.");
     } finally {
