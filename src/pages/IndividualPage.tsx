@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
-import { computeIndividualRanking, filterByCategory } from '@/lib/individual-ranking';
+import { computeCategoryRanking } from '@/lib/individual-ranking';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { categoryShortLabel } from '@/lib/ui-labels';
 import { SearchField } from '@/components/ui/SearchField';
@@ -34,11 +34,7 @@ export default function IndividualPage(): JSX.Element {
   // Default to first available category; keep selection if still valid.
   const currentCategory = categories.includes(activeCategory) ? activeCategory : (categories[0] ?? '');
 
-  const allResults = useMemo(() => computeIndividualRanking(rows), [rows]);
-  const displayedResults = useMemo(
-    () => filterByCategory(allResults, currentCategory),
-    [allResults, currentCategory]
-  );
+  const displayedResults = useMemo(() => computeCategoryRanking(rows, currentCategory), [rows, currentCategory]);
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) return <Navigate to="/" replace />;
