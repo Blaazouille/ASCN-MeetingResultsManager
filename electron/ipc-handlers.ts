@@ -18,6 +18,7 @@ import {
   updateMeeting,
   type MeetingInput,
 } from '../src/lib/db';
+import { getImportSnapshot } from '../src/lib/import-snapshot';
 import { computeTeamRanking, type RankingParams } from '../src/lib/ranking-engine';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import { exportDatabase, validateBackup, restoreDatabase, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
@@ -48,6 +49,8 @@ export function registerIpcHandlers(db: Database.Database): void {
   ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>
     getSwimmerResults(db, meetingId, category)
   );
+
+  ipcMain.handle(IpcChannels.getImportSnapshot, async (_event, meetingId: number) => getImportSnapshot(db, meetingId));
 
   // computeRanking/saveRanking below: wired and tested but not currently invoked
   // by the renderer, which computes rankings client-side instead. See the

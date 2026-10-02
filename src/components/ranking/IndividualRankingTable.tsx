@@ -6,18 +6,22 @@
 import { useMemo } from 'react';
 import { ASCN_CLUB_NAME, cn, formatPoints } from '@/lib/utils';
 import { tiedRanks } from '@/lib/rank-ties';
+import { swimmerIdentity, type Movement } from '@/lib/import-diff';
 import type { IndividualResult } from '@/lib/individual-ranking';
 import { RankChip } from '@/components/ui/RankChip';
 import { ClubTag } from '@/components/ui/ClubTag';
+import { MovementBadge } from '@/components/ui/MovementBadge';
 
 export interface IndividualRankingTableProps {
   results: IndividualResult[];
   /** The first N swimmers get a prize tag (« 1er Prix », « 2e Prix »). */
   prizeCount: number;
   search: string;
+  /** Rank changes since the previous import, by swimmer identity; absent without a previous import. */
+  movements?: Map<string, Movement> | null;
 }
 
-export function IndividualRankingTable({ results, prizeCount, search }: IndividualRankingTableProps): JSX.Element {
+export function IndividualRankingTable({ results, prizeCount, search, movements }: IndividualRankingTableProps): JSX.Element {
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return results;
@@ -44,7 +48,7 @@ export function IndividualRankingTable({ results, prizeCount, search }: Individu
       <table className="w-full table-fixed border-collapse">
         <thead>
           <tr className="h-11 bg-surface-header text-left text-[13px] font-bold uppercase tracking-[0.06em] text-ink-muted">
-            <th scope="col" className="w-[190px] pl-5 pr-3">Rang</th>
+            <th scope="col" className="w-[250px] pl-5 pr-3">Rang</th>
             <th scope="col" className="px-3">Nom</th>
             <th scope="col" className="w-[90px] px-3">Année</th>
             <th scope="col" className="px-3">Club</th>
@@ -62,6 +66,7 @@ export function IndividualRankingTable({ results, prizeCount, search }: Individu
                 <td className="py-2 pl-5 pr-3">
                   <span className="flex items-center gap-2">
                     <RankChip rank={r.rank} tied={tied.has(r.rank)} />
+                    <MovementBadge movement={movements?.get(swimmerIdentity(r))} />
                     {r.rank <= prizeCount && (
                       <span className="whitespace-nowrap rounded-full bg-corail-soft px-2.5 py-0.5 text-xs font-bold text-corail-strong">
                         {r.rank === 1 ? '1er Prix' : `${r.rank}e Prix`}

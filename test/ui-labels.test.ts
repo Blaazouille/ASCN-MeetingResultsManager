@@ -9,13 +9,17 @@ import {
   categoryShortLabel,
   clubCountLabel,
   countedSummary,
+  importChangeParts,
   formatGap,
   isDeleteConfirmed,
   lastImportLabel,
   leaderRatio,
   meetingStatsLabel,
+  movementAriaLabel,
+  movementText,
   placeLabel,
   resultCountLabel,
+  sinceImportLabel,
   swimmerCountLabel,
 } from '../src/lib/ui-labels';
 
@@ -152,5 +156,40 @@ describe('meetingStatsLabel', () => {
 describe('lastImportLabel', () => {
   it('prefixes the formatted date', () => {
     expect(lastImportLabel('27 sept. 2026 à 14 h 32')).toBe('Dernier import le 27 sept. 2026 à 14 h 32');
+  });
+});
+
+describe('movement labels', () => {
+  it('shows arrow and number, or « nouveau »', () => {
+    expect(movementText(2)).toBe('↑2');
+    expect(movementText(-1)).toBe('↓1');
+    expect(movementText('new')).toBe('nouveau');
+  });
+
+  it('speaks them in full French', () => {
+    expect(movementAriaLabel(2)).toBe('Gagne 2 places');
+    expect(movementAriaLabel(-1)).toBe('Perd 1 place');
+    expect(movementAriaLabel('new')).toBe('Nouveau dans le classement');
+  });
+});
+
+describe('import summary labels', () => {
+  it('names the previous import, or falls back when its time is unknown', () => {
+    expect(sinceImportLabel('27 sept. 2026 à 14 h 32')).toBe("Depuis l'import du 27 sept. 2026 à 14 h 32");
+    expect(sinceImportLabel(null)).toBe("Depuis l'import précédent");
+  });
+
+  it('lists only what changed, with French plurals', () => {
+    expect(importChangeParts({ addedSwimmers: 12, removedSwimmers: 1, changedResults: 38, clubsMoved: 3 })).toEqual([
+      '+12 nageurs',
+      `${MINUS}1 nageur`,
+      '38 résultats modifiés',
+      '3 clubs ont changé de rang',
+    ]);
+    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 1, clubsMoved: 1 })).toEqual([
+      '1 résultat modifié',
+      '1 club a changé de rang',
+    ]);
+    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 0, clubsMoved: 0 })).toEqual([]);
   });
 });

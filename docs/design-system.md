@@ -61,6 +61,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 | `RankChip` | Numéro de rang, aux couleurs de la médaille pour les trois premiers (chiffres `ink`, jamais blancs) |
 | `SearchField` | Champ de recherche avec loupe, filtre à la frappe |
 | `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés) |
+| `MovementBadge` | Mouvement de rang depuis le dernier import : `↑2` en `success`, `↓1` en `corail-strong`, « nouveau » en `ink-muted` ; la flèche et le chiffre portent le sens, la couleur ne fait que le renforcer |
 | `ImportPendingBadge` | Pastille « À importer » d'un meeting sans résultat importé |
 
 ## Formatage des nombres

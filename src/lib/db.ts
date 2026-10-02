@@ -6,6 +6,7 @@
 import type Database from 'better-sqlite3';
 import type { RawSwimmerRow } from './csv-parser';
 import type { TeamResult } from './ranking-engine';
+import { saveImportSnapshot } from './import-snapshot';
 
 export interface Meeting {
   id: number;
@@ -186,6 +187,11 @@ export function insertSwimmerResults(db: Database.Database, meetingId: number, r
   const stampImport = db.prepare("UPDATE meeting SET last_imported_at = datetime('now') WHERE id = ?");
 
   const insertAll = db.transaction((rowsToInsert: RawSwimmerRow[]) => {
+    // Before any write, so the snapshot is the state the new import is compared with.
+    const previous = db.prepare('SELECT last_imported_at FROM meeting WHERE id = ?').get(meetingId) as
+      | { last_imported_at: string | null }
+      | undefined;
+    saveImportSnapshot(db, meetingId, getSwimmerResults(db, meetingId), previous?.last_imported_at ?? null);
     for (const row of rowsToInsert) {
       stmt.run({
         meetingId,

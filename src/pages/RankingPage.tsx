@@ -10,8 +10,10 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { usePrintExport } from '@/hooks/use-print-export';
+import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { findPodiumTies } from '@/lib/rank-ties';
-import { resolveActiveCategories } from '@/lib/ranking-engine';
+import { rankMovements } from '@/lib/import-diff';
+import { computeTeamRanking, resolveActiveCategories } from '@/lib/ranking-engine';
 import { categoryShortLabel } from '@/lib/ui-labels';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TieBanner } from '@/components/ranking/TieBanner';
@@ -34,6 +36,18 @@ export default function RankingPage(): JSX.Element {
     minSwimmers: meetingState.currentMeeting?.minSwimmers,
   });
   const { isExporting, error, exportPdf, exportExcel } = usePrintExport();
+  const previousRows = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
+  // Same category, top N and threshold as the displayed ranking, or the arrows would compare different things.
+  const movements = useMemo(
+    () =>
+      previousRows &&
+      rankMovements(
+        computeTeamRanking(previousRows, { category: ranking.category, topN: ranking.topN, minSwimmers: meetingState.currentMeeting?.minSwimmers }),
+        ranking.teamResults,
+        (team) => team.club
+      ),
+    [previousRows, ranking.category, ranking.topN, ranking.teamResults, meetingState.currentMeeting?.minSwimmers]
+  );
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) {
@@ -77,7 +91,7 @@ export default function RankingPage(): JSX.Element {
       {error && <p className="text-sm text-error">{error}</p>}
       <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={ranking.category} />
       <PodiumCards results={ranking.teamResults} />
-      <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} />
+      <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} movements={movements} />
     </div>
   );
 }

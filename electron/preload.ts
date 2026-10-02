@@ -7,6 +7,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { IpcChannels } from './ipc-channels';
 import type { Meeting, MeetingInput } from '../src/lib/db';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
+import type { ImportSnapshot } from '../src/lib/import-snapshot';
 import type { RankingParams, TeamResult } from '../src/lib/ranking-engine';
 import type { RestoreResult } from '../src/lib/backup';
 import type { BackupConfig } from './auto-backup';
@@ -29,6 +30,8 @@ const electronAPI = {
     ipcRenderer.invoke(IpcChannels.importCsv, meetingId, rows),
   getSwimmerResults: (meetingId: number, category?: string): Promise<RawSwimmerRow[]> =>
     ipcRenderer.invoke(IpcChannels.getSwimmerResults, meetingId, category),
+  getImportSnapshot: (meetingId: number): Promise<ImportSnapshot | null> =>
+    ipcRenderer.invoke(IpcChannels.getImportSnapshot, meetingId),
 
   // Rankings
   computeRanking: (meetingId: number, params: RankingParams): Promise<TeamResult[]> =>

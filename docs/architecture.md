@@ -28,6 +28,8 @@ Le parseur CSV (`src/lib/csv-parser.ts`) et le moteur de calcul (`src/lib/rankin
 
 Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/lib/db.ts`) et enregistre les handlers IPC (`electron/ipc-handlers.ts`). Le **renderer** (React) n'accède jamais directement à SQLite : il passe par l'API exposée dans `electron/preload.ts` via `contextBridge`, sur la fenêtre globale `window.electronAPI`. Les noms de canaux sont centralisés dans `electron/ipc-channels.ts` pour éviter toute divergence entre les deux côtés du bridge.
 
+**Mouvements après un réimport** : `insertSwimmerResults` range, dans la même transaction et avant toute écriture, les lignes existantes dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import). Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
+
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie.
 
 **Canaux déclarés mais jamais appelés par le renderer** (dette connue, à trancher dans une issue séparée — règle « pas de code mort ») :
@@ -108,6 +110,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
+│   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
+│   │   ├── import-diff.ts         # Mouvements de rang et résumé des changements entre deux imports
 │   │   ├── backup.ts              # Export/restauration complète de la base en JSON
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
 │   │   ├── export-data.ts         # Métadonnées et helpers pour les exports
@@ -122,6 +126,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── hooks/
 │   │   ├── use-meeting.ts         # Meetings : liste, création, mise à jour, suppression
 │   │   ├── use-meeting-rows.ts    # Lignes nageurs d'un meeting (cache)
+│   │   ├── use-previous-rows.ts   # Résultats d'avant le dernier import (instantané), pour les flèches de mouvement
 │   │   ├── use-import.ts          # Import CSV (parse, aperçu, persistance)
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
 │   │   ├── use-print-export.ts    # Exports PDF/Excel du classement par équipes (nom hérité, voir note)
@@ -132,11 +137,11 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
 │   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
-│   │   ├── import/                # DropZone, StatTile
+│   │   ├── import/                # DropZone, StatTile, ImportChanges
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
-│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag
+│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage
 │   ├── styles/
 │   │   ├── globals.css            # Tailwind base + custom properties (tokens)

@@ -9,6 +9,14 @@ import { assignCompetitionRanks } from './rank-ties';
 /** The three FFN result categories this app supports, in the order they should be offered as UI options. */
 export const ALL_CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'] as const;
 
+/** Category shown first when present in the imported data. */
+export const DEFAULT_CATEGORY = 'Classement Mixte';
+
+/** The default category when imported, otherwise the first one ('' when there is none). */
+export function pickDefaultCategory(categories: string[]): string {
+  return categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : (categories[0] ?? '');
+}
+
 /**
  * Resolves which categories the ranking UI should offer: the intersection
  * of `present` (categories actually found in the imported data, in their

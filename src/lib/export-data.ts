@@ -40,8 +40,12 @@ export function formatMeetingCreatedAt(meeting: Meeting): string {
  * several times on meeting day and need to tell which version is loaded.
  */
 export function formatMeetingImportedAt(meeting: Meeting): string | null {
-  if (meeting.lastImportedAt === null) return null;
-  const at = parseSqliteTimestamp(meeting.lastImportedAt);
+  return meeting.lastImportedAt === null ? null : formatImportTimestamp(meeting.lastImportedAt);
+}
+
+/** Same format for any SQLite import timestamp (e.g. the previous import's, kept in the snapshot). */
+export function formatImportTimestamp(timestamp: string): string {
+  const at = parseSqliteTimestamp(timestamp);
   // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
   const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
   const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';

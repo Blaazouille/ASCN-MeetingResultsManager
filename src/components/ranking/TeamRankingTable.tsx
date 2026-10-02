@@ -13,10 +13,12 @@ import {
 } from '@tanstack/react-table';
 import { ASCN_CLUB_NAME, cn, formatPoints, formatRetainedSwimmers } from '@/lib/utils';
 import { tiedRanks } from '@/lib/rank-ties';
+import type { Movement } from '@/lib/import-diff';
 import { filterTeamResultsByClub, type TeamResult } from '@/lib/ranking-engine';
 import { formatGap, leaderRatio } from '@/lib/ui-labels';
 import { RankChip } from '@/components/ui/RankChip';
 import { ClubTag } from '@/components/ui/ClubTag';
+import { MovementBadge } from '@/components/ui/MovementBadge';
 import { TeamRow } from './TeamRow';
 
 export interface TeamRankingTableProps {
@@ -24,12 +26,14 @@ export interface TeamRankingTableProps {
   results: TeamResult[];
   category: string;
   search: string;
+  /** Rank changes since the previous import, by club; absent without a previous import. */
+  movements?: Map<string, Movement> | null;
 }
 
 const columnHelper = createColumnHelper<TeamResult>();
 
 const COLUMN_WIDTHS: Record<string, string> = {
-  rank: 'w-[116px]',
+  rank: 'w-[170px]',
   swimmerCount: 'w-[170px]',
   gap: 'w-[110px]',
   totalPoints: 'w-[240px]',
@@ -38,11 +42,16 @@ const RIGHT_ALIGNED = new Set(['gap', 'totalPoints']);
 
 // TanStack Table's ColumnDef<TData, TValue> needs a shared TValue across heterogeneous
 // columns; `any` here is the library's own documented pattern for a mixed column array.
-function buildColumns(leaderPoints: number, tied: Set<number>): ColumnDef<TeamResult, any>[] {
+function buildColumns(leaderPoints: number, tied: Set<number>, movements?: Map<string, Movement> | null): ColumnDef<TeamResult, any>[] {
   return [
     columnHelper.accessor('rank', {
       header: 'Rang',
-      cell: (info) => <RankChip rank={info.getValue()} tied={tied.has(info.getValue())} />,
+      cell: (info) => (
+        <span className="flex items-center gap-2">
+          <RankChip rank={info.getValue()} tied={tied.has(info.getValue())} />
+          <MovementBadge movement={movements?.get(info.row.original.club)} />
+        </span>
+      ),
     }),
     columnHelper.accessor('club', {
       header: 'Club',
@@ -94,14 +103,14 @@ function buildColumns(leaderPoints: number, tied: Set<number>): ColumnDef<TeamRe
   ];
 }
 
-export function TeamRankingTable({ results, category, search }: TeamRankingTableProps): JSX.Element {
+export function TeamRankingTable({ results, category, search, movements }: TeamRankingTableProps): JSX.Element {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => filterTeamResultsByClub(results, search), [results, search]);
   // Gaps and bars compare every club to the 1st of the whole ranking, not of the filtered view.
   const leaderPoints = results[0]?.totalPoints ?? 0;
   const tied = useMemo(() => tiedRanks(results), [results]);
-  const columns = useMemo(() => buildColumns(leaderPoints, tied), [leaderPoints, tied]);
+  const columns = useMemo(() => buildColumns(leaderPoints, tied, movements), [leaderPoints, tied, movements]);
 
   const table = useReactTable({
     data: filtered,

@@ -10,7 +10,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
+import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { computeIndividualRanking, filterByCategory } from '@/lib/individual-ranking';
+import { rankMovements, swimmerIdentity } from '@/lib/import-diff';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { categoryShortLabel } from '@/lib/ui-labels';
 import { SearchField } from '@/components/ui/SearchField';
@@ -38,6 +40,18 @@ export default function IndividualPage(): JSX.Element {
   const displayedResults = useMemo(
     () => filterByCategory(allResults, currentCategory),
     [allResults, currentCategory]
+  );
+
+  const previousRows = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
+  const movements = useMemo(
+    () =>
+      previousRows &&
+      rankMovements(
+        filterByCategory(computeIndividualRanking(previousRows), currentCategory),
+        displayedResults,
+        swimmerIdentity
+      ),
+    [previousRows, currentCategory, displayedResults]
   );
 
   const meeting = meetingState.currentMeeting;
@@ -68,7 +82,7 @@ export default function IndividualPage(): JSX.Element {
       </FilterBar>
       {exportError && <p className="text-sm text-error">{exportError}</p>}
       <TieBanner ranks={findPodiumTies(displayedResults, PRIZE_COUNT)} category={currentCategory} />
-      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} search={search} />
+      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} search={search} movements={movements} />
     </div>
   );
 }
