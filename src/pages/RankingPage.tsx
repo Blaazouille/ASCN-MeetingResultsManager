@@ -1,15 +1,17 @@
 /**
- * Responsabilité : écran de classement par équipes (tableau, filtres, exports PDF/Excel).
+ * Responsabilité : écran de classement par équipes (tableau, filtres, exports PDF/Excel, « Tout exporter »).
  * Appelé par : App.tsx (route "classement").
  * Suppression casserait : l'écran de classement, cœur de l'application.
  */
 import { useMemo, useState } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
+import { FolderDown } from 'lucide-react';
 import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
 import { useRankingExport } from '@/hooks/use-ranking-export';
+import { useExportPack } from '@/hooks/use-export-pack';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { rankMovements } from '@/lib/import-diff';
@@ -21,6 +23,8 @@ import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
 import { ExportFeedback } from '@/components/ranking/ExportFeedback';
+import { ExportPackFeedback } from '@/components/ranking/ExportPackFeedback';
+import { Button } from '@/components/ui/Button';
 import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
 
 export default function RankingPage(): JSX.Element {
@@ -39,6 +43,7 @@ export default function RankingPage(): JSX.Element {
     minSwimmers,
   });
   const { isExporting, error, notice, exportPdf, exportExcel } = useRankingExport();
+  const pack = useExportPack();
   const { rows: previousRows, failed: previousRowsFailed } = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
   // Same category, top N and threshold as the displayed ranking, or the arrows would compare different things.
   const movements = useMemo(
@@ -80,11 +85,21 @@ export default function RankingPage(): JSX.Element {
         title="Classement par équipes"
         subtitle={`${categoryShortLabel(ranking.category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
         actions={
-          <ExportActions
-            disabled={isExporting}
-            onExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
-            onPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
-          />
+          <>
+            {/* Secondary: the end-of-meeting pack (every active category, top N shown here), see use-export-pack.ts. */}
+            <Button
+              icon={FolderDown}
+              disabled={pack.isExporting}
+              onClick={() => void pack.exportAll({ meeting, rows, categories, topN: ranking.topN })}
+            >
+              {pack.isExporting ? 'Export en cours…' : 'Tout exporter'}
+            </Button>
+            <ExportActions
+              disabled={isExporting}
+              onExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
+              onPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
+            />
+          </>
         }
       />
       <RankingToolbar
@@ -97,6 +112,7 @@ export default function RankingPage(): JSX.Element {
         onSearchChange={setSearch}
       />
       <ExportFeedback error={error} notice={notice} />
+      <ExportPackFeedback outcome={pack.outcome} error={pack.error} onOpenFolder={() => void pack.openFolder()} />
       {unrankedCount > 0 && (
         <p className="text-sm text-ink-muted">{unrankedClubsLabel(unrankedCount, minSwimmers)}</p>
       )}

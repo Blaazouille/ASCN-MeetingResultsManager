@@ -1,11 +1,11 @@
 /**
  * Responsabilité : enregistre les handlers IPC pour les opérations DB et fichiers.
  * Appelé par : electron/main.ts au démarrage.
- * Suppression casserait : toutes les opérations de persistance (meetings, imports, sauvegardes).
+ * Suppression casserait : toutes les opérations de persistance (meetings, imports, sauvegardes, pack « Tout exporter »).
  */
-import { app, ipcMain, dialog, type OpenDialogOptions } from 'electron';
+import { app, ipcMain, dialog, shell, type OpenDialogOptions } from 'electron';
 import type Database from 'better-sqlite3';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { IpcChannels } from './ipc-channels';
 import {
@@ -22,6 +22,8 @@ import type { RawSwimmerRow } from '../src/lib/csv-parser';
 import { exportDatabase, validateBackup, formatBackupTimestamp, type BackupData } from '../src/lib/backup';
 import { performAutoBackup, loadBackupConfig, saveBackupConfig, type BackupConfig } from './auto-backup';
 import { restoreWithSafetyCopy } from './pre-restore-backup';
+import { defaultExportDir, writeExportPack } from './export-pack-writer';
+import type { PackFilePayload } from '../src/lib/export-pack-plan';
 
 /** Registers all IPC handlers used by the renderer via the contextBridge exposed in preload.ts. */
 export function registerIpcHandlers(db: Database.Database): void {
@@ -176,6 +178,51 @@ export function registerIpcHandlers(db: Database.Database): void {
     // clicks "Annuler" instead of confirming.
     pendingImport = null;
     return { success: true };
+  });
+
+  ipcMain.handle(IpcChannels.exportChoosePackDir, async () => {
+    try {
+      // Created up front so the dialog opens there: the pack folder lands in
+      // Documents/MDLM Ranking/Exports unless the volunteer picks another place.
+      const defaultDir = defaultExportDir();
+      mkdirSync(defaultDir, { recursive: true });
+      const result = await dialog.showOpenDialog({
+        title: 'Où enregistrer les résultats du meeting\u00a0?',
+        buttonLabel: 'Enregistrer ici',
+        defaultPath: defaultDir,
+        properties: ['openDirectory', 'createDirectory'],
+      });
+      return { success: true, path: result.canceled ? null : (result.filePaths[0] ?? null) };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // Folders written by writeExportPack in this session: openExportPackFolder
+  // only opens one of them, so the renderer cannot ask the OS to open an
+  // arbitrary path (shell.openPath also launches files).
+  const writtenPackFolders = new Set<string>();
+
+  ipcMain.handle(
+    IpcChannels.exportWritePack,
+    async (_event, parentDir: string, folderName: string, files: PackFilePayload[]) => {
+      try {
+        const result = writeExportPack(parentDir, folderName, files);
+        writtenPackFolders.add(result.folderPath);
+        return { success: true, ...result };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    }
+  );
+
+  ipcMain.handle(IpcChannels.exportOpenPackFolder, async (_event, folderPath: string) => {
+    if (!writtenPackFolders.has(folderPath)) {
+      return { success: false, error: 'Dossier inconnu' };
+    }
+    // openPath resolves with an error message, or '' on success; it does not reject.
+    const error = await shell.openPath(folderPath);
+    return error ? { success: false, error } : { success: true };
   });
 
   ipcMain.handle(IpcChannels.getAppVersion, async () => app.getVersion());
