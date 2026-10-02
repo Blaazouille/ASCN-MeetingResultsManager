@@ -105,7 +105,7 @@ describe('performAutoBackup', () => {
     const db = createDatabase(':memory:');
     createMeeting(db, { name: 'Meeting Auto-Backup', defaultTopN: 5, minSwimmers: 3, activeCategories: [] });
 
-    performAutoBackup(db);
+    expect(performAutoBackup(db)).toBeNull();
 
     const files = readdirSync(backupDir).filter((f) => f.startsWith('mdlm-auto-backup-'));
     expect(files).toHaveLength(1);
@@ -124,8 +124,22 @@ describe('performAutoBackup', () => {
     const db = createDatabase(':memory:');
     try {
       expect(() => performAutoBackup(db)).not.toThrow();
+      // The failure is reported, not swallowed: the import screen shows it.
+      expect(performAutoBackup(db)).toEqual(expect.any(String));
     } finally {
       rmSync(blockedPath, { force: true });
     }
+  });
+});
+
+describe('backup safety net', () => {
+  it('rejects fewer than 3 backups so a wrong file cannot rotate every good one out', () => {
+    expect(() => saveBackupConfig({ backupDir: '/tmp/x', maxBackups: 2 })).toThrow('au moins 3');
+  });
+
+  it('raises a stored value below 3 to 3', () => {
+    mkdirSync(userDataDir, { recursive: true });
+    writeFileSync(path.join(userDataDir, 'backup-config.json'), JSON.stringify({ backupDir: '/tmp/x', maxBackups: 1 }));
+    expect(loadBackupConfig().maxBackups).toBe(3);
   });
 });

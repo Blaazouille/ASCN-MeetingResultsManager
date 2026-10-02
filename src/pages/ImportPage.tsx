@@ -29,6 +29,8 @@ export default function ImportPage(): JSX.Element {
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
   const [changes, setChanges] = useState<{ since: string | null; summary: ImportChangesData } | null>(null);
+  // Things the volunteer should know after a save that went through (non-blocking warnings, failed backup, skipped rows).
+  const [notices, setNotices] = useState<string[]>([]);
   const [pending, setPending] = useState<{ parsed: CsvParseResult; warnings: ImportWarning[] } | null>(null);
   const navigate = useNavigate();
 
@@ -37,11 +39,20 @@ export default function ImportPage(): JSX.Element {
 
   // Writes the file to the database and computes the "since last import" summary.
   const persist = useCallback(
-    async (parsed: CsvParseResult): Promise<void> => {
+    async (parsed: CsvParseResult, warnings: ImportWarning[]): Promise<void> => {
       if (meetingId === null) return;
       setIsPersisting(true);
+      const found = warnings.map((warning) => warning.message);
       try {
-        await window.electronAPI.importCsv(meetingId, parsed.rows);
+        const { backupError } = await window.electronAPI.importCsv(meetingId, parsed.rows);
+        if (backupError) found.push(`La sauvegarde automatique a échoué (${backupError}). Vérifiez le dossier dans les Paramètres.`);
+      } catch (err) {
+        setPersistError(err instanceof Error ? err.message : String(err));
+        setIsPersisting(false);
+        return;
+      }
+      // The data is saved from here on: a failure below must not read as a failed import.
+      try {
         // Reload meetings so resultCount (sidebar ✓, Accueil) reflects the import.
         await refresh();
         // No snapshot = first import of this meeting: nothing to compare with.
@@ -56,11 +67,11 @@ export default function ImportPage(): JSX.Element {
           });
           setChanges({ since: snapshot.importedAt, summary });
         }
-      } catch (err) {
-        setPersistError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setIsPersisting(false);
+      } catch {
+        found.push("Les résultats sont enregistrés, mais le résumé des changements n'a pas pu être calculé.");
       }
+      setNotices(found);
+      setIsPersisting(false);
     },
     [meetingId, meeting, refresh]
   );
@@ -70,6 +81,7 @@ export default function ImportPage(): JSX.Element {
       setPersistError(null);
       setChanges(null);
       setPending(null);
+      setNotices([]);
       const parsed = await handleFileAccepted(file);
       if (!parsed || meetingId === null) return;
       // Checked before any write: nothing touches the database until the volunteer confirms.
@@ -89,16 +101,16 @@ export default function ImportPage(): JSX.Element {
         setPending({ parsed, warnings });
         return;
       }
-      await persist(parsed);
+      await persist(parsed, warnings);
     },
     [handleFileAccepted, meetingId, meeting, persist]
   );
 
   const confirmPending = (): void => {
     if (!pending) return;
-    const { parsed } = pending;
+    const { parsed, warnings } = pending;
     setPending(null);
-    void persist(parsed);
+    void persist(parsed, warnings.filter((warning) => !warning.blocking));
   };
 
   const cancelPending = (): void => {
@@ -169,6 +181,19 @@ export default function ImportPage(): JSX.Element {
               ))}
             </StatTile>
           </div>
+
+          {isDone && (notices.length > 0 || result.ignoredRowCount > 0 || result.duplicateRowCount > 0) && (
+            <div role="status" className="flex flex-col gap-1 rounded-lg bg-corail-soft px-5 py-4 text-[15px] text-ink">
+              <p className="font-semibold">À savoir</p>
+              <ul className="list-disc space-y-1 pl-5">
+                {notices.map((notice) => (
+                  <li key={notice}>{notice}</li>
+                ))}
+                {result.ignoredRowCount > 0 && <li>Lignes sans points, non importées&nbsp;: {result.ignoredRowCount}.</li>}
+                {result.duplicateRowCount > 0 && <li>Nageurs en double dans une catégorie (seul le dernier est gardé)&nbsp;: {result.duplicateRowCount}.</li>}
+              </ul>
+            </div>
+          )}
 
           {result.warnings.length > 0 && (
             <details className="text-sm text-warning">

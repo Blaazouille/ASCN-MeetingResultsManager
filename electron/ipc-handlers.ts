@@ -40,10 +40,9 @@ export function registerIpcHandlers(db: Database.Database): void {
 
   ipcMain.handle(IpcChannels.importCsv, async (_event, meetingId: number, rows: RawSwimmerRow[]) => {
     insertSwimmerResults(db, meetingId, rows);
-    // Deferred to the next tick: performAutoBackup does a full DB export,
-    // JSON write, and rotation pass, which must not add latency to the
-    // import response the poolside volunteer is waiting on.
-    setImmediate(() => performAutoBackup(db));
+    // Awaited (not deferred): the response carries the backup outcome so the
+    // import screen can warn when no restore point was written.
+    return { backupError: performAutoBackup(db) };
   });
 
   ipcMain.handle(IpcChannels.getSwimmerResults, async (_event, meetingId: number, category?: string) =>

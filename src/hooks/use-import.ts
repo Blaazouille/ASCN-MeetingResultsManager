@@ -26,6 +26,10 @@ export function useImport(): UseImportResult {
     try {
       const buffer = await file.arrayBuffer();
       const parsed = parseCsv(buffer);
+      // A header-only file, or one whose points column is missing, yields no row: importing it would change nothing yet look like a success.
+      if (parsed.rows.length === 0) {
+        throw new Error('Aucune ligne exploitable dans ce fichier. Est-ce bien un export de cotations extraNat ?');
+      }
       setResult(parsed);
       setFileName(file.name);
       return parsed;

@@ -16,6 +16,8 @@ export interface BackupConfig {
 
 const CONFIG_FILENAME = 'backup-config.json';
 const DEFAULT_MAX_BACKUPS = 5;
+// A wrong file re-imported a few times would rotate every good backup out; 3 keeps at least one older state.
+export const MIN_BACKUPS = 3;
 const BACKUP_PREFIX = 'mdlm-auto-backup-';
 
 function configPath(): string {
@@ -39,7 +41,7 @@ export function loadBackupConfig(): BackupConfig {
     const parsed = JSON.parse(raw) as Partial<BackupConfig>;
     return {
       backupDir: typeof parsed.backupDir === 'string' ? parsed.backupDir : defaultBackupDir(),
-      maxBackups: typeof parsed.maxBackups === 'number' && parsed.maxBackups > 0 ? parsed.maxBackups : DEFAULT_MAX_BACKUPS,
+      maxBackups: typeof parsed.maxBackups === 'number' && parsed.maxBackups > 0 ? Math.max(MIN_BACKUPS, parsed.maxBackups) : DEFAULT_MAX_BACKUPS,
     };
   }
   return { backupDir: defaultBackupDir(), maxBackups: DEFAULT_MAX_BACKUPS };
@@ -53,6 +55,9 @@ export function loadBackupConfig(): BackupConfig {
 export function saveBackupConfig(config: BackupConfig): void {
   if (config.backupDir.trim() === '') {
     throw new Error('Le dossier de sauvegarde ne peut pas être vide');
+  }
+  if (config.maxBackups < MIN_BACKUPS) {
+    throw new Error(`Conservez au moins ${MIN_BACKUPS} sauvegardes`);
   }
   writeFileSync(configPath(), JSON.stringify(config, null, 2), 'utf-8');
 }
@@ -71,8 +76,9 @@ export function rotateBackups(dir: string, maxBackups: number): void {
 
 // Called after every successful CSV import (see ipc-handlers.ts). Never
 // throws: a backup failure must not block the import a poolside volunteer is
-// waiting on, so any error is swallowed and logged instead of propagated.
-export function performAutoBackup(db: Database.Database): void {
+// waiting on. The error is logged and returned instead, so the import screen
+// can tell the volunteer that no restore point was written.
+export function performAutoBackup(db: Database.Database): string | null {
   try {
     const config = loadBackupConfig();
 
@@ -85,8 +91,9 @@ export function performAutoBackup(db: Database.Database): void {
     writeFileSync(path.join(config.backupDir, `${BACKUP_PREFIX}${timestamp}.json`), JSON.stringify(data, null, 2), 'utf-8');
 
     rotateBackups(config.backupDir, config.maxBackups);
+    return null;
   } catch (error) {
-    // Auto-backup must never block or fail the CSV import it runs after.
     console.error('Auto-backup failed:', error);
+    return error instanceof Error ? error.message : String(error);
   }
 }

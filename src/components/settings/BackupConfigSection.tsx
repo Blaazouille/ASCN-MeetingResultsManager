@@ -66,7 +66,7 @@ export function BackupConfigSection(): JSX.Element {
         <input
           id="max-backups"
           type="number"
-          min={1}
+          min={3}
           value={maxBackups}
           onChange={(event) => {
             // Clamp to a positive integer client-side: loadBackupConfig only
