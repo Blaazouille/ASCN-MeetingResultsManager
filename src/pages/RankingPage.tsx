@@ -1,5 +1,5 @@
 /**
- * Responsabilité : écran de classement par équipes (tableau, filtres, exports PDF/Excel, « Tout exporter »).
+ * Responsabilité : écran de classement par équipes (carte « Notre club », tableau, filtres, exports PDF/Excel, « Tout exporter »).
  * Appelé par : App.tsx (route "classement").
  * Suppression casserait : l'écran de classement, cœur de l'application.
  */
@@ -13,12 +13,15 @@ import { useRanking } from '@/hooks/use-ranking';
 import { useRankingExport } from '@/hooks/use-ranking-export';
 import { useExportPack } from '@/hooks/use-export-pack';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
+import { useOurClub } from '@/hooks/use-our-club';
+import { computeClubSummary } from '@/lib/club-summary';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { rankMovements } from '@/lib/import-diff';
 import { computeTeamRanking, countClubsBelowThreshold, resolveActiveCategories } from '@/lib/ranking-engine';
 import { categoryShortLabel, unrankedClubsLabel } from '@/lib/ui-labels';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TieBanner } from '@/components/ranking/TieBanner';
+import { OurClubCard } from '@/components/ranking/OurClubCard';
 import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
@@ -30,6 +33,7 @@ import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavai
 export default function RankingPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
+  const [reveal, setReveal] = useState<{ club: string } | null>(null);
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
   const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
@@ -61,6 +65,12 @@ export default function RankingPage(): JSX.Element {
     () => countClubsBelowThreshold(rows, ranking.category, minSwimmers),
     [rows, ranking.category, minSwimmers]
   );
+  const ourClub = useOurClub();
+  // Same categories, top N and threshold as the table, so the card's gaps are the ones the table shows.
+  const clubSummary = useMemo(
+    () => computeClubSummary(rows, ourClub, { categories, topN: ranking.topN, minSwimmers }),
+    [rows, ourClub, categories, ranking.topN, minSwimmers]
+  );
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) {
@@ -77,6 +87,15 @@ export default function RankingPage(): JSX.Element {
   }
 
   const clubCount = ranking.teamResults.length;
+
+  function showOurClub(category: string): void {
+    ranking.setCategory(category);
+    // A search for another club would hide our row; clear it so the row is there to unfold.
+    setSearch('');
+    // Only a ranked club has a row; for the others, opening the tab is the whole answer.
+    const ranked = clubSummary?.categories.find((line) => line.category === category)?.status.kind === 'ranked';
+    setReveal(ranked && clubSummary ? { club: clubSummary.club } : null);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -117,9 +136,17 @@ export default function RankingPage(): JSX.Element {
         <p className="text-sm text-ink-muted">{unrankedClubsLabel(unrankedCount, minSwimmers)}</p>
       )}
       <ComparisonUnavailableNote show={previousRowsFailed} />
+      {clubSummary && <OurClubCard summary={clubSummary} category={ranking.category} onSelect={showOurClub} />}
+      {/* The tie banner stays right above the podium it is about. */}
       <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={ranking.category} />
       <PodiumCards results={ranking.teamResults} />
-      <TeamRankingTable results={ranking.teamResults} category={ranking.category} search={search} movements={movements} />
+      <TeamRankingTable
+        results={ranking.teamResults}
+        category={ranking.category}
+        search={search}
+        movements={movements}
+        reveal={reveal}
+      />
     </div>
   );
 }

@@ -102,9 +102,9 @@ Canaux IPC de `electron/ipc-channels.ts` :
 
 Le club mis en avant (ligne corail, `ClubTag`, exports PDF, cérémonie, barre latérale) n'est plus une constante : c'est un réglage global de l'application, stocké dans la table SQLite `app_setting` (clé `our_club`, migration 9) par `src/lib/app-settings.ts`. Clé absente = `DEFAULT_OUR_CLUB` (« AS CHERBOURG NATATION ») : rien ne change pour une installation existante. SQLite plutôt qu'un fichier JSON dans `userData` comme `backup-config.json`, pour que le réglage voyage dans les sauvegardes.
 
-Canaux IPC : `settings:getOurClub` (valeur configurée ou défaut) et `settings:setOurClub` (enregistre le nom, espaces nettoyés, et renvoie la valeur stockée ; refuse un nom vide).
+Canaux IPC : `settings:getOurClub` (valeur configurée ou défaut) et `settings:setOurClub` (enregistre le nom, espaces nettoyés, et renvoie la valeur stockée ; refuse un nom vide ou une valeur qui n'est pas du texte).
 
-Côté renderer, `src/hooks/use-our-club.ts` garde la valeur dans un store de module lu par `useSyncExternalStore` : chargée une fois, elle est partagée par tous les écrans, et un enregistrement depuis Paramètres (`saveOurClub`) ou une restauration (`reloadOurClub`) la met à jour partout sans passer de prop depuis `AppShell`. Les générateurs PDF la reçoivent dans `ExportMeta.ourClub` (`buildExportMeta(meeting, ourClub)`, appelé par les hooks d'export).
+Côté renderer, `src/hooks/use-our-club.ts` garde la valeur dans un store de module lu par `useSyncExternalStore` : chargée une fois (si cette lecture échoue, l'écran suivant qui s'abonne la retente, et `useOurClubUnread` le signale dans Paramètres), elle est partagée par tous les écrans, et un enregistrement depuis Paramètres (`saveOurClub`) ou une restauration (`reloadOurClub`) la met à jour partout sans passer de prop depuis `AppShell`. Les générateurs PDF la reçoivent dans `ExportMeta.ourClub` (`buildExportMeta(meeting, ourClub)`, appelé par les hooks d'export).
 
 La comparaison passe toujours par `isOurClub` (`src/lib/our-club.ts`) : exacte, insensible seulement à la casse et aux espaces superflus. Aucune correspondance approximative : le fichier réel contient aussi « AC CHERBOURG EN COTENTIN ». Le script `scripts/anonymize-sample.ts` garde « AS CHERBOURG NATATION » en dur : c'est le club par défaut, que le meeting d'entraînement doit montrer surligné.
 
@@ -147,6 +147,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ranking-engine.ts      # Classement par équipes
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
+│   │   ├── club-summary.ts        # Situation de « Notre club » par catégorie (rang, écarts, nageurs, meilleur nageur)
+│   │   ├── club-summary-labels.ts # Textes de la carte « Notre club » (« 7e / 38 », « −154 pts pour la 6e place »…)
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
 │   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre → options du déroulé
@@ -209,7 +211,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice,
 │   │   │                          # DemoImportWarning
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
+│   │   │                          # PodiumCards, OurClubCard, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, OurClubSection, BackupSection, BackupConfigSection, UpdateSection

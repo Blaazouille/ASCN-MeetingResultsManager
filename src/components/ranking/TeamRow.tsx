@@ -27,6 +27,7 @@ function TeamRowComponent({ row, category, isOwnClub, isExpanded, onToggle }: Te
     <Fragment>
       {/* The whole row toggles on click (mouse); the chevron is the keyboard-accessible button. */}
       <tr
+        data-club={team.club}
         onClick={onToggle}
         className={cn(
           'h-14 cursor-pointer border-t transition-colors',

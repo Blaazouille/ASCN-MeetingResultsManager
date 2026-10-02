@@ -46,6 +46,17 @@ Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
 
 Les 38 clubs doivent correspondre exactement à `test/fixtures/expected-ranking.json`.
 
+## Situation de « Notre club » (`club-summary.ts`)
+
+`computeClubSummary(rows, ourClub, { categories, topN, minSwimmers })` réutilise `computeTeamRanking` et `computeCategoryRanking` (aucun calcul de classement propre, la carte ne peut pas contredire le tableau). Pour chaque catégorie active :
+
+- **Classé** : rang (partagé si un autre club a le même total), nombre de clubs classés, total, nageurs retenus. L'écart « au-dessus » se mesure jusqu'au total strictement supérieur le plus proche (le club ex æquo ne compte pas), l'avance jusqu'au total strictement inférieur le plus proche. Pas d'écart au-dessus pour le 1er, pas d'avance pour le dernier.
+- **Non classé** : le club a des nageurs dans la catégorie mais moins que le seuil.
+- **Absent** : aucun nageur du club dans la catégorie.
+- **Meilleur nageur** : le premier nageur du club dans le classement individuel de la catégorie (rang de compétition, ex æquo signalé).
+
+Résultat `null` si le club n'a aucun nageur dans les catégories actives : la carte n'est pas affichée. Le club est reconnu par `isOurClub`.
+
 ## Recherche par club
 
 `filterTeamResultsByClub` filtre les résultats déjà classés par nom de club, insensible à la casse. Une requête vide ou blanche retourne tous les résultats.
