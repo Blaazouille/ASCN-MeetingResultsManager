@@ -1,6 +1,6 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx, update-status.ts.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
@@ -45,7 +45,11 @@ export function formatMeetingImportedAt(meeting: Meeting): string | null {
 
 /** Same format for any SQLite import timestamp (e.g. the previous import's, kept in the snapshot). */
 export function formatImportTimestamp(timestamp: string): string {
-  const at = parseSqliteTimestamp(timestamp);
+  return formatDateTimeFr(parseSqliteTimestamp(timestamp));
+}
+
+/** Any instant as "27 sept. 2026 à 14 h 32" (also used for the last update check in Paramètres). */
+export function formatDateTimeFr(at: Date): string {
   // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
   const parts = IMPORT_TIME_FORMATTER.formatToParts(at);
   const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';

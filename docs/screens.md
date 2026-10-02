@@ -76,4 +76,11 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 - Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5, minimum 3 : une valeur plus basse est relevée à 3) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
 - Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur : l'import continue et un échec de sauvegarde est signalé dans l'encart « À savoir » de l'écran Import.
 
+### Mises à jour
+
+- Version installée, date et heure de la dernière vérification (« Jamais » avant la première), et statut en français simple : « À jour », « Mise à jour prête — redémarrez l'application », « Impossible de vérifier (pas de connexion ?) » quand le poste est hors ligne, ou « La mise à jour a échoué. Réessayez plus tard. » pour un autre échec (release cassée, téléchargement interrompu), suivi d'une ligne « Détail : » avec le message technique court.
+- Bouton « Vérifier maintenant » : affiche « Vérification en cours… » jusqu'à la fin de la vérification et de l'éventuel téléchargement, puis le nouveau statut.
+- Hors ligne au démarrage, rien ne s'affiche ailleurs : pas de toast d'erreur, seulement ce statut. Le toast « Une mise à jour est prête. » reste réservé au téléchargement réussi.
+- Chaque vérification est aussi consignée dans `update-log.txt` (200 dernières lignes) sous le dossier de données de l'application, pour diagnostiquer un échec à distance.
+
 **Note** : l'écran Impression a été retiré (Phase 6) — les exports PDF et Excel depuis l'écran Classement couvrent ce besoin.
