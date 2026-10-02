@@ -1,5 +1,5 @@
 /**
- * Responsabilité : vérifie que tout export (PDF/Excel, équipes/individuel) du meeting d'entraînement porte la mention « EXEMPLE — non officiel », et aucun export d'un vrai meeting.
+ * Responsabilité : vérifie que tout export (PDF/Excel, équipes/individuel, déroulé de cérémonie) du meeting d'entraînement porte la mention « EXEMPLE — non officiel », et aucun export d'un vrai meeting.
  * Appelé par : Vitest.
  * Suppression casserait : le garde-fou qui empêche une feuille d'exemple de passer pour des résultats officiels.
  */
@@ -15,6 +15,8 @@ import { buildRankingPdfBlob } from '../src/lib/pdf-export';
 import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 import { buildIndividualPdfBlob } from '../src/lib/individual-pdf-export';
 import { buildIndividualWorkbookBuffer } from '../src/lib/individual-excel-export';
+import { buildCeremonyPdfBlob } from '../src/lib/ceremony-pdf-export';
+import { buildCeremonyScript } from '../src/lib/ceremony-script';
 
 const BASE_MEETING: Meeting = {
   id: 1,
@@ -93,6 +95,13 @@ describe('PDF exports of the training meeting', () => {
     const text = await pdfText(await buildIndividualPdfBlob(buildExportMeta(DEMO), CATEGORY, results));
 
     expect(text).toContain(DEMO_EXPORT_NOTICE);
+  });
+
+  it('print the notice on the ceremony sheet, and not on a real meeting', async () => {
+    const steps = buildCeremonyScript(DEMO, ROWS, { blocks: ['individual-prizes'], teamPlaces: 3 });
+
+    expect(await pdfText(await buildCeremonyPdfBlob(buildExportMeta(DEMO), steps))).toContain(DEMO_EXPORT_NOTICE);
+    expect(await pdfText(await buildCeremonyPdfBlob(buildExportMeta(REAL), steps))).not.toContain('EXEMPLE');
   });
 });
 

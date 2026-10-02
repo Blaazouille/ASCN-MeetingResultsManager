@@ -3,6 +3,7 @@
  * Appelé par : use-ranking-export.ts, use-individual-export.ts, use-ceremony-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, ceremony-pdf-export.tsx, ceremony-warnings.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
+import type { Worksheet } from 'exceljs';
 import type { Meeting } from './db';
 import { categoryShortLabel } from './ui-labels';
 import { formatDateTimeFr } from './utils';
@@ -16,6 +17,21 @@ export interface ExportMeta {
 }
 
 export const DEMO_EXPORT_NOTICE = 'EXEMPLE — non officiel';
+/** Colour of that warning on paper and in Excel: the app's `warning` token, the same tone as the « Exemple » badge. */
+export const EXPORT_NOTICE_COLOR = '#92400E';
+
+/**
+ * Writes the meeting's notice (if any) as the sheet's first line, above the
+ * header row, so it is the first thing seen when the file opens. Call it once
+ * the table is filled: the rows below simply shift down.
+ */
+export function addExportNotice(sheet: Worksheet, meta: ExportMeta): void {
+  if (!meta.notice) {
+    return;
+  }
+  sheet.spliceRows(1, 0, [meta.notice]);
+  sheet.getRow(1).font = { bold: true, color: { argb: `FF${EXPORT_NOTICE_COLOR.slice(1)}` } };
+}
 
 const CREATED_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });

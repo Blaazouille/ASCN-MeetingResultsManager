@@ -10,11 +10,11 @@ import { categoryShortLabel, rankText } from './ui-labels';
 import type { ExportMeta } from './export-data';
 import { individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
+import { PdfExportNotice } from './pdf-export-notice';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10 },
-  notice: { fontSize: 12, fontWeight: 700, color: '#92400E', marginBottom: 8 },
   title: { fontSize: 20, fontWeight: 700, marginBottom: 4 },
   subtitle: { fontSize: 12, marginBottom: 16, color: '#5B6B7D' },
   headerRow: { flexDirection: 'row', borderBottom: '1px solid #1A2332', paddingBottom: 4, marginBottom: 4 },
@@ -41,7 +41,7 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {meta.notice && <Text style={styles.notice}>{meta.notice}</Text>}
+        <PdfExportNotice meta={meta} />
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Classement individuel — {categoryShortLabel(category)}</Text>
 

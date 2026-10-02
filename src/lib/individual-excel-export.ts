@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
-import { excelSheetName, individualExportFileName } from './export-data';
+import { addExportNotice, excelSheetName, individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 
 /** Builds the workbook without downloading it, so tests can inspect its content. */
@@ -47,11 +47,7 @@ export async function buildIndividualWorkbookBuffer(
     });
   }
 
-  // Inserted last, above the header row, so it is the first line seen when the file opens.
-  if (meta.notice) {
-    sheet.spliceRows(1, 0, [meta.notice]);
-    sheet.getRow(1).font = { bold: true, color: { argb: 'FF92400E' } };
-  }
+  addExportNotice(sheet, meta);
 
   return workbook.xlsx.writeBuffer();
 }

@@ -8,6 +8,7 @@ import type { CeremonyStep } from './ceremony-script';
 import { gapLabel, stepContext, stepCountLabel, stepHeading, winnerLine } from './ceremony-labels';
 import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
+import { PdfExportNotice } from './pdf-export-notice';
 import { ASCN_CLUB_NAME } from './utils';
 
 // Large type on purpose: the sheet is read at arm's length, standing, by the speaker.
@@ -39,6 +40,7 @@ function CeremonyPdfDocument({ meta, steps }: CeremonyPdfDocumentProps): JSX.Ele
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <PdfExportNotice meta={meta} />
         <Text style={styles.title}>{meta.meetingName}</Text>
         <Text style={styles.subtitle}>Déroulé de la remise des prix · {stepCountLabel(steps.length)}</Text>
         {steps.map((step, index) => (
