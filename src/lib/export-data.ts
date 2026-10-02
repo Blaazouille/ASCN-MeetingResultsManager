@@ -4,6 +4,7 @@
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
+import { categoryShortLabel } from './ui-labels';
 
 export interface ExportMeta {
   meetingName: string;
@@ -74,4 +75,29 @@ export function slugifyCategory(category: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Excel sheet name for a category: "Classement Mixte" -> "Mixte". Excel rejects
+ * names containing \ / ? * : [ ] or longer than 31 characters and fails the
+ * whole export, so those characters become spaces and the name is cut.
+ */
+export function excelSheetName(category: string): string {
+  return (
+    categoryShortLabel(category)
+      .replace(/[\\/?*:[\]]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 31) || 'Classement'
+  );
+}
+
+/**
+ * Download filename of an individual ranking export, e.g.
+ * "classement-individuel-dames-2026-11-16.pdf". The "Classement" prefix of the
+ * category is dropped because the file name already starts with it.
+ */
+export function individualExportFileName(category: string, extension: 'pdf' | 'xlsx', date: Date = new Date()): string {
+  const day = date.toISOString().slice(0, 10);
+  return `classement-individuel-${slugifyCategory(categoryShortLabel(category))}-${day}.${extension}`;
 }

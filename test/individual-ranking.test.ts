@@ -35,7 +35,6 @@ describe('computeCategoryRanking', () => {
 
   it('lists every swimmer of the category, not only those whose best score is there', () => {
     expect(mixte).toHaveLength(rows.filter((r) => r.name === 'Classement Mixte').length);
-    expect(mixte.every((r) => r.category === 'Classement Mixte')).toBe(true);
   });
 
   it('keeps a swimmer listed in two categories in both', () => {

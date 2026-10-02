@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
+import { excelSheetName, individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 
 /** Builds the workbook without downloading it, so tests can inspect its content. */
@@ -19,7 +20,7 @@ export async function buildIndividualWorkbookBuffer(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet(category.replace(/^Classement\s+/i, ''));
+  const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
     { header: 'Rang', key: 'rank', width: 8 },
@@ -59,7 +60,5 @@ export async function exportIndividualToExcel(
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
-  const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-');
-  downloadBlob(blob, `classement-individuel-${slug}-${today}.xlsx`);
+  downloadBlob(blob, individualExportFileName(category, 'xlsx'));
 }

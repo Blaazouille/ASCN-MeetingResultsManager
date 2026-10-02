@@ -15,7 +15,6 @@ export interface IndividualResult {
   birthyear: number;
   club: string;
   points: number;
-  category: string;
   gender: Gender;
 }
 
@@ -43,7 +42,6 @@ export function computeCategoryRanking(rows: RawSwimmerRow[], category: string):
     birthyear: row.birthyear,
     club: row.club,
     points: row.points,
-    category,
     gender,
   }));
 }

@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
 import type { ExportMeta } from './export-data';
-import { slugifyCategory } from './export-data';
+import { excelSheetName, slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
 const COLUMN_HEADERS = ['Rang', 'Club', 'Points', 'Nageurs retenus'];
@@ -25,14 +25,7 @@ export async function buildRankingWorkbookBuffer(
   workbook.creator = meta.meetingName;
   workbook.created = new Date();
 
-  const sheetName =
-    category
-      .replace(/^Classement\s+/i, '')
-      .replace(/[\\/?*:[\]]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 31) || 'Classement';
-  const sheet = workbook.addWorksheet(sheetName);
+  const sheet = workbook.addWorksheet(excelSheetName(category));
 
   sheet.columns = [
     { header: COLUMN_HEADERS[0], key: 'rank', width: 8 },

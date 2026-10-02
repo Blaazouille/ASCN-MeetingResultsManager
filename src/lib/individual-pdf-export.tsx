@@ -6,8 +6,9 @@
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
-import { rankText } from './ui-labels';
+import { categoryShortLabel, rankText } from './ui-labels';
 import type { ExportMeta } from './export-data';
+import { individualExportFileName } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
@@ -35,13 +36,12 @@ interface IndividualPdfDocumentProps {
 
 function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumentProps): JSX.Element {
   const tied = tiedRanks(results);
-  const subtitle = category.replace(/^Classement\s+/i, '');
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{meta.meetingName}</Text>
-        <Text style={styles.subtitle}>Classement individuel — {subtitle}</Text>
+        <Text style={styles.subtitle}>Classement individuel — {categoryShortLabel(category)}</Text>
 
         {results.length === 0 ? (
           <Text style={{ fontSize: 11, color: '#5B6B7D', marginTop: 16 }}>Aucun résultat.</Text>
@@ -93,7 +93,5 @@ export async function exportIndividualToPdf(
   results: IndividualResult[]
 ): Promise<void> {
   const blob = await buildIndividualPdfBlob(meta, category, results);
-  const today = new Date().toISOString().slice(0, 10);
-  const slug = category.replace(/^Classement\s+/i, '').toLowerCase().replace(/\s+/g, '-');
-  downloadBlob(blob, `classement-individuel-${slug}-${today}.pdf`);
+  downloadBlob(blob, individualExportFileName(category, 'pdf'));
 }
