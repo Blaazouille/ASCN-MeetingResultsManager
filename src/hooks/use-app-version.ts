@@ -1,6 +1,6 @@
 /**
  * Responsabilité : récupère la version de l'application (package.json, via app.getVersion()).
- * Appelé par : Sidebar.tsx.
+ * Appelé par : Sidebar.tsx, UpdateSection.tsx.
  * Suppression casserait : l'affichage de la version dans le menu latéral.
  */
 import { useEffect, useState } from 'react';

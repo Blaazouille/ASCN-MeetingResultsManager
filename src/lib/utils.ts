@@ -1,7 +1,7 @@
 /**
- * Responsabilité : helpers partagés (cn, formatPoints, formatRetainedSwimmers, ASCN_CLUB_NAME).
+ * Responsabilité : helpers partagés (cn, formatPoints, formatRetainedSwimmers, formatDateTimeFr, ASCN_CLUB_NAME).
  * Appelé par : la plupart des composants et modules.
- * Suppression casserait : le formatage des classes CSS, des points et du nombre de nageurs retenus.
+ * Suppression casserait : le formatage des classes CSS, des points, du nombre de nageurs retenus et des dates « 27 sept. 2026 à 14 h 32 ».
  */
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -30,6 +30,22 @@ export function formatPoints(n: number): string {
  */
 export function formatRetainedSwimmers(retained: number, entered: number): string {
   return `${retained}\u00a0${retained >= 2 ? 'retenus' : 'retenu'} sur\u00a0${entered}`;
+}
+
+// Date and time are formatted apart and joined by hand: a single Intl call with
+// dateStyle + timeStyle yields "14:32" or "à 14:32" depending on the ICU version,
+// while the club reads "14 h 32".
+const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+/** Any instant as "27 sept. 2026 à 14 h 32" — last import (export-data.ts) and last update check (update-status.ts). */
+export function formatDateTimeFr(at: Date): string {
+  // formatToParts rather than splitting "14:32" on ':' — no dependence on the ICU separator.
+  const parts = TIME_FORMATTER.formatToParts(at);
+  const hours = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const minutes = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  // Non-breaking spaces keep "14 h 32" on one line when the card wraps.
+  return `${DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
 
 /** The club name used to highlight ASCN own rows throughout the ranking UI and exports. */
