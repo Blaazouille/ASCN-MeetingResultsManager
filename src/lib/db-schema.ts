@@ -28,22 +28,8 @@ CREATE TABLE IF NOT EXISTS swimmer_result (
   UNIQUE(meeting_id, category, lastname, firstname, birthyear, club)
 );
 
-CREATE TABLE IF NOT EXISTS team_ranking (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  meeting_id  INTEGER NOT NULL REFERENCES meeting(id) ON DELETE CASCADE,
-  category    TEXT NOT NULL,
-  club        TEXT NOT NULL,
-  rank        INTEGER NOT NULL,
-  total_pts   REAL NOT NULL,
-  top_n       INTEGER NOT NULL,
-  swimmers    TEXT NOT NULL,
-  computed_at TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE(meeting_id, category, club)
-);
-
 CREATE INDEX IF NOT EXISTS idx_swimmer_meeting ON swimmer_result(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_swimmer_category ON swimmer_result(meeting_id, category);
-CREATE INDEX IF NOT EXISTS idx_ranking_meeting ON team_ranking(meeting_id);
 `;
 
 /** Initializes the schema on an existing Database instance (used for :memory: test databases). */
@@ -128,5 +114,15 @@ function migrateSchema(db: Database.Database): void {
       )
     `);
     db.pragma('user_version = 6');
+  }
+  if (version < 7) {
+    // team_ranking held rankings persisted by the ranking:compute IPC channel,
+    // which no screen ever called (issue #31): every screen recomputes from
+    // swimmer_result, so the table only ever held stale or no data. Dropped
+    // rather than left empty so the schema stops implying rankings are stored.
+    // IF EXISTS: a fresh database built from SCHEMA_SQL never has it. Its index
+    // (idx_ranking_meeting) goes with it.
+    db.exec('DROP TABLE IF EXISTS team_ranking');
+    db.pragma('user_version = 7');
   }
 }

@@ -21,7 +21,13 @@ export interface MeetingBackup {
   minSwimmers: number;
   activeCategories: string[] | null;
   swimmers: SwimmerBackup[];
-  teamRankings: TeamRankingBackup[];
+  /**
+   * Legacy field: rankings are recomputed from `swimmers`, never stored
+   * (issue #31). Backups made before that carry the old rankings here; they
+   * are ignored on restore. exportDatabase still writes `[]` so an older app
+   * version, whose validation requires an array, can read newer backups.
+   */
+  teamRankings?: unknown[];
 }
 
 export interface SwimmerBackup {
@@ -34,16 +40,6 @@ export interface SwimmerBackup {
   club: string;
   points: number;
   rawLine: string | null;
-}
-
-export interface TeamRankingBackup {
-  category: string;
-  club: string;
-  rank: number;
-  totalPoints: number;
-  topN: number;
-  swimmers: string;
-  computedAt: string;
 }
 
 export interface RestoreResult {
@@ -84,7 +80,8 @@ export function validateBackup(data: unknown): BackupData {
     // These fields are bound directly into SQL by restoreDatabase, so a
     // missing/malformed one would otherwise surface as a raw, untranslated
     // better-sqlite3/SQLite error in the UI instead of this French validation
-    // message. A legacy `status` field in older backups is simply ignored.
+    // message. Legacy fields from older backups (`status`, `teamRankings`) are
+    // simply ignored: nothing reads them on restore.
     if (typeof m.createdAt !== 'string' || typeof m.updatedAt !== 'string') {
       throw new Error('Format de backup invalide : meeting.createdAt et meeting.updatedAt doivent être des strings');
     }
@@ -145,27 +142,6 @@ export function validateBackup(data: unknown): BackupData {
       }
       if (s.rawLine !== null && typeof s.rawLine !== 'string') {
         throw new Error('Format de backup invalide : swimmer.rawLine doit être une string ou null');
-      }
-    }
-
-    // teamRankings is a required field on MeetingBackup (not optional), so a
-    // backup that omits it entirely must be rejected here — otherwise
-    // restoreDatabase's `if (meeting.teamRankings)` guard silently treats the
-    // missing field as "no rankings to restore" and drops them without any
-    // error surfaced to the user.
-    if (!Array.isArray(m.teamRankings)) {
-      throw new Error('Format de backup invalide : meeting.teamRankings doit être un tableau');
-    }
-    for (const ranking of m.teamRankings) {
-      if (typeof ranking !== 'object' || ranking === null) {
-        throw new Error('Format de backup invalide : teamRanking doit être un objet');
-      }
-      const r = ranking as Record<string, unknown>;
-      if (typeof r.category !== 'string' || typeof r.club !== 'string' || typeof r.swimmers !== 'string' || typeof r.computedAt !== 'string') {
-        throw new Error('Format de backup invalide : teamRanking.category, club, swimmers et computedAt doivent être des strings');
-      }
-      if (typeof r.rank !== 'number' || typeof r.totalPoints !== 'number' || typeof r.topN !== 'number') {
-        throw new Error('Format de backup invalide : teamRanking.rank, totalPoints et topN doivent être des nombres');
       }
     }
   }

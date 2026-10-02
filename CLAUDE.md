@@ -125,7 +125,7 @@ Les specs détaillées de chaque écran sont dans `docs/screens.md`.
 
 ## Modèle de données (SQLite)
 
-3 tables : `meeting`, `swimmer_result`, `team_ranking`. Schéma complet dans `docs/data-model.md`.
+3 tables : `meeting`, `swimmer_result`, `import_snapshot` (les classements ne sont pas stockés, ils sont recalculés depuis `swimmer_result`). Schéma complet dans `docs/data-model.md`.
 
 La base SQLite tourne dans le **main process** Electron. Le renderer communique via IPC (`contextBridge`). L'interface IPC est définie dans `docs/architecture.md`.
 

@@ -30,18 +30,14 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 **Mouvements après un réimport** : `insertSwimmerResults` range, dans la même transaction et avant toute écriture, les lignes existantes dans `import_snapshot` (un seul instantané par meeting : celui d'avant le dernier import). Le canal `import:getSnapshot` le renvoie ; le renderer calcule lui-même les flèches (`rankMovements`) en reclassant l'instantané avec la catégorie, le top N et le seuil affichés, et le résumé de l'écran Import (`summarizeImportChanges`). L'instantané n'est pas inclus dans `BackupData` : après une restauration, il n'y a plus d'import précédent à comparer.
 
-Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie.
-
-**Canaux déclarés mais jamais appelés par le renderer** (dette connue, à trancher dans une issue séparée — règle « pas de code mort ») :
-- `ranking:compute` / `ranking:save` : le premier calcule et persiste (`saveTeamRanking`), le second est un no-op. Les handlers existent et `saveTeamRanking` est testé (`test/db.test.ts`), mais aucun écran ne les invoque.
-- `export:pdf` / `export:excel` : handlers qui lèvent « not implemented ». Les exports passent en réalité par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`).
+Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
 ## Sauvegarde et restauration (Phase 9)
 
 ### Flux de sauvegarde et restauration
 
 ```
-SQLite (meeting, swimmer_result, team_ranking)
+SQLite (meeting, swimmer_result)
     ↓
 exportDatabase() [src/lib/backup.ts]
     ↓
@@ -71,6 +67,8 @@ Ces copies ne font **pas** partie de la rotation : `rotateBackups` ne supprime q
 Les sauvegardes automatiques s'exécutent dans `electron/auto-backup.ts` après chaque import CSV réussi (fin de `insertSwimmerResults` dans le handler `import:csv`). `performAutoBackup` ne lève jamais mais renvoie le message d'erreur (ou `null`) : le handler `import:csv` le renvoie au renderer (`{ backupError }`), qui l'affiche dans l'encart « À savoir » ; la sauvegarde est donc attendue, plus différée. Le nombre de sauvegardes conservées est d'au moins 3 (`MIN_BACKUPS`) : un mauvais fichier réimporté plusieurs fois ne doit pas faire tourner toutes les bonnes sauvegardes. Pas de sauvegarde avant import : les résultats ne changent que par import, donc la sauvegarde du dernier import contient déjà l'état qu'un nouvel import va écraser. Elles ne bloquent jamais l'import : un échec est journalisé, renvoyé au renderer et affiché, mais l'import déjà écrit reste valide (`performAutoBackup` enveloppe le code dans un try/catch).
 
 La configuration des sauvegardes (`backupDir` et `maxBackups`) est stockée dans un fichier JSON distinct (`backup-config.json`) sous `app.getPath('userData')`, en dehors de SQLite. Cela garantit que la config survit à une restauration complète de la base (la restauration ne touche que les tables SQLite, pas le système de fichiers Electron).
+
+**Compatibilité des fichiers** : le champ `teamRankings` des sauvegardes n'est plus lu (classements recalculés, voir plus haut). Une ancienne sauvegarde qui en contient se restaure normalement, le champ est ignoré. Les nouvelles sauvegardes l'écrivent toujours, vide (`[]`), parce que les versions précédentes de l'app exigent ce tableau : elles peuvent ainsi relire une sauvegarde faite par cette version.
 
 ### Canaux IPC pour backup/restore
 
