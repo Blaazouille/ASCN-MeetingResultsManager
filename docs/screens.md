@@ -37,9 +37,11 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 ## Classement (`/classement`)
 
 - `PageHeader` avec les exports en actions : bouton Excel (secondaire) et bouton PDF (principal).
+- Retour d'export (`ExportFeedback`) sous les filtres : « Fichier PDF créé. » / « Fichier Excel créé. » en vert (`role="status"`, sans modale), ou l'échec avec sa cause (« Échec de l'export PDF. Vous pouvez réessayer. Détail : … », `role="alert"`). Même comportement sur Individuels.
+- Clubs sous le seuil minimum de nageurs (Paramètres) : ils ne sont pas classés, et une mention discrète l'indique sous les filtres (« 2 clubs non classés : moins de 3 nageurs dans la catégorie », `countClubsBelowThreshold`). Rien sans seuil ou si aucun club n'est concerné.
 - Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`).
 - Podium (`PodiumCards`) : les 3 premiers clubs, ordre gauche-à-droite 1‑2‑3, carte du 1er en `marine` mise en avant, écart par rapport au leader (`formatGap`).
-- Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour AS Cherbourg Natation, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader. Après un réimport, `MovementBadge` à côté du rang : `↑2` (`success`), `↓1` (`corail-strong`), pastille « + » pour une entrée nouvelle (infobulle « Nouveau dans le classement » ; omise quand plus de la moitié des lignes sont nouvelles) ; rien si le rang est stable ou s'il n'y a pas d'import précédent. Calculé pour la catégorie et le top N affichés ; absent des exports PDF/Excel.
+- Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour AS Cherbourg Natation, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader. Après un réimport, `MovementBadge` à côté du rang : `↑2` (`success`), `↓1` (`corail-strong`), pastille « + » pour une entrée nouvelle (infobulle « Nouveau dans le classement » ; omise quand plus de la moitié des lignes sont nouvelles) ; rien si le rang est stable ou s'il n'y a pas d'import précédent. Calculé pour la catégorie et le top N affichés ; absent des exports PDF/Excel. Si l'import précédent ne peut pas être relu, les flèches sont masquées et une mention discrète le dit (`ComparisonUnavailableNote`, aussi sur Individuels), pour que leur absence ne passe pas pour « aucun changement ».
 - Ligne entière cliquable pour déplier/replier le détail des nageurs (`SwimmerDetail`) ; chevron dédié, accessible au clavier (Tab), cible ≥44px.
 
 ## Individuels (`/individuels`)
@@ -73,6 +75,7 @@ Toujours accessible depuis la sidebar, même sans meeting ouvert — c'est le se
 
 ### Sauvegardes automatiques
 
+- Erreurs (lecture de la configuration, ouverture du choix de dossier, enregistrement) affichées en rouge sous la section avec leur cause ; annuler le choix du dossier ne produit aucun message.
 - Dossier de sauvegarde configurable (bouton parcourir), par défaut `Documents/MDLM Ranking/Sauvegardes` — un emplacement que le bénévole sait déjà retrouver, contrairement au dossier de données d'Electron. Ce choix est stocké dans `backup-config.json` sous `app.getPath('userData')`.
 - Nombre maximal de sauvegardes conservées (entrée numérique, par défaut 5, minimum 3 : une valeur plus basse est relevée à 3) : les fichiers les plus anciens sont supprimés lors du dépassement de cette limite.
 - Les sauvegardes automatiques s'exécutent silencieusement après chaque import CSV réussi et ne bloquent jamais l'import en cas d'erreur : l'import continue et un échec de sauvegarde est signalé dans l'encart « À savoir » de l'écran Import.

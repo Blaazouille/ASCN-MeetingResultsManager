@@ -80,7 +80,7 @@ Canaux IPC de `electron/ipc-channels.ts` :
 - `backup:cancel-import` — libère l'import en attente côté main quand l'utilisateur annule l'aperçu
 - `backup:get-config` — charge la config de sauvegarde automatique
 - `backup:set-config` — enregistre la config de sauvegarde automatique
-- `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde
+- `backup:choose-dir` — ouvre un dialogue pour sélectionner le dossier de sauvegarde ; renvoie `{ success: true, path }` (`path` vaut `null` si le bénévole annule) ou `{ success: false, error }` si le dialogue échoue, pour ne pas confondre une erreur avec une annulation
 
 ## Configuration Electron
 
@@ -130,6 +130,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
+│   │   ├── export-feedback.ts     # Messages de succès et d'échec des exports PDF/Excel
+│   │   ├── backup-config-messages.ts # Messages d'erreur de la configuration des sauvegardes automatiques
 │   │   ├── focus-trap.ts          # Focus des modales : Tab suivant, retour au déclencheur
 │   │   ├── ui-labels.ts           # Libellés et valeurs d'affichage dérivés des données
 │   │   └── utils.ts               # Helpers (formatPoints, cn, etc.)
@@ -141,6 +143,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
 │   │   ├── use-ranking-export.ts  # Exports PDF/Excel du classement par équipes
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
+│   │   ├── use-export-status.ts   # État commun des exports (en cours, succès, échec)
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
 │   │   └── use-auto-update.ts     # Notification de mise à jour téléchargée
@@ -149,7 +152,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, ExportActions, IndividualRankingTable, FunAwardsGrid
+│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ComparisonUnavailableNote,
+│   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, SettingsPage

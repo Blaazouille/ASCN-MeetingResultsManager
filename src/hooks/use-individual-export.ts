@@ -1,49 +1,28 @@
 /**
- * Responsabilité : orchestre les exports PDF/Excel du classement individuel.
+ * Responsabilité : orchestre les exports PDF/Excel du classement individuel (état de chargement, succès, erreurs).
  * Appelé par : IndividualPage.tsx (boutons "Export PDF" et "Export Excel").
  * Suppression casserait : les exports du classement individuel.
  */
-import { useState } from 'react';
 import { buildExportMeta } from '@/lib/export-data';
 import { exportIndividualToPdf } from '@/lib/individual-pdf-export';
 import { exportIndividualToExcel } from '@/lib/individual-excel-export';
 import type { Meeting } from '@/lib/db';
 import type { IndividualResult } from '@/lib/individual-ranking';
+import { useExportStatus, type UseExportStatusResult } from './use-export-status';
 
-export interface UseIndividualExportResult {
-  isExporting: boolean;
-  error: string | null;
+export interface UseIndividualExportResult extends Omit<UseExportStatusResult, 'run'> {
   exportPdf: (meeting: Meeting, category: string, results: IndividualResult[]) => Promise<void>;
   exportExcel: (meeting: Meeting, category: string, results: IndividualResult[]) => Promise<void>;
 }
 
 export function useIndividualExport(): UseIndividualExportResult {
-  const [isExporting, setIsExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { run, ...status } = useExportStatus();
 
-  async function exportPdf(meeting: Meeting, category: string, results: IndividualResult[]): Promise<void> {
-    setIsExporting(true);
-    setError(null);
-    try {
-      await exportIndividualToPdf(buildExportMeta(meeting), category, results);
-    } catch {
-      setError("Échec de l'export PDF. Vous pouvez réessayer.");
-    } finally {
-      setIsExporting(false);
-    }
-  }
-
-  async function exportExcel(meeting: Meeting, category: string, results: IndividualResult[]): Promise<void> {
-    setIsExporting(true);
-    setError(null);
-    try {
-      await exportIndividualToExcel(buildExportMeta(meeting), category, results);
-    } catch {
-      setError("Échec de l'export Excel. Vous pouvez réessayer.");
-    } finally {
-      setIsExporting(false);
-    }
-  }
-
-  return { isExporting, error, exportPdf, exportExcel };
+  return {
+    ...status,
+    exportPdf: (meeting, category, results) =>
+      run('pdf', () => exportIndividualToPdf(buildExportMeta(meeting), category, results)),
+    exportExcel: (meeting, category, results) =>
+      run('excel', () => exportIndividualToExcel(buildExportMeta(meeting), category, results)),
+  };
 }

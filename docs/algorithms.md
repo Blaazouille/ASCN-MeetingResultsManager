@@ -7,7 +7,7 @@ Implémenté dans `src/lib/ranking-engine.ts` (`computeTeamRanking`).
 ```
 1. Filtrer les lignes où name === catégorie choisie (ex: "Classement Mixte")
 2. Grouper par club
-3. Exclure les clubs avec moins de nageurs que le seuil minSwimmers configuré (défaut : pas de seuil)
+3. Exclure les clubs avec moins de nageurs que le seuil minSwimmers configuré (défaut : pas de seuil) ; l'écran Classement indique combien de clubs sont ainsi exclus (`countClubsBelowThreshold`)
 4. Pour chaque club restant :
    a. Trier les nageurs par points DESC
    b. Prendre les top min(N, nombre_de_nageurs) — N configurable, défaut 5 (issu du top N par défaut du meeting)

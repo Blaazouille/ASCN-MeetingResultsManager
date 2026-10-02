@@ -1,6 +1,6 @@
 /**
  * Responsabilité : calcule le classement par équipes à partir des lignes nageurs.
- * Appelé par : use-ranking.ts, ipc-handlers.ts, et les tests.
+ * Appelé par : use-ranking.ts, RankingPage.tsx (mouvements, clubs non classés) et les tests.
  * Suppression casserait : tout le calcul de classement.
  */
 import type { RawSwimmerRow } from './csv-parser';
@@ -124,4 +124,19 @@ export function filterTeamResultsByClub(results: TeamResult[], query: string): T
     return results;
   }
   return results.filter((team) => team.club.toLowerCase().includes(normalized));
+}
+
+/**
+ * Number of clubs left out of a category's ranking because they entered fewer
+ * swimmers than `minSwimmers`. computeTeamRanking drops them silently, so the
+ * ranking screen uses this count to say they exist instead of letting a
+ * volunteer wonder where a club went. 0 when there is no threshold.
+ */
+export function countClubsBelowThreshold(rows: RawSwimmerRow[], category: string, minSwimmers = 0): number {
+  const swimmersByClub = new Map<string, number>();
+  for (const row of rows) {
+    if (row.name !== category) continue;
+    swimmersByClub.set(row.club, (swimmersByClub.get(row.club) ?? 0) + 1);
+  }
+  return [...swimmersByClub.values()].filter((count) => count < minSwimmers).length;
 }

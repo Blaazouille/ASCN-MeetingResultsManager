@@ -56,6 +56,12 @@ export function swimmerCountLabel(count: number): string {
   return count < 2 ? `${count} nageur` : `${formatPoints(count)} nageurs`;
 }
 
+/** "2 clubs non classés : moins de 3 nageurs" — explains why clubs are missing from the team ranking. */
+export function unrankedClubsLabel(count: number, minSwimmers: number): string {
+  const clubs = count >= 2 ? `${count} clubs non classés` : `${count} club non classé`;
+  return `${clubs} : moins de ${minSwimmers} nageurs dans la catégorie`;
+}
+
 /** "38 clubs · 412 nageurs": the one-line size of an imported meeting, shared by both Accueil cards. */
 export function meetingStatsLabel(clubCount: number, swimmerCount: number): string {
   return `${clubCountLabel(clubCount)} · ${swimmerCountLabel(swimmerCount)}`;

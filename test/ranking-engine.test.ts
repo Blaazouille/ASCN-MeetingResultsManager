@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { parseCsv } from '../src/lib/csv-parser';
-import { computeTeamRanking, filterTeamResultsByClub, resolveActiveCategories, type TeamResult } from '../src/lib/ranking-engine';
+import { parseCsv, type RawSwimmerRow } from '../src/lib/csv-parser';
+import {
+  computeTeamRanking,
+  countClubsBelowThreshold,
+  filterTeamResultsByClub,
+  resolveActiveCategories,
+  type TeamResult,
+} from '../src/lib/ranking-engine';
 
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
@@ -187,5 +193,37 @@ describe('resolveActiveCategories', () => {
 
   it('returns an empty array when no categories are present', () => {
     expect(resolveActiveCategories([], ['Classement Mixte'])).toEqual([]);
+  });
+});
+
+describe('countClubsBelowThreshold', () => {
+  function row(club: string, name = 'Classement Mixte'): RawSwimmerRow {
+    return { name, place: 1, lastname: 'X', firstname: 'Y', birthyear: 2000, nation: 'FRA', club, points: 100, comment: '' };
+  }
+  // Mixte: A has 3 swimmers, B 2, C 1. C also has 5 Dames rows, which must not count for Mixte.
+  const rows = [
+    ...['A', 'A', 'A', 'B', 'B', 'C'].map((club) => row(club)),
+    ...Array.from({ length: 5 }, () => row('C', 'Classement Dames')),
+  ];
+
+  it('counts the clubs with fewer swimmers than the threshold in the category', () => {
+    expect(countClubsBelowThreshold(rows, 'Classement Mixte', 3)).toBe(2);
+    expect(countClubsBelowThreshold(rows, 'Classement Mixte', 2)).toBe(1);
+  });
+
+  it('counts swimmers of the requested category only', () => {
+    expect(countClubsBelowThreshold(rows, 'Classement Dames', 3)).toBe(0);
+  });
+
+  it('is 0 without a threshold', () => {
+    expect(countClubsBelowThreshold(rows, 'Classement Mixte')).toBe(0);
+    expect(countClubsBelowThreshold(rows, 'Classement Mixte', 0)).toBe(0);
+  });
+
+  it('matches exactly the clubs the ranking leaves out (reference fixture)', () => {
+    const fixtureRows = loadRows();
+    const all = computeTeamRanking(fixtureRows, { category: 'Classement Dames', topN: 5 });
+    const ranked = computeTeamRanking(fixtureRows, { category: 'Classement Dames', topN: 5, minSwimmers: 3 });
+    expect(countClubsBelowThreshold(fixtureRows, 'Classement Dames', 3)).toBe(all.length - ranked.length);
   });
 });
