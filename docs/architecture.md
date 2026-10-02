@@ -121,7 +121,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
 │   │   ├── download.ts            # Déclenchement du téléchargement navigateur
-│   │   ├── focus-trap.ts          # Calcul du focus suivant dans une modale
+│   │   ├── focus-trap.ts          # Focus des modales : Tab suivant, retour au déclencheur
 │   │   ├── ui-labels.ts           # Libellés et valeurs d'affichage dérivés des données
 │   │   └── utils.ts               # Helpers (formatPoints, cn, etc.)
 │   ├── hooks/
