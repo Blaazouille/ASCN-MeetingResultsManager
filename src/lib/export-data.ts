@@ -1,11 +1,11 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-print-export.ts, pdf-export.tsx, excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Meeting } from './db';
 
-export interface PrintMeta {
+export interface ExportMeta {
   meetingName: string;
   /** Timestamp of computation, formatted fr-FR date + time. */
   computedAt: string;
@@ -54,8 +54,8 @@ export function formatImportTimestamp(timestamp: string): string {
   return `${IMPORT_DATE_FORMATTER.format(at)} à ${hours} h ${minutes}`;
 }
 
-/** Builds the print/export metadata from the persisted meeting record. */
-export function buildPrintMeta(meeting: Meeting): PrintMeta {
+/** Builds the export metadata from the persisted meeting record. */
+export function buildExportMeta(meeting: Meeting): ExportMeta {
   return {
     meetingName: meeting.name,
     computedAt: TIMESTAMP_FORMATTER.format(new Date()),

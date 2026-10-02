@@ -6,11 +6,11 @@
 import ExcelJS from 'exceljs';
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
-import type { PrintMeta } from './export-data';
+import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
 
 export async function exportIndividualToExcel(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: IndividualResult[]
 ): Promise<void> {

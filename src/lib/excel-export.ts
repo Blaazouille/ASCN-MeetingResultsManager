@@ -1,12 +1,12 @@
 /**
  * Responsabilité : génère et télécharge le classeur Excel du classement par équipes.
- * Appelé par : use-print-export.ts (bouton "Export Excel" de RankingPage).
+ * Appelé par : use-ranking-export.ts (bouton "Export Excel" de RankingPage).
  * Suppression casserait : l'export Excel du classement.
  */
 import ExcelJS from 'exceljs';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
-import type { PrintMeta } from './export-data';
+import type { ExportMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 
@@ -17,7 +17,7 @@ function formatSwimmerList(team: TeamResult): string {
 }
 
 export async function buildRankingWorkbookBuffer(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<ArrayBuffer> {
@@ -60,7 +60,7 @@ export async function buildRankingWorkbookBuffer(
 
 /** Builds the ranking workbook and triggers a browser download. */
 export async function exportRankingToExcel(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<void> {

@@ -4,7 +4,7 @@
  * Suppression casserait : les exports du classement individuel.
  */
 import { useState } from 'react';
-import { buildPrintMeta } from '@/lib/export-data';
+import { buildExportMeta } from '@/lib/export-data';
 import { exportIndividualToPdf } from '@/lib/individual-pdf-export';
 import { exportIndividualToExcel } from '@/lib/individual-excel-export';
 import type { Meeting } from '@/lib/db';
@@ -25,7 +25,7 @@ export function useIndividualExport(): UseIndividualExportResult {
     setIsExporting(true);
     setError(null);
     try {
-      await exportIndividualToPdf(buildPrintMeta(meeting), category, results);
+      await exportIndividualToPdf(buildExportMeta(meeting), category, results);
     } catch {
       setError("Échec de l'export PDF. Vous pouvez réessayer.");
     } finally {
@@ -37,7 +37,7 @@ export function useIndividualExport(): UseIndividualExportResult {
     setIsExporting(true);
     setError(null);
     try {
-      await exportIndividualToExcel(buildPrintMeta(meeting), category, results);
+      await exportIndividualToExcel(buildExportMeta(meeting), category, results);
     } catch {
       setError("Échec de l'export Excel. Vous pouvez réessayer.");
     } finally {

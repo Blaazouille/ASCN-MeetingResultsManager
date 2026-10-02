@@ -7,7 +7,7 @@ import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer
 import type { IndividualResult } from './individual-ranking';
 import { tiedRanks } from './rank-ties';
 import { rankText } from './ui-labels';
-import type { PrintMeta } from './export-data';
+import type { ExportMeta } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
 
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
 });
 
 interface IndividualPdfDocumentProps {
-  meta: PrintMeta;
+  meta: ExportMeta;
   category: string;
   results: IndividualResult[];
 }
@@ -84,7 +84,7 @@ function IndividualPdfDocument({ meta, category, results }: IndividualPdfDocumen
 }
 
 export async function exportIndividualToPdf(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: IndividualResult[]
 ): Promise<void> {

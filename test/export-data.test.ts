@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPrintMeta, formatMeetingCreatedAt, formatMeetingImportedAt, slugifyCategory } from '../src/lib/export-data';
+import { buildExportMeta, formatMeetingCreatedAt, formatMeetingImportedAt, slugifyCategory } from '../src/lib/export-data';
 
 describe('slugifyCategory', () => {
   it('slugifies "Classement Mixte" to "classement-mixte"', () => {
@@ -19,9 +19,9 @@ describe('slugifyCategory', () => {
   });
 });
 
-describe('buildPrintMeta', () => {
+describe('buildExportMeta', () => {
   it('maps the meeting name and a computation timestamp', () => {
-    const meta = buildPrintMeta({
+    const meta = buildExportMeta({
       id: 1,
       name: 'Meeting de la Mer 2026',
       createdAt: '2026-01-01 00:00:00',

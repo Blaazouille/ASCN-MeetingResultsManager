@@ -1,13 +1,13 @@
 /**
  * Responsabilité : génère et télécharge le PDF du classement par équipes.
- * Appelé par : use-print-export.ts (bouton "Export PDF" de RankingPage).
+ * Appelé par : use-ranking-export.ts (bouton "Export PDF" de RankingPage).
  * Suppression casserait : l'export PDF du classement.
  */
 import { Document, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import type { TeamResult } from './ranking-engine';
 import { tiedRanks } from './rank-ties';
 import { rankText } from './ui-labels';
-import type { PrintMeta } from './export-data';
+import type { ExportMeta } from './export-data';
 import { slugifyCategory } from './export-data';
 import { downloadBlob } from './download';
 import { ASCN_CLUB_NAME, formatPoints } from './utils';
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
 });
 
 interface RankingPdfDocumentProps {
-  meta: PrintMeta;
+  meta: ExportMeta;
   category: string;
   results: TeamResult[];
 }
@@ -78,7 +78,7 @@ function RankingPdfDocument({ meta, category, results }: RankingPdfDocumentProps
 }
 
 export async function buildRankingPdfBlob(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<Blob> {
@@ -87,7 +87,7 @@ export async function buildRankingPdfBlob(
 
 /** Builds the ranking PDF and triggers a browser download. */
 export async function exportRankingToPdf(
-  meta: PrintMeta,
+  meta: ExportMeta,
   category: string,
   results: TeamResult[]
 ): Promise<void> {

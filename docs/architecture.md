@@ -130,7 +130,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── use-previous-rows.ts   # Résultats d'avant le dernier import (instantané), pour les flèches de mouvement
 │   │   ├── use-import.ts          # Import CSV (parse, aperçu, persistance)
 │   │   ├── use-ranking.ts         # Classement par équipes (catégorie, top N, recherche)
-│   │   ├── use-print-export.ts    # Exports PDF/Excel du classement par équipes (nom hérité, voir note)
+│   │   ├── use-ranking-export.ts  # Exports PDF/Excel du classement par équipes
 │   │   ├── use-individual-export.ts # Exports PDF/Excel du classement individuel
 │   │   ├── use-modal-keyboard.ts  # Échap, piège à focus et restitution du focus des modales
 │   │   ├── use-app-version.ts     # Version de l'app
@@ -160,5 +160,3 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
     ├── algorithms.md
     └── archive/                   # Specs et plans des phases terminées (historique figé, ne pas mettre à jour)
 ```
-
-**Nommage hérité** : `use-print-export.ts` (`usePrintExport`, `buildPrintMeta` dans `export-data.ts`) garde le mot « print » bien que l'impression ait été retirée en Phase 6. Il pilote en réalité les exports PDF/Excel ; le renommage est volontairement laissé hors de la remise à plat de la documentation.
