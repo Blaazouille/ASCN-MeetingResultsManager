@@ -1,6 +1,6 @@
 /**
  * Responsabilité : ligne de retour sous les filtres après un export (erreur ou confirmation discrète).
- * Appelé par : RankingPage.tsx, IndividualPage.tsx.
+ * Appelé par : RankingPage.tsx, IndividualPage.tsx, CeremonyPage.tsx.
  * Suppression casserait : le bénévole ne saurait plus si son export a réussi ou pourquoi il a échoué.
  */
 

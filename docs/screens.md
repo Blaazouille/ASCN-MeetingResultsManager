@@ -8,7 +8,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 - Logo/nom de l'app en haut.
 - Carte du meeting courant (`SidebarMeetingCard`) : nom + `ImportPendingBadge` (si rien n'est importé) sur fond `marine-raised` ; état vide en pointillés quand aucun meeting n'est ouvert.
-- Sections de navigation à plat : Meetings, Données (Import), Résultats (Classement, Individuels, Palmarès), Paramètres.
+- Sections de navigation à plat : Meetings, Données (Import), Résultats (Classement, Individuels, Palmarès, Cérémonie), Paramètres.
 - Les entrées Données/Résultats restent visibles mais grisées/désactivées tant qu'aucun meeting n'est ouvert (plutôt que masquées, pour que le bénévole sache qu'elles existent).
 - L'entrée « Import CSV » affiche une coche verte (`bg-success-bright`) dès que des résultats ont été importés (`resultCount > 0`).
 - Numéro de version de l'app en pied de sidebar (`useAppVersion`).
@@ -58,6 +58,23 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - `PageHeader` avec `CategoryTabs` en action (filtrage par catégorie).
 - Grille de 6 cartes (`FunAwardsGrid`), une par récompense humoristique (Le Doyen, La Relève, Duo Mixte, Photo-Finish, Le Club des Sages / Le Club des Grandes Dames selon la catégorie, La Jeune Garde) : icône Lucide colorée dans un badge rond (pas d'emoji), nom du gagnant, description.
 - Calcul entièrement automatique à partir des résultats de la catégorie active (`computeFunAwards`).
+
+## Cérémonie (`/ceremonie`)
+
+Antisèche du gérant pour la remise des prix, sur son poste uniquement : pas de plein écran, de second écran ni d'affichage public (hors périmètre).
+
+- `PageHeader` avec « Imprimer le déroulé » (secondaire) et « Lancer le déroulé » (principal) ; pendant le déroulé, « Revenir à la préparation » remplace le bouton principal et ouvre une confirmation (`LeaveCeremonyDialog`) : « Abandonner le déroulé en cours ? La progression sera perdue… », focus par défaut sur « Continuer le déroulé », Échap pour fermer.
+- **Préparation** (`CeremonyPreparation`) :
+  - « Ordre des annonces » (`CeremonyBlockList`) : trois blocs à cocher et à réordonner avec des boutons Monter / Descendre (≥44px) — par défaut Palmarès des rigolos, Prix individuels (1er et 2e Prix), Classement par équipes. Chaque bloc couvre les catégories actives l'une après l'autre.
+  - « Places annoncées par équipes » (`Segmented`) : 3 (défaut), 5 ou 10.
+  - « À vérifier avant de commencer » : ex æquo sur une place annoncée, dernier import de plus de 30 minutes, catégorie active sans rien à annoncer. Sinon « Rien à signaler. »
+  - « Aperçu » : la liste numérotée des annonces telles qu'elles seront lancées.
+- **Déroulé** (`CeremonyRun`) : figé au lancement (un réimport ne change pas l'ordre en cours) et conservé dans `sessionStorage` pour survivre à un passage par un autre écran. Bandeau corail si des résultats plus récents ont été importés depuis.
+  - « Annonce 7 / 18 » et barre de progression.
+  - Carte de l'annonce (`CeremonyStepCard`, `font-display` en grand) : contexte (« Classement par équipes · Mixte »), intitulé (« 3e place », « 1er Prix », « La Doyenne », avec `RankChip`), nom à lire (+ `ClubTag` pour notre club), club et points, nageurs à appeler pour une équipe, écart avec la place suivante. Les ex æquo sont sur la même carte, annoncés ensemble.
+  - Précédent / Suivant (`h-12`) ; « Terminer » sur la dernière annonce (message de fin, qui compte les annonces sautées s'il y en a). Clavier : → ou espace pour la suivante, ← pour la précédente, interceptés partout sauf dans un champ de saisie ou quand la confirmation est ouverte : l'espace n'active jamais le bouton qui a le focus. Touche maintenue ignorée.
+  - Liste latérale (`CeremonyStepList`) : une annonce n'est cochée qu'après avoir été affichée puis quittée ; un saut en avant par la liste ne coche pas les annonces sautées, marquées « Non annoncée » en corail. Annonce courante en `marine`, clic pour y aller. La barre de progression compte les annonces cochées.
+- Fiche PDF (`ceremony-pdf-export.tsx`) : les mêmes étapes, dans le même ordre (l'aperçu avant le lancement, le déroulé figé ensuite), en gros caractères avec une case à cocher par annonce. Retour d'export identique au Classement et aux Individuels (`ExportFeedback`) : erreur avec sa cause (`role="alert"`) ou « Fichier PDF créé. ».
 
 ## Paramètres (`/parametres`)
 

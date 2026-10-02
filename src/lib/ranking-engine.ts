@@ -1,7 +1,7 @@
 /**
  * Responsabilité : calcule le classement par équipes à partir des lignes nageurs.
  * Appelé par : use-ranking.ts, use-ranking-export.ts, RankingPage.tsx (mouvements, clubs non classés),
- * import-diff.ts, pdf-export.tsx, excel-export.ts, SettingsForm.tsx, les composants ranking/ et les tests.
+ * import-diff.ts, pdf-export.tsx, excel-export.ts, ceremony-script.ts, SettingsForm.tsx, les composants ranking/ et les tests.
  * Suppression casserait : tout le calcul de classement.
  */
 import type { RawSwimmerRow } from './csv-parser';

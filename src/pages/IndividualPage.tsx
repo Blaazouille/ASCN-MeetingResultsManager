@@ -11,7 +11,7 @@ import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useIndividualExport } from '@/hooks/use-individual-export';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
-import { computeCategoryRanking } from '@/lib/individual-ranking';
+import { computeCategoryRanking, INDIVIDUAL_PRIZE_COUNT } from '@/lib/individual-ranking';
 import { rankMovements, swimmerIdentity } from '@/lib/import-diff';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { categoryShortLabel } from '@/lib/ui-labels';
@@ -22,9 +22,6 @@ import { IndividualRankingTable } from '@/components/ranking/IndividualRankingTa
 import { ExportActions } from '@/components/ranking/ExportActions';
 import { ExportFeedback } from '@/components/ranking/ExportFeedback';
 import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
-
-/** Number of top swimmers highlighted with a prize badge (1er Prix, 2e Prix…). */
-const PRIZE_COUNT = 2;
 
 export default function IndividualPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -80,8 +77,8 @@ export default function IndividualPage(): JSX.Element {
       </FilterBar>
       <ExportFeedback error={exportError} notice={exportNotice} />
       <ComparisonUnavailableNote show={previousRowsFailed} />
-      <TieBanner ranks={findPodiumTies(displayedResults, PRIZE_COUNT)} category={currentCategory} />
-      <IndividualRankingTable results={displayedResults} prizeCount={PRIZE_COUNT} search={search} movements={movements} />
+      <TieBanner ranks={findPodiumTies(displayedResults, INDIVIDUAL_PRIZE_COUNT)} category={currentCategory} />
+      <IndividualRankingTable results={displayedResults} prizeCount={INDIVIDUAL_PRIZE_COUNT} search={search} movements={movements} />
     </div>
   );
 }

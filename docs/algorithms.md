@@ -92,3 +92,20 @@ Un nageur n'est compté qu'une fois (identité : nom, prénom, année de naissan
 | **La Jeune Garde** | Club à la moyenne d'âge la plus basse |
 
 Les deux prix par club (Sages / Jeune Garde) ne considèrent que les clubs d'au moins 3 nageurs (`MIN_CLUB_SIZE`) ayant une année de naissance valide. L'âge est calculé avec l'année civile en cours (`new Date().getFullYear()`).
+
+## Déroulé de cérémonie
+
+Implémenté dans `src/lib/ceremony-script.ts` (`buildCeremonyScript(meeting, rows, options)`), affiché par `CeremonyPage` (`/ceremonie`). Aucune logique de classement propre : chaque annonce vient des mêmes fonctions que les autres écrans, pour que la cérémonie ne puisse jamais contredire le Classement, les Individuels ou le Palmarès.
+
+```
+Pour chaque bloc coché, dans l'ordre choisi (défaut : Palmarès des rigolos, Prix individuels, Classement par équipes) :
+  Pour chaque catégorie active présente dans les données (resolveActiveCategories) :
+    - Palmarès des rigolos : computeFunAwards sur les lignes de la catégorie, une annonce par prix
+    - Prix individuels : computeCategoryRanking, rangs 1 à INDIVIDUAL_PRIZE_COUNT (2)
+    - Classement par équipes : computeTeamRanking (top N et seuil du meeting), rangs 1 à N (défaut 3)
+Les annonces classées sont à rebours (3e, 2e, puis 1re) ; les résultats d'un même rang forment une seule annonce (ex æquo annoncés ensemble).
+```
+
+- Filtre sur le rang, pas sur la position : des ex æquo à la dernière place annoncée sont tous gardés.
+- Écart avec le suivant : points de l'annonce moins ceux du premier résultat classé en dessous ; absent s'il n'y a personne en dessous et pour les prix rigolos.
+- Points à vérifier (`ceremony-warnings.ts`) : chaque ex æquo d'une annonce classée, un dernier import de plus de 30 minutes (`STALE_IMPORT_MINUTES`), une catégorie active absente des données ou sans aucune annonce.

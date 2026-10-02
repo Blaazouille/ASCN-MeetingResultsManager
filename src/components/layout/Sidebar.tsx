@@ -4,7 +4,7 @@
  * Suppression casserait : la navigation entre écrans.
  */
 import { NavLink } from 'react-router-dom';
-import { Award, Check, Home, Settings, Upload, User, Users, type LucideIcon } from 'lucide-react';
+import { Award, Check, Home, Settings, Trophy, Upload, User, Users, type LucideIcon } from 'lucide-react';
 import logoUrl from '../../../resources/icon.png';
 import type { Meeting } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,7 @@ const RESULT_ENTRIES: readonly NavEntry[] = [
   { to: '/classement', label: 'Par équipes', icon: Users },
   { to: '/individuels', label: 'Individuels', icon: User },
   { to: '/palmares', label: 'Palmarès des rigolos', icon: Award },
+  { to: '/ceremonie', label: 'Cérémonie', icon: Trophy },
 ];
 const SETTINGS_ENTRY: NavEntry = { to: '/parametres', label: 'Paramètres', icon: Settings };
 
