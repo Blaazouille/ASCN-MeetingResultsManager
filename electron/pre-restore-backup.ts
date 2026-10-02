@@ -23,7 +23,7 @@ export interface SafeRestoreResult {
 /**
  * Writes the current database to `<backupDir>/mdlm-pre-restore-<timestamp>.json`,
  * then restores `data`. The copy is skipped when the database holds no
- * meeting. If the copy cannot be written (folder missing or
+ * real meeting. If the copy cannot be written (folder missing or
  * read-only, corrupted backup-config.json, disk full…) it throws a French
  * message for the volunteer and the database is left untouched.
  *
@@ -39,7 +39,8 @@ export function restoreWithSafetyCopy(
   // An empty database (fresh install, recovery after a crash) has nothing to
   // lose, and it is exactly when restoring matters most: requiring the copy
   // there would let a missing or corrupted backup folder block the recovery.
-  const meetingCount = (db.prepare('SELECT COUNT(*) as count FROM meeting').get() as { count: number }).count;
+  // The training meeting doesn't count: it is never backed up (exportDatabase).
+  const meetingCount = (db.prepare('SELECT COUNT(*) as count FROM meeting WHERE is_demo = 0').get() as { count: number }).count;
   if (meetingCount === 0) {
     return { result: restoreDatabase(db, data), safetyCopyPath: null };
   }

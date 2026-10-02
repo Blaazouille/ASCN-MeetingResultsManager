@@ -60,7 +60,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(7);
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
       const meetings = getAllMeetings(db);
       expect(meetings.map((m) => m.name)).toEqual(['Meeting 2025']);
       expect(meetings[0]?.lastImportedAt).toBeNull();
@@ -93,7 +93,7 @@ describe('schema migrations', () => {
     let db: ReturnType<typeof createDatabase> | undefined;
     try {
       db = createDatabase(file);
-      expect(db.pragma('user_version', { simple: true })).toBe(7);
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
       expect(getAllMeetings(db)[0]?.lastImportedAt).toBe('2026-09-27 12:30:00');
     } finally {
       db?.close();
@@ -101,9 +101,9 @@ describe('schema migrations', () => {
     }
   });
 
-  it('gives a fresh database the last_imported_at column at version 7', () => {
+  it('gives a fresh database the last_imported_at column at version 8', () => {
     const db = createDatabase(':memory:');
-    expect(db.pragma('user_version', { simple: true })).toBe(7);
+    expect(db.pragma('user_version', { simple: true })).toBe(8);
     expect(createMeeting(db, { name: 'Neuf' }).lastImportedAt).toBeNull();
   });
 
@@ -129,7 +129,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(7);
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
       expect(db.prepare('SELECT COUNT(*) AS n FROM import_snapshot').get()).toEqual({ n: 0 });
       expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting 2025']);
     } finally {
@@ -170,7 +170,7 @@ describe('schema migrations', () => {
 
     const db = createDatabase(file);
     try {
-      expect(db.pragma('user_version', { simple: true })).toBe(7);
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
       expect(tableNames(db)).not.toContain('team_ranking');
       expect(getAllMeetings(db).map((m) => m.name)).toEqual(['Meeting 2025']);
       expect(getSwimmerResults(db, meeting.id)).toHaveLength(1);
@@ -183,6 +183,62 @@ describe('schema migrations', () => {
   it('creates no team_ranking table in a fresh database', () => {
     const db = createDatabase(':memory:');
     expect(tableNames(db)).not.toContain('team_ranking');
+  });
+
+  it('adds is_demo to a v7 database, every existing meeting staying a real one', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'mrm-migration-'));
+    const file = path.join(dir, 'v7.db');
+    const legacy = new Database(file);
+    legacy.exec(`
+      CREATE TABLE meeting (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT NOT NULL,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        default_top_n INTEGER NOT NULL DEFAULT 5,
+        min_swimmers INTEGER NOT NULL DEFAULT 0,
+        active_categories TEXT,
+        last_imported_at TEXT
+      );
+      INSERT INTO meeting (name) VALUES ('Entraînement');
+    `);
+    legacy.pragma('user_version = 7');
+    legacy.close();
+
+    const db = createDatabase(file);
+    try {
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      // Even a real meeting named "Entraînement" is not mistaken for the training one.
+      expect(getAllMeetings(db).map((m) => [m.name, m.isDemo])).toEqual([['Entraînement', false]]);
+    } finally {
+      db.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('is a no-op when a v7 database already has is_demo', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'mrm-migration-'));
+    const file = path.join(dir, 'v7-with-column.db');
+    const seeded = createDatabase(file);
+    createMeeting(seeded, { name: 'Meeting 2025' });
+    seeded.exec("UPDATE meeting SET is_demo = 1");
+    seeded.pragma('user_version = 7');
+    seeded.close();
+
+    let db: ReturnType<typeof createDatabase> | undefined;
+    try {
+      db = createDatabase(file);
+      expect(db.pragma('user_version', { simple: true })).toBe(8);
+      expect(getAllMeetings(db)[0]?.isDemo).toBe(true);
+    } finally {
+      db?.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates new meetings as real (not training) meetings', () => {
+    const db = createDatabase(':memory:');
+    expect(createMeeting(db, { name: 'Meeting 2026' }).isDemo).toBe(false);
   });
 });
 

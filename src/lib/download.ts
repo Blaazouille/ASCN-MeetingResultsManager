@@ -1,6 +1,6 @@
 /**
  * Responsabilité : déclenche le téléchargement navigateur d'un blob (URL objet transitoire).
- * Appelé par : pdf-export.tsx, excel-export.ts, ceremony-pdf-export.tsx.
+ * Appelé par : pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, ceremony-pdf-export.tsx, TrainingSection.tsx (CSV d'exemple).
  * Suppression casserait : les exports PDF/Excel (rien ne déclencherait le téléchargement).
  * Note : dépend de `document`/`URL.createObjectURL`, non exercé par la suite de tests Node.
  */

@@ -32,6 +32,17 @@ Le process **main** Electron (`electron/main.ts`) possède la base SQLite (`src/
 
 Le classement par équipes est calculé côté renderer (`useRanking` → `computeTeamRanking`) plutôt que via IPC : cela évite un aller-retour à chaque changement de top N ou de catégorie. Il n'est jamais stocké : la seule source est `swimmer_result`, et tout écran (y compris un futur historique) le recalcule à partir des résultats. Les exports PDF et Excel passent eux aussi par le renderer (`pdf-export.tsx`, `excel-export.ts`, `download.ts`), sans canal IPC.
 
+## Meeting d'entraînement (issue #28)
+
+Un meeting « Entraînement » (`meeting.is_demo = 1`) permet de répéter tout le parcours avant le jour J sans toucher aux vrais meetings.
+
+- **Données** : `resources/meeting-exemple.csv`, version anonymisée de `test/fixtures/sample.csv`, produite par `scripts/anonymize-sample.ts` (`npm run anonymize-sample`, exécuté avec `node --experimental-strip-types`, sans dépendance). Noms et prénoms remplacés par des noms courants fictifs, de façon déterministe (même nageur → même identité fictive dans Dames/Messieurs et Mixte), avec le genre conservé ; clubs remplacés par des clubs fictifs sauf AS Cherbourg Natation ; années de naissance, places et points conservés (ex-aequo compris) ; format extraNat intact (Latin-1, `;`, `"1274 Pts"`). Toute valeur fictive présente dans le vrai fichier est écartée. Le fichier est versionné et embarqué dans le paquet (`build.files` de `package.json`) : aucun accès réseau. `test/demo-sample.test.ts` vérifie qu'aucun nom ou prénom réel n'y figure et que le fichier versionné correspond à la sortie du script.
+- **Création** : canal `meeting:createDemo` → le main lit le fichier, le parse avec `parseCsv` (le vrai parseur) et appelle `resetDemoMeeting` (`src/lib/demo-meeting.ts`), qui supprime l'ancien meeting d'entraînement et en crée un nouveau dans une seule transaction : il n'y en a jamais qu'un.
+- **Téléchargement** : canal `meeting:getDemoCsv` → octets bruts du fichier, téléchargés par le renderer (`downloadBlob`) pour s'exercer au glisser-déposer.
+- **Sauvegardes** : exclu de `exportDatabase` (donc des sauvegardes automatiques, de l'export manuel et de la copie avant restauration). Un import dans ce meeting n'écrit pas de sauvegarde automatique (`isDemoMeeting` dans le handler `import:csv`) : chaque répétition ferait sinon sortir une vraie sauvegarde de la rotation.
+- **Exports** : `buildExportMeta` renseigne `notice` (« EXEMPLE — non officiel ») pour ce meeting. Les trois PDF (équipes, individuel, déroulé de cérémonie) l'impriment au-dessus du titre via `PdfExportNotice` (`pdf-export-notice.tsx`), les deux Excel en première ligne via `addExportNotice` (`export-data.ts`). Couleur unique : `EXPORT_NOTICE_COLOR`.
+- **Écran Import** : sur ce meeting, un avertissement rappelle que les résultats ne sont ni officiels ni sauvegardés.
+
 ## Sauvegarde et restauration (Phase 9)
 
 ### Flux de sauvegarde et restauration
@@ -48,7 +59,7 @@ Fichier .json sur disque
 validateBackup() [src/lib/backup-validation.ts]
     ↓  (confirmation)
 restoreWithSafetyCopy() [electron/pre-restore-backup.ts]
-    ├─ si la base contient des meetings : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
+    ├─ si la base contient des meetings réels : exportDatabase() → mdlm-pre-restore-<horodatage>.json dans le dossier de sauvegarde
     │   (échec → restauration annulée, message en français, base intacte)
     ↓
 restoreDatabase() [src/lib/backup.ts]
@@ -106,7 +117,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   ├── preload.ts                 # Context bridge IPC
 │   ├── ipc-handlers.ts            # Handlers filesystem + SQLite
 │   ├── ipc-channels.ts            # Noms de canaux IPC partagés
-│   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation
+│   ├── auto-backup.ts             # Sauvegarde automatique après import CSV, avec rotation (sauf meeting d'entraînement)
 │   ├── pre-restore-backup.ts      # Copie de sécurité de la base avant une restauration
 │   ├── auto-updater.ts            # Vérification et téléchargement des mises à jour
 │   └── update-state.ts            # Statut de la dernière vérification et journal borné (userData)
@@ -130,6 +141,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ceremony-pdf-export.tsx # Fiche de proclamation PDF (même déroulé que l'écran)
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
+│   │   ├── demo-meeting.ts        # Meeting d'entraînement : création/réinitialisation, détection
 │   │   ├── import-snapshot.ts     # Instantané des résultats d'avant le dernier import (table import_snapshot)
 │   │   ├── import-check.ts        # Alertes avant import : fichier identique, export incomplet, autre meeting
 │   │   ├── import-card-state.ts   # Carte de l'écran Import : masquée, en cours ou importé (jamais de coche sans enregistrement)
@@ -138,6 +150,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── backup-validation.ts   # Types de sauvegarde et validation d'un fichier externe
 │   │   ├── export-data.ts         # Métadonnées et helpers pour les exports
 │   │   ├── pdf-export.tsx         # PDF du classement par équipes
+│   │   ├── pdf-export-notice.tsx  # Mention « EXEMPLE — non officiel » en tête des PDF (meeting d'entraînement)
 │   │   ├── excel-export.ts        # Excel du classement par équipes
 │   │   ├── individual-pdf-export.tsx   # PDF du classement individuel
 │   │   ├── individual-excel-export.ts  # Excel du classement individuel
@@ -167,14 +180,17 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   └── use-update-status.ts   # Section « Mises à jour » de Paramètres (statut, vérification à la demande)
 │   ├── components/
 │   │   ├── layout/                # AppShell, Sidebar, SidebarMeetingCard, PageHeader, FilterBar, UpdateToast
-│   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog
-│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice
+│   │   ├── meeting/               # MeetingCard, MeetingList, MeetingForm, ResumeMeetingCard, DeleteMeetingDialog,
+│   │   │                          # TrainingSection
+│   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice,
+│   │   │                          # DemoImportWarning
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, ExportActions, ExportFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, BackupSection, BackupConfigSection, UpdateSection
-│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, RankChip, ClubTag, MovementBadge
+│   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, DemoBadge, RankChip, ClubTag,
+│   │                              # MovementBadge
 │   ├── pages/                     # HomePage, ImportPage, RankingPage, IndividualPage, PalmaresPage, CeremonyPage, SettingsPage
 │   ├── styles/
 │   │   ├── globals.css            # Tailwind base + custom properties (tokens)
@@ -183,7 +199,11 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 ├── test/                          # Tests Vitest : un fichier par module de src/lib et electron, plus les
 │   │                              # garde-fous design-tokens, no-legacy-tokens et docs-architecture
 │   └── fixtures/                  # sample.csv (vrai CSV Latin-1), expected-ranking.json, CSV d'essais manuels
-├── resources/icon.png
+├── scripts/
+│   └── anonymize-sample.ts        # Génère resources/meeting-exemple.csv à partir de sample.csv
+├── resources/
+│   ├── icon.png
+│   └── meeting-exemple.csv        # CSV d'exemple anonymisé (meeting d'entraînement), embarqué
 └── docs/
     ├── architecture.md            # Ce fichier
     ├── screens.md

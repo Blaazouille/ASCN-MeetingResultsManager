@@ -47,6 +47,7 @@ describe('buildExportMeta', () => {
       lastImportedAt: null,
       clubCount: 0,
       swimmerCount: 0,
+      isDemo: false,
     });
 
     expect(meta.meetingName).toBe('Meeting de la Mer 2026');
@@ -68,6 +69,7 @@ describe('formatMeetingCreatedAt', () => {
       lastImportedAt: null,
       clubCount: 0,
       swimmerCount: 0,
+      isDemo: false,
     });
 
     expect(formatted).toMatch(/16 novembre 2026/);
@@ -86,6 +88,7 @@ describe('formatMeetingImportedAt', () => {
     resultCount: 0,
     clubCount: 0,
     swimmerCount: 0,
+    isDemo: false,
   };
 
   it('is null when the meeting was never imported', () => {

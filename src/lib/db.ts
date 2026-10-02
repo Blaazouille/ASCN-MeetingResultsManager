@@ -23,6 +23,8 @@ export interface Meeting {
   clubCount: number;
   /** Distinct swimmers (a swimmer listed in several categories counts once). */
   swimmerCount: number;
+  /** Training meeting built from the anonymized sample (see demo-meeting.ts): never backed up, deleted without confirmation. */
+  isDemo: boolean;
 }
 
 export interface MeetingInput {
@@ -44,6 +46,7 @@ interface MeetingRow {
   last_imported_at: string | null;
   club_count: number;
   swimmer_count: number;
+  is_demo: number;
 }
 
 function rowToMeeting(row: MeetingRow): Meeting {
@@ -59,6 +62,7 @@ function rowToMeeting(row: MeetingRow): Meeting {
     lastImportedAt: row.last_imported_at,
     clubCount: row.club_count,
     swimmerCount: row.swimmer_count,
+    isDemo: row.is_demo === 1,
   };
 }
 

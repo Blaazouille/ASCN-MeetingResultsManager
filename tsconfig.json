@@ -26,5 +26,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "test", "electron", "vite.config.ts", "tailwind.config.ts"]
+  "include": ["src", "test", "electron", "scripts", "vite.config.ts", "tailwind.config.ts"]
 }

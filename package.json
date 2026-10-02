@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc -b --noEmit",
+    "anonymize-sample": "node --experimental-strip-types scripts/anonymize-sample.ts",
     "postinstall": "electron-builder install-app-deps",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
@@ -27,7 +28,8 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "resources/icon.png"
+      "resources/icon.png",
+      "resources/meeting-exemple.csv"
     ],
     "publish": {
       "provider": "github",

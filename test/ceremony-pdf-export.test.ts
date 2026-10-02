@@ -10,7 +10,7 @@ import { parseCsv } from '../src/lib/csv-parser';
 import { buildCeremonyScript } from '../src/lib/ceremony-script';
 import { buildCeremonyPdfBlob } from '../src/lib/ceremony-pdf-export';
 
-const META = { meetingName: 'Meeting de la Mer 2026', computedAt: '16/11/2026 14:32' };
+const META = { meetingName: 'Meeting de la Mer 2026', computedAt: '16/11/2026 14:32', notice: null };
 
 describe('buildCeremonyPdfBlob', () => {
   it('produces a PDF for the full default script of the reference meeting', async () => {
