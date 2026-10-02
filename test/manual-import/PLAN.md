@@ -23,9 +23,9 @@ Les fichiers de ce dossier sont tous dérivés de `test/fixtures/sample.csv` (La
 | E | `05-incomplete-export.csv` (Mixte réduit à 52) | Modale : « Ce fichier contient 52 nageurs en Mixte, contre 211 actuellement. Il pourrait s'agir d'un export incomplet. » | Non tant que rien n'est confirmé |
 | F | `06-other-meeting.csv` (tous les noms changés) | Modale : « La plupart des nageurs de ce fichier sont différents de ceux déjà importés. S'agit-il bien du même meeting ? » | Non tant que rien n'est confirmé |
 | G | `07-wrong-file-small.csv` (5 nageurs Mixte inconnus) | Modale avec 4 lignes : Dames absent, Messieurs absent (info), 5 nageurs en Mixte contre 211, nageurs différents. | Non tant que rien n'est confirmé |
-| H | `08-header-only.csv`, puis `09-no-points-column.csv` | Message rouge « Aucune ligne exploitable dans ce fichier… ». Pas de carte de succès, pas de modale. | Non, aucune sauvegarde créée |
+| H | `08-header-only.csv`, puis `09-no-points-column.csv` | Message rouge **dans la zone de dépôt** (bordure et fond rouges, icône) « Aucune ligne exploitable dans ce fichier… », la zone tremble. Pas de carte de succès, pas de modale. | Non, aucune sauvegarde créée |
 | I | `10-ignored-and-duplicates.csv` | **Pas de modale.** Carte de succès + « À savoir » : « Lignes sans points, non importées : 3. » et « Nageurs en double dans une catégorie (seul le dernier est gardé) : 2. » Les 3 nageurs sans points disparaissent de la base (absents du fichier), c'est normal. | Oui |
-| J | `11-not-a-csv.txt` | Message rouge « Fichier non supporté (.csv attendu) ». | Non |
+| J | `11-not-a-csv.txt` | Même rendu rouge dans la zone : « Fichier non supporté (.csv attendu) ». Redéposer le même fichier fait trembler la zone à nouveau. | Non |
 
 ### Comportement de la modale (scénarios B, E, F, G)
 

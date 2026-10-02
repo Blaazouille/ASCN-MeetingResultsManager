@@ -10,6 +10,8 @@ export interface UseImportResult {
   result: CsvParseResult | null;
   fileName: string | null;
   error: string | null;
+  /** Bumped on every error, even a repeated message, so the drop zone shakes again on each failed drop. */
+  errorId: number;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
   reset: () => void;
@@ -19,7 +21,12 @@ export interface UseImportResult {
 export function useImport(): UseImportResult {
   const [result, setResult] = useState<CsvParseResult | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorMessage] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState(0);
+  const setError = useCallback((message: string | null): void => {
+    setErrorMessage(message);
+    if (message !== null) setErrorId((id) => id + 1);
+  }, []);
 
   const handleFileAccepted = useCallback(async (file: File): Promise<CsvParseResult | null> => {
     setError(null);
@@ -34,11 +41,11 @@ export function useImport(): UseImportResult {
       setError(err instanceof Error ? err.message : String(err));
       return null;
     }
-  }, []);
+  }, [setError]);
 
   const handleFileRejected = useCallback((): void => {
     setError('Fichier non supporté (.csv attendu)');
-  }, []);
+  }, [setError]);
 
   /** Clears the import state. Called when the selected meeting changes, so one meeting's imported data never leaks into another's screens. */
   const reset = useCallback((): void => {
@@ -47,5 +54,5 @@ export function useImport(): UseImportResult {
     setError(null);
   }, []);
 
-  return { result, fileName, error, handleFileAccepted, handleFileRejected, reset };
+  return { result, fileName, error, errorId, handleFileAccepted, handleFileRejected, reset };
 }

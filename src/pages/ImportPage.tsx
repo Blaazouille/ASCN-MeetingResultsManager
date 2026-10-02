@@ -24,7 +24,7 @@ const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
   const { importState, meetingState } = useOutletContext<AppOutletContext>();
-  const { result, fileName, error, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
+  const { result, fileName, error, errorId, handleFileAccepted, handleFileRejected, reset: resetImport } = importState;
   const { refresh } = meetingState;
   const [persistError, setPersistError] = useState<string | null>(null);
   const [isPersisting, setIsPersisting] = useState(false);
@@ -141,7 +141,6 @@ export default function ImportPage(): JSX.Element {
         subtitle="Fichier CSV de cotations exporté depuis extraNat (FFN)."
       />
 
-      {error && <p className="text-sm text-error">{error}</p>}
       {persistError && <p className="text-sm text-error">Échec de l'enregistrement : {persistError}</p>}
 
       {hasResult && (
@@ -228,7 +227,7 @@ export default function ImportPage(): JSX.Element {
 
       {pending && <ImportGuardDialog warnings={pending.warnings} onConfirm={confirmPending} onCancel={cancelPending} />}
 
-      <DropZone compact={hasResult} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
+      <DropZone compact={hasResult} error={error} errorId={errorId} onFileAccepted={handleAccepted} onFileRejected={handleFileRejected} />
     </div>
   );
 }
