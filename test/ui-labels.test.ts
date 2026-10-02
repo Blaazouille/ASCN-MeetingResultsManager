@@ -21,6 +21,7 @@ import {
   resultCountLabel,
   sinceImportLabel,
   swimmerCountLabel,
+  unrankedClubsLabel,
 } from '../src/lib/ui-labels';
 
 const NBSP = ' ';
@@ -128,6 +129,16 @@ describe('clubCountLabel', () => {
     expect(clubCountLabel(0)).toBe('0 club');
     expect(clubCountLabel(1)).toBe('1 club');
     expect(clubCountLabel(38)).toBe('38 clubs');
+  });
+});
+
+describe('unrankedClubsLabel', () => {
+  it('says how many clubs are left out and why, with a non-breaking space before the colon', () => {
+    expect(unrankedClubsLabel(2, 3)).toBe(`2 clubs non classés${NBSP}: moins de 3 nageurs dans la catégorie`);
+  });
+
+  it('uses the singular for a single club', () => {
+    expect(unrankedClubsLabel(1, 4)).toBe(`1 club non classé${NBSP}: moins de 4 nageurs dans la catégorie`);
   });
 });
 
