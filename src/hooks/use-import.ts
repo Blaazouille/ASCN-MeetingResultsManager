@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react';
 import { parseCsv, type CsvParseResult } from '@/lib/csv-parser';
 import type { ImportChanges } from '@/lib/import-diff';
+import type { ImportWarning } from '@/lib/import-check';
 
 /** What the volunteer is told after a save, kept here (not in the page) so it survives leaving and returning to the Import screen. */
 export interface ImportOutcome {
@@ -13,6 +14,15 @@ export interface ImportOutcome {
   changes: { since: string | null; summary: ImportChanges } | null;
   /** Non-blocking warnings, a failed backup, a recap that could not be computed. */
   notices: string[];
+}
+
+/**
+ * A parsed file waiting for the volunteer's answer (guard modal or « Avant d'importer »), nothing written yet.
+ * Kept here for the same reason as ImportOutcome: leaving the Import screen must not turn it into « importé ».
+ */
+export interface PendingImport {
+  parsed: CsvParseResult;
+  warnings: ImportWarning[];
 }
 
 export interface UseImportResult {
@@ -23,6 +33,8 @@ export interface UseImportResult {
   errorId: number;
   outcome: ImportOutcome | null;
   setOutcome: (outcome: ImportOutcome | null) => void;
+  pending: PendingImport | null;
+  setPending: (pending: PendingImport | null) => void;
   handleFileAccepted: (file: File) => Promise<CsvParseResult | null>;
   handleFileRejected: () => void;
   reset: () => void;
@@ -35,6 +47,7 @@ export function useImport(): UseImportResult {
   const [error, setErrorMessage] = useState<string | null>(null);
   const [errorId, setErrorId] = useState(0);
   const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
+  const [pending, setPending] = useState<PendingImport | null>(null);
   const setError = useCallback((message: string | null): void => {
     setErrorMessage(message);
     if (message !== null) setErrorId((id) => id + 1);
@@ -64,8 +77,21 @@ export function useImport(): UseImportResult {
     setResult(null);
     setFileName(null);
     setOutcome(null);
+    setPending(null);
     setError(null);
   }, [setError]);
 
-  return { result, fileName, error, errorId, outcome, setOutcome, handleFileAccepted, handleFileRejected, reset };
+  return {
+    result,
+    fileName,
+    error,
+    errorId,
+    outcome,
+    setOutcome,
+    pending,
+    setPending,
+    handleFileAccepted,
+    handleFileRejected,
+    reset,
+  };
 }

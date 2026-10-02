@@ -41,6 +41,7 @@ Pour chacun, vérifier :
 
 - **Après un échec** : déposer `08-header-only.csv`, puis `01-baseline.csv` : l'erreur disparaît et la suite fonctionne.
 - **Après une annulation** : annuler `05`, puis déposer `03-corrected.csv` : import normal, pas de reste de l'ancienne modale.
+- **Quitter l'écran pendant l'encart** : déposer `03-corrected.csv` sur la base de départ, laisser l'encart « Avant d'importer » affiché, cliquer « Par équipes » dans la barre latérale puis revenir sur Import : l'encart est toujours là (pas de coche verte « Fichier importé et enregistré »), le Classement n'a pas changé. « Importer » met le focus sur la carte de résultat ; « Annuler » (ou Échap) le met sur « Parcourir… ».
 - **Même fichier redéposé** : après C, déposer à nouveau `03-corrected.csv`, confirmer « Importer quand même » : l'encart « Depuis l'import du … » affiche toujours les 2 nageurs en moins (et non « Aucun changement »), et les flèches du Classement sont toujours là.
 - **Autre meeting** : créer un 2ᵉ meeting vide, importer `06-other-meeting.csv` : **pas de modale** (premier import). Le meeting « Test garde-fous » n'est pas modifié.
 

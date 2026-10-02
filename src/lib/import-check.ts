@@ -103,3 +103,19 @@ export function checkImportAgainstExisting(
 
   return warnings;
 }
+
+/** What must be answered before the write: the guard modal for a suspicious file, the inline notice for swimmers about to be removed, or nothing. */
+export type ImportConfirmation = 'guard' | 'removals' | null;
+
+export function importConfirmation(warnings: ImportWarning[]): ImportConfirmation {
+  if (warnings.some((warning) => warning.blocking)) return 'guard';
+  return warnings.some((warning) => warning.kind === 'removed') ? 'removals' : null;
+}
+
+/**
+ * Warnings still worth showing in « À savoir » once the import is written. Blocking ones were answered,
+ * and removals were read before the write: repeated afterwards they would say « seront retirés » after the fact.
+ */
+export function noticesAfterWrite(warnings: ImportWarning[]): ImportWarning[] {
+  return warnings.filter((warning) => !warning.blocking && warning.kind !== 'removed');
+}

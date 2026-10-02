@@ -70,8 +70,9 @@ describe('import snapshot', () => {
     const fileA = [row('Un', 100)];
     insertSwimmerResults(db, id, fileA);
     insertSwimmerResults(db, id, [row('Un', 120)]);
+    db.prepare("UPDATE meeting SET last_imported_at = '2026-10-02 11:00:00' WHERE id = ?").run(id);
     insertSwimmerResults(db, id, fileA);
-    expect(getImportSnapshot(db, id)?.rows.map((r) => r.points)).toEqual([120]);
+    expect(getImportSnapshot(db, id)).toEqual({ importedAt: '2026-10-02 11:00:00', rows: [row('Un', 120)] });
   });
 
   it('is not replaced by an empty import', () => {

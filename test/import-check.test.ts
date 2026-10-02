@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
-import { checkImportAgainstExisting } from '../src/lib/import-check';
+import { checkImportAgainstExisting, importConfirmation, noticesAfterWrite, type ImportWarning } from '../src/lib/import-check';
 
 function rows(category: string, count: number, offset = 0): RawSwimmerRow[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -123,5 +123,27 @@ describe('checkImportAgainstExisting — duplicate lines in a file', () => {
   it('does not call a file identical when a swimmer is missing, even if another line is repeated', () => {
     const existing = rows('Classement Mixte', 5);
     expect(kinds(existing, [...existing.slice(0, 4), existing[0]!])).not.toContain('identical');
+  });
+});
+
+describe('importConfirmation and noticesAfterWrite', () => {
+  const warning = (kind: ImportWarning['kind'], blocking: boolean): ImportWarning => ({ kind, blocking, message: kind });
+
+  it('asks nothing when no warning needs an answer', () => {
+    expect(importConfirmation([])).toBeNull();
+    expect(importConfirmation([warning('missing-category', false)])).toBeNull();
+  });
+
+  it('opens the inline notice when swimmers will be removed and nothing looks suspicious', () => {
+    expect(importConfirmation([warning('removed', false), warning('missing-category', false)])).toBe('removals');
+  });
+
+  it('opens the guard modal as soon as one warning is blocking, even with removals', () => {
+    expect(importConfirmation([warning('removed', false), warning('shrunk', true)])).toBe('guard');
+  });
+
+  it('keeps only the info still true after the write for « À savoir »', () => {
+    const all = [warning('shrunk', true), warning('removed', false), warning('missing-category', false)];
+    expect(noticesAfterWrite(all).map((w) => w.kind)).toEqual(['missing-category']);
   });
 });
