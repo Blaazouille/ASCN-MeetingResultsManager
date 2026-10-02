@@ -81,10 +81,13 @@ export default function ImportPage(): JSX.Element {
         found.push("Les résultats sont enregistrés, mais le résumé des changements n'a pas pu être calculé.");
       }
       if (!isCurrent()) return;
+      // A file refused during the question or the save is answered for once this one is saved:
+      // its message next to the green check would read as this import's error.
+      clearError();
       setOutcome({ changes, notices: found });
       setIsPersisting(false);
     },
-    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError, beginRun]
+    [meetingId, meeting, refresh, setOutcome, setIsPersisting, setPersistError, beginRun, clearError]
   );
 
   const handleAccepted = useCallback(
@@ -127,8 +130,6 @@ export default function ImportPage(): JSX.Element {
     const { parsed, warnings } = pending;
     if (importConfirmation(warnings) === 'removals') focusAfterNotice.current = 'result';
     setPending(null);
-    // A file refused while the question was shown is answered for: its message next to the result would read as this import's error.
-    clearError();
     void persist(parsed, noticesAfterWrite(warnings));
   };
 
