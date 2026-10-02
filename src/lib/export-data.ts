@@ -1,6 +1,6 @@
 /**
  * Responsabilité : métadonnées et helpers pour les exports PDF/Excel.
- * Appelé par : use-ranking-export.ts, use-individual-export.ts, use-ceremony-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, ceremony-pdf-export.tsx, ceremony-warnings.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
+ * Appelé par : use-ranking-export.ts, use-individual-export.ts, use-ceremony-export.ts, pdf-export.tsx, excel-export.ts, individual-pdf-export.tsx, individual-excel-export.ts, ceremony-pdf-export.tsx, ceremony-warnings.ts, palmares-pdf-export.tsx, export-pack-files.ts, MeetingCard.tsx, ResumeMeetingCard.tsx.
  * Suppression casserait : les exports PDF/Excel et l'affichage des cartes meeting.
  */
 import type { Worksheet } from 'exceljs';
@@ -31,6 +31,16 @@ export function addExportNotice(sheet: Worksheet, meta: ExportMeta): void {
   }
   sheet.spliceRows(1, 0, [meta.notice]);
   sheet.getRow(1).font = { bold: true, color: { argb: `FF${EXPORT_NOTICE_COLOR.slice(1)}` } };
+}
+
+/**
+ * One category's results inside an export. Exports take a list of sections so
+ * the single-category buttons and the full-meeting pack share one generator
+ * (and therefore one layout) — the unit export is just a one-section list.
+ */
+export interface ExportSection<T> {
+  category: string;
+  results: T[];
 }
 
 const CREATED_FORMATTER = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });

@@ -36,6 +36,11 @@ export const IpcChannels = {
   backupGetConfig: 'backup:get-config',
   backupSetConfig: 'backup:set-config',
   backupChooseDir: 'backup:choose-dir',
+  // Pack de fin de meeting (« Tout exporter ») : choix du dossier, écriture des fichiers
+  // générés par le renderer, ouverture du dossier créé. Voir electron/export-pack-writer.ts.
+  exportChoosePackDir: 'export:choosePackDir',
+  exportWritePack: 'export:writePack',
+  exportOpenPackFolder: 'export:openPackFolder',
   updateDownloaded: 'update:downloaded',
   quitAndInstallUpdate: 'update:quitAndInstall',
   // Last check result shown in Paramètres (waits for a check in progress), and the

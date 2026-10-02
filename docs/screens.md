@@ -38,7 +38,8 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 ## Classement (`/classement`)
 
-- `PageHeader` avec les exports en actions : bouton Excel (secondaire) et bouton PDF (principal).
+- `PageHeader` avec les exports en actions : bouton « Tout exporter » (secondaire), bouton Excel (secondaire) et bouton PDF (principal).
+- « Tout exporter » (pack de fin de meeting) : une boîte de dialogue propose `Documents/MDLM Ranking/Exports` (le bénévole peut choisir un autre dossier), puis l'app crée `<nom du meeting> – <AAAA-MM-JJ>` (ou « (2) » s'il existe déjà) avec `Classement équipes – Complet.pdf`, `Classement équipes.xlsx` (une feuille par catégorie), `Classement individuel – Complet.pdf`, `Classement individuel.xlsx` et `Palmarès.pdf`, pour toutes les catégories actives et le top N affiché. Le compte rendu (`ExportPackFeedback`) dit si tout est enregistré (fond vert) ou liste les fichiers non créés avec leur cause (fond orangé), affiche le chemin du dossier et propose « Ouvrir le dossier ». Annuler la boîte de dialogue n'affiche rien.
 - Retour d'export (`ExportFeedback`) sous les filtres : « Fichier PDF créé. » / « Fichier Excel créé. » en vert (`role="status"`, sans modale), ou l'échec avec sa cause (« Échec de l'export PDF. Vous pouvez réessayer. Détail : … », `role="alert"`). Même comportement sur Individuels.
 - Clubs sous le seuil minimum de nageurs (Paramètres) : ils ne sont pas classés, et une mention discrète l'indique sous les filtres (« 2 clubs non classés : moins de 3 nageurs dans la catégorie », `countClubsBelowThreshold`). Rien sans seuil ou si aucun club n'est concerné.
 - Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`).
