@@ -8,7 +8,7 @@ import { clubRankLabel, clubStandingParts } from '../src/lib/club-summary-labels
 import type { ClubCategoryStatus } from '../src/lib/club-summary';
 
 // `_` marks a non-breaking space: numbers stay with their units, « : » with the word before it.
-const nb = (text: string): string => text.replace(/_/g, ' ');
+const nb = (text: string): string => text.replace(/_/g, '\u00a0');
 
 function ranked(over: Partial<Extract<ClubCategoryStatus, { kind: 'ranked' }>>): ClubCategoryStatus {
   return { kind: 'ranked', rank: 7, tied: false, clubCount: 38, totalPoints: 4735, behind: null, ahead: null, ...over };
