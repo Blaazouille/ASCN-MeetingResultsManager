@@ -123,7 +123,7 @@ export function sinceImportLabel(formattedDate: string | null): string {
   return formattedDate === null ? "Depuis l'import précédent" : `Depuis l'import du ${formattedDate}`;
 }
 
-/** Non-zero parts of the import summary ("+12 nageurs", "−1 nageur", "38 résultats modifiés", "3 clubs ont changé de rang"). */
+/** Non-zero parts of the import summary ("+12 nageurs", "−1 nageur", "38 résultats modifiés", "3 clubs ont changé de rang en Mixte"). */
 export function importChangeParts(changes: ImportChanges): string[] {
   const parts: string[] = [];
   if (changes.addedSwimmers > 0) parts.push(`+${swimmerCountLabel(changes.addedSwimmers)}`);
@@ -132,7 +132,9 @@ export function importChangeParts(changes: ImportChanges): string[] {
     parts.push(`${formatPoints(changes.changedResults)} ${changes.changedResults >= 2 ? 'résultats modifiés' : 'résultat modifié'}`);
   }
   if (changes.clubsMoved > 0) {
-    parts.push(changes.clubsMoved >= 2 ? `${changes.clubsMoved} clubs ont changé de rang` : '1 club a changé de rang');
+    // The category is named: the moves are counted in one category only, and the link opens that one.
+    const where = `en ${categoryShortLabel(changes.clubsMovedCategory)}`;
+    parts.push(changes.clubsMoved >= 2 ? `${changes.clubsMoved} clubs ont changé de rang ${where}` : `1 club a changé de rang ${where}`);
   }
   return parts;
 }

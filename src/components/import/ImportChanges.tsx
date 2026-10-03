@@ -12,9 +12,11 @@ export interface ImportChangesProps {
   changes: ImportChangesData;
   /** SQLite timestamp of the previous import, null when unknown. */
   since: string | null;
+  /** Selects a category on the result screens (shared selection) before « Voir le classement » navigates. */
+  onShowRanking: (category: string) => void;
 }
 
-export function ImportChanges({ changes, since }: ImportChangesProps): JSX.Element {
+export function ImportChanges({ changes, since, onShowRanking }: ImportChangesProps): JSX.Element {
   return (
     <div className="flex flex-col gap-1 rounded-lg bg-bassin-soft px-5 py-4">
       <p className="text-sm font-bold uppercase tracking-[0.06em] text-ink-muted">
@@ -26,7 +28,12 @@ export function ImportChanges({ changes, since }: ImportChangesProps): JSX.Eleme
           {changes.clubsMoved > 0 && (
             <>
               {' · '}
-              <Link to="/classement" className="font-semibold text-bassin-strong underline">
+              {/* Opens the category the moves were counted in, whatever was selected before. */}
+              <Link
+                to="/classement"
+                onClick={() => onShowRanking(changes.clubsMovedCategory)}
+                className="font-semibold text-bassin-strong underline"
+              >
                 Voir le classement
               </Link>
             </>

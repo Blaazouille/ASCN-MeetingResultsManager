@@ -201,17 +201,17 @@ describe('import summary labels', () => {
   });
 
   it('lists only what changed, with French plurals', () => {
-    expect(importChangeParts({ addedSwimmers: 12, removedSwimmers: 1, changedResults: 38, clubsMoved: 3 })).toEqual([
+    expect(importChangeParts({ addedSwimmers: 12, removedSwimmers: 1, changedResults: 38, clubsMoved: 3, clubsMovedCategory: 'Classement Mixte' })).toEqual([
       '+12 nageurs',
       `${MINUS}1 nageur`,
       '38 résultats modifiés',
-      '3 clubs ont changé de rang',
+      '3 clubs ont changé de rang en Mixte',
     ]);
-    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 1, clubsMoved: 1 })).toEqual([
+    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 1, clubsMoved: 1, clubsMovedCategory: 'Classement Dames' })).toEqual([
       '1 résultat modifié',
-      '1 club a changé de rang',
+      '1 club a changé de rang en Dames',
     ]);
-    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 0, clubsMoved: 0 })).toEqual([]);
+    expect(importChangeParts({ addedSwimmers: 0, removedSwimmers: 0, changedResults: 0, clubsMoved: 0, clubsMovedCategory: 'Classement Mixte' })).toEqual([]);
   });
 });
 

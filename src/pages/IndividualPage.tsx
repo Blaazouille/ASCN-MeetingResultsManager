@@ -9,6 +9,8 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FilterBar } from '@/components/layout/FilterBar';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
+import { useCategoryChoice } from '@/hooks/use-selected-category';
+import { resolveActiveCategories } from '@/lib/ranking-engine';
 import { useIndividualExport } from '@/hooks/use-individual-export';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
 import { computeCategoryRanking, INDIVIDUAL_PRIZE_COUNT } from '@/lib/individual-ranking';
@@ -24,29 +26,32 @@ import { ExportFeedback } from '@/components/ranking/ExportFeedback';
 import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
 
 export default function IndividualPage(): JSX.Element {
-  const { meetingState } = useOutletContext<AppOutletContext>();
-  const [activeCategory, setActiveCategory] = useState('');
+  const { meetingState, categorySelection } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
   const { isExporting, error: exportError, notice: exportNotice, exportPdf, exportExcel } = useIndividualExport();
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
-  const { rows, categories, isLoading, error } = useMeetingRows(meetingId);
+  const { rows, categories: presentCategories, isLoading, error } = useMeetingRows(meetingId);
+  // Same offered categories as Classement: the selection is shared, so a category offered on one
+  // screen and not on another would be reset to the default every time the volunteer switches screens.
+  const categories = useMemo(
+    () => resolveActiveCategories(presentCategories, meetingState.currentMeeting?.activeCategories ?? null),
+    [presentCategories, meetingState.currentMeeting]
+  );
+  const { category, setCategory } = useCategoryChoice(categorySelection, categories);
 
-  // Default to first available category; keep selection if still valid.
-  const currentCategory = categories.includes(activeCategory) ? activeCategory : (categories[0] ?? '');
-
-  const displayedResults = useMemo(() => computeCategoryRanking(rows, currentCategory), [rows, currentCategory]);
+  const displayedResults = useMemo(() => computeCategoryRanking(rows, category), [rows, category]);
 
   const { rows: previousRows, failed: previousRowsFailed } = usePreviousRows(meetingId, meetingState.currentMeeting?.lastImportedAt ?? null);
   const movements = useMemo(
     () =>
       previousRows &&
       rankMovements(
-        computeCategoryRanking(previousRows, currentCategory),
+        computeCategoryRanking(previousRows, category),
         displayedResults,
         swimmerIdentity
       ),
-    [previousRows, currentCategory, displayedResults]
+    [previousRows, category, displayedResults]
   );
 
   const meeting = meetingState.currentMeeting;
@@ -60,24 +65,24 @@ export default function IndividualPage(): JSX.Element {
       <PageHeader
         overline={meeting.name}
         title="Classement individuel"
-        subtitle={`${categoryShortLabel(currentCategory)} · ${displayedResults.length} nageurs`}
+        subtitle={`${categoryShortLabel(category)} · ${displayedResults.length} nageurs`}
         actions={
           <ExportActions
             disabled={isExporting || displayedResults.length === 0}
-            onExcel={() => void exportExcel(meeting, currentCategory, displayedResults)}
-            onPdf={() => void exportPdf(meeting, currentCategory, displayedResults)}
+            onExcel={() => void exportExcel(meeting, category, displayedResults)}
+            onPdf={() => void exportPdf(meeting, category, displayedResults)}
           />
         }
       />
       <FilterBar>
-        <CategoryTabs categories={categories} active={currentCategory} onChange={setActiveCategory} />
+        <CategoryTabs categories={categories} active={category} onChange={setCategory} />
         <div className="ml-auto">
           <SearchField value={search} onChange={setSearch} placeholder="Rechercher un nageur ou un club" />
         </div>
       </FilterBar>
       <ExportFeedback error={exportError} notice={exportNotice} />
       <ComparisonUnavailableNote show={previousRowsFailed} />
-      <TieBanner ranks={findPodiumTies(displayedResults, INDIVIDUAL_PRIZE_COUNT)} category={currentCategory} />
+      <TieBanner ranks={findPodiumTies(displayedResults, INDIVIDUAL_PRIZE_COUNT)} category={category} />
       <IndividualRankingTable results={displayedResults} prizeCount={INDIVIDUAL_PRIZE_COUNT} search={search} movements={movements} />
     </div>
   );

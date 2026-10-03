@@ -1,6 +1,7 @@
 /**
  * Responsabilité : calcule le classement par équipes à partir des lignes nageurs.
- * Appelé par : use-ranking.ts, use-ranking-export.ts, RankingPage.tsx (mouvements, clubs non classés),
+ * Appelé par : use-ranking.ts, use-ranking-export.ts, RankingPage.tsx (mouvements, clubs non classés, catégories proposées),
+ * IndividualPage.tsx et PalmaresPage.tsx (catégories proposées),
  * import-diff.ts, pdf-export.tsx, excel-export.ts, ceremony-script.ts, SettingsForm.tsx, les composants ranking/ et les tests.
  * Suppression casserait : tout le calcul de classement.
  */
@@ -9,14 +10,6 @@ import { assignCompetitionRanks } from './rank-ties';
 
 /** The three FFN result categories this app supports, in the order they should be offered as UI options. */
 export const ALL_CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'] as const;
-
-/** Category shown first when present in the imported data. */
-export const DEFAULT_CATEGORY = 'Classement Mixte';
-
-/** The default category when imported, otherwise the first one ('' when there is none). */
-export function pickDefaultCategory(categories: string[]): string {
-  return categories.includes(DEFAULT_CATEGORY) ? DEFAULT_CATEGORY : (categories[0] ?? '');
-}
 
 /**
  * Resolves which categories the ranking UI should offer: the intersection
