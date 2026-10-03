@@ -150,8 +150,6 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── category-selection.ts  # Catégorie affichée : Mixte par défaut, choix encore proposé ou non
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
-│   │   ├── club-summary.ts        # Situation de « Notre club » dans la catégorie affichée (rang, points, écarts)
-│   │   ├── club-summary-labels.ts # Textes de la ligne « Notre club » (« 7e / 38 », « −23 pour la 6e »…)
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
 │   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre, catégories annoncées (Mixte seul par défaut) → options du déroulé
@@ -216,7 +214,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice,
 │   │   │                          # DemoImportWarning
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, OurClubLine, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
+│   │   │                          # PodiumCards, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyCategoryPicker, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, OurClubSection, BackupSection, BackupConfigSection, UpdateSection
