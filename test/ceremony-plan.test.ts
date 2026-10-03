@@ -6,13 +6,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PLAN,
-  defaultCeremonyCategories,
-  isMissingCeremonyCategory,
   moveBlock,
   planToOptions,
   resolveCeremonyCategories,
   toggleBlock,
-  toggleCeremonyCategory,
 } from '../src/lib/ceremony-plan';
 
 const MIXTE = 'Classement Mixte';
@@ -50,24 +47,6 @@ describe('moveBlock', () => {
   });
 });
 
-describe('defaultCeremonyCategories', () => {
-  it('ticks Mixte only, the one category the meeting rewards', () => {
-    expect(defaultCeremonyCategories(ALL)).toEqual([MIXTE]);
-  });
-
-  it('recognises Mixte whatever its case', () => {
-    expect(defaultCeremonyCategories([DAMES, 'CLASSEMENT MIXTE'])).toEqual(['CLASSEMENT MIXTE']);
-  });
-
-  it('ticks every category when the meeting has no Mixte', () => {
-    expect(defaultCeremonyCategories([DAMES, MESSIEURS])).toEqual([DAMES, MESSIEURS]);
-  });
-
-  it('ticks nothing when there is nothing to choose from', () => {
-    expect(defaultCeremonyCategories([])).toEqual([]);
-  });
-});
-
 describe('resolveCeremonyCategories', () => {
   it('uses the default until the manager makes a choice', () => {
     expect(resolveCeremonyCategories(ALL, null)).toEqual([MIXTE]);
@@ -87,34 +66,5 @@ describe('resolveCeremonyCategories', () => {
 
   it('keeps an empty choice empty instead of silently ticking the default back', () => {
     expect(resolveCeremonyCategories(ALL, [])).toEqual([]);
-  });
-});
-
-describe('toggleCeremonyCategory', () => {
-  it('ticks and unticks a category', () => {
-    expect(toggleCeremonyCategory([MIXTE], DAMES)).toEqual([MIXTE, DAMES]);
-    expect(toggleCeremonyCategory([MIXTE, DAMES], MIXTE)).toEqual([DAMES]);
-  });
-
-  it('lets the manager untick the last ticked category', () => {
-    expect(toggleCeremonyCategory([MIXTE], MIXTE)).toEqual([]);
-  });
-
-  it('ticks a category again from an empty choice', () => {
-    expect(toggleCeremonyCategory([], DAMES)).toEqual([DAMES]);
-  });
-});
-
-describe('isMissingCeremonyCategory', () => {
-  it('asks for a category when none is ticked', () => {
-    expect(isMissingCeremonyCategory(ALL, [])).toBe(true);
-  });
-
-  it('is satisfied as soon as one category is ticked', () => {
-    expect(isMissingCeremonyCategory(ALL, [DAMES])).toBe(false);
-  });
-
-  it('asks nothing when the data has no category to tick', () => {
-    expect(isMissingCeremonyCategory([], [])).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Responsabilité : tests du contenu des fichiers du pack « Tout exporter » (export-pack-files.ts, palmares-pdf-export.tsx).
  * Appelé par : Vitest.
- * Suppression casserait : la garantie que le pack reprend les exports unitaires pour chaque catégorie active (issue #24).
+ * Suppression casserait : la garantie que le pack reprend les exports unitaires pour chaque catégorie exportée (issues #24 et #77).
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -11,6 +11,7 @@ import { parseCsv } from '../src/lib/csv-parser';
 import { buildExportMeta } from '../src/lib/export-data';
 import { DEFAULT_OUR_CLUB } from '../src/lib/our-club';
 import { buildPackFile, type ExportPackInput } from '../src/lib/export-pack-files';
+import { planExportPack } from '../src/lib/export-pack-plan';
 import { buildRankingWorkbookBuffer } from '../src/lib/excel-export';
 import { computeTeamRanking } from '../src/lib/ranking-engine';
 import { buildPalmaresPdfBlob } from '../src/lib/palmares-pdf-export';
@@ -93,6 +94,17 @@ describe('buildPackFile — individual Excel', () => {
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Dames', 'Messieurs']);
     const damesCount = rows.filter((row) => row.name === 'Classement Dames').length;
     expect(workbook.getWorksheet('Dames')!.rowCount).toBe(damesCount + 1);
+  });
+});
+
+// Issue #77: a category unticked in « Exporter le meeting » appears in no file of the pack.
+describe('buildPackFile — pack planned with the ticked categories only', () => {
+  const ACTIVE = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'];
+
+  it.each(['team-excel', 'individual-excel'] as const)('%s holds only the ticked categories', async (kind) => {
+    const plan = planExportPack(TEST_MEETING.name, ACTIVE, ['Classement Mixte', 'Classement Dames'], new Date());
+    const workbook = await loadWorkbook(await buildPackFile(kind, packInput(plan.categories)));
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Dames', 'Mixte']);
   });
 });
 

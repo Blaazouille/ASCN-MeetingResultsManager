@@ -9,14 +9,13 @@ import type { Meeting } from '@/lib/db';
 import { buildCeremonyScript, ceremonyCategories, DEFAULT_TEAM_PLACES, type CeremonyBlock, type CeremonyStep } from '@/lib/ceremony-script';
 import {
   DEFAULT_PLAN,
-  isMissingCeremonyCategory,
   moveBlock,
   planToOptions,
   resolveCeremonyCategories,
   toggleBlock,
-  toggleCeremonyCategory,
   type PlannedBlock,
 } from '@/lib/ceremony-plan';
+import { isMissingPickedCategory, togglePickedCategory } from '@/lib/category-picking';
 import { goToStep, moveStep, START_PROGRESS, type CeremonyMove } from '@/lib/ceremony-navigation';
 import { parseCeremonyRun, type CeremonyRun } from '@/lib/ceremony-session';
 import { ceremonyWarnings, type CeremonyWarning } from '@/lib/ceremony-warnings';
@@ -132,11 +131,11 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     setTeamPlaces,
     availableCategories,
     categories,
-    isMissingCategory: isMissingCeremonyCategory(availableCategories, categories),
+    isMissingCategory: isMissingPickedCategory(availableCategories, categories),
     // Toggled from what is shown (resolved), not from the raw choice, so the
     // first click on a default box behaves exactly as it looks.
     toggleCategory: (category) =>
-      setChosenCategories((current) => toggleCeremonyCategory(resolveCeremonyCategories(availableCategories, current), category)),
+      setChosenCategories((current) => togglePickedCategory(resolveCeremonyCategories(availableCategories, current), category)),
     preview,
     warnings,
     run,

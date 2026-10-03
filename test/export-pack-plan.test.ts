@@ -1,10 +1,11 @@
 /**
  * Responsabilité : tests de la liste des fichiers et du nom de dossier du pack « Tout exporter » (export-pack-plan.ts).
  * Appelé par : Vitest.
- * Suppression casserait : la couverture de export-pack-plan.ts (critère d'acceptation de l'issue #24).
+ * Suppression casserait : la couverture de export-pack-plan.ts (critères d'acceptation des issues #24 et #77).
  */
 import { describe, expect, it } from 'vitest';
 import { isPackFileName, packFolderCandidate, planExportPack, safeFolderName } from '../src/lib/export-pack-plan';
+import { defaultPickedCategories } from '../src/lib/category-picking';
 
 const CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'];
 // Local time, late evening: the folder must carry the meeting's day, not the UTC one.
@@ -12,13 +13,13 @@ const MEETING_DAY = new Date(2026, 10, 16, 23, 30);
 
 describe('planExportPack', () => {
   it('names the folder "<meeting name> – <YYYY-MM-DD>"', () => {
-    expect(planExportPack('Meeting de la Mer 2026', CATEGORIES, MEETING_DAY).folderName).toBe(
+    expect(planExportPack('Meeting de la Mer 2026', CATEGORIES, CATEGORIES, MEETING_DAY).folderName).toBe(
       'Meeting de la Mer 2026 – 2026-11-16'
     );
   });
 
   it('plans the five files of the pack, in a fixed order', () => {
-    const { files } = planExportPack('Meeting de la Mer 2026', CATEGORIES, MEETING_DAY);
+    const { files } = planExportPack('Meeting de la Mer 2026', CATEGORIES, CATEGORIES, MEETING_DAY);
     expect(files).toEqual([
       { kind: 'team-pdf', fileName: 'Classement équipes – Complet.pdf' },
       { kind: 'team-excel', fileName: 'Classement équipes.xlsx' },
@@ -28,20 +29,56 @@ describe('planExportPack', () => {
     ]);
   });
 
-  it('plans the same files whatever the number of active categories (each file holds them all)', () => {
-    const single = planExportPack('Meeting', ['Classement Mixte'], MEETING_DAY);
-    const all = planExportPack('Meeting', CATEGORIES, MEETING_DAY);
+  it('plans the same files whatever the number of exported categories (each file holds them all)', () => {
+    const single = planExportPack('Meeting', CATEGORIES, ['Classement Mixte'], MEETING_DAY);
+    const all = planExportPack('Meeting', CATEGORIES, CATEGORIES, MEETING_DAY);
     expect(single.files).toEqual(all.files);
   });
 
   it('plans no file when the meeting has no active category', () => {
-    expect(planExportPack('Meeting', [], MEETING_DAY).files).toEqual([]);
+    expect(planExportPack('Meeting', [], [], MEETING_DAY).files).toEqual([]);
   });
 
   it('never lets the meeting name escape the export folder', () => {
-    const { folderName } = planExportPack('Meeting 2026/11 : finale', CATEGORIES, MEETING_DAY);
+    const { folderName } = planExportPack('Meeting 2026/11 : finale', CATEGORIES, CATEGORIES, MEETING_DAY);
     expect(folderName).not.toMatch(/[\\/:*?"<>|]/);
     expect(folderName).toBe('Meeting 2026 11 finale – 2026-11-16');
+  });
+});
+
+// Issue #77: « Tout exporter » only exports the categories ticked in its dialog.
+describe('planExportPack — chosen categories', () => {
+  it('exports Mixte only when the dialog opens on its default choice', () => {
+    const plan = planExportPack('Meeting', CATEGORIES, defaultPickedCategories(CATEGORIES), MEETING_DAY);
+    expect(plan.categories).toEqual(['Classement Mixte']);
+  });
+
+  it('exports every active category by default when there is no Mixte category', () => {
+    const noMixte = ['Classement Dames', 'Classement Messieurs'];
+    const plan = planExportPack('Meeting', noMixte, defaultPickedCategories(noMixte), MEETING_DAY);
+    expect(plan.categories).toEqual(noMixte);
+  });
+
+  it('exports several ticked categories and leaves out the unticked one', () => {
+    const plan = planExportPack('Meeting', CATEGORIES, ['Classement Dames', 'Classement Mixte'], MEETING_DAY);
+    expect(plan.categories).toEqual(['Classement Dames', 'Classement Mixte']);
+    expect(plan.categories).not.toContain('Classement Messieurs');
+  });
+
+  it('keeps the on-screen order, whatever the order the boxes were ticked in', () => {
+    const plan = planExportPack('Meeting', CATEGORIES, ['Classement Mixte', 'Classement Dames'], MEETING_DAY);
+    expect(plan.categories).toEqual(['Classement Dames', 'Classement Mixte']);
+  });
+
+  it('ignores a ticked category that is no longer active', () => {
+    const plan = planExportPack('Meeting', CATEGORIES, ['Classement Benjamins', 'Classement Mixte'], MEETING_DAY);
+    expect(plan.categories).toEqual(['Classement Mixte']);
+  });
+
+  it('plans no file at all when no category is ticked', () => {
+    const plan = planExportPack('Meeting', CATEGORIES, [], MEETING_DAY);
+    expect(plan.categories).toEqual([]);
+    expect(plan.files).toEqual([]);
   });
 });
 
@@ -70,19 +107,19 @@ describe('safeFolderName', () => {
 
 describe('planExportPack — long meeting names', () => {
   it('keeps at most 100 characters of the meeting name and always keeps the date', () => {
-    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, MEETING_DAY);
+    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, CATEGORIES, MEETING_DAY);
     expect(folderName).toBe(`${'M'.repeat(100)} – 2026-11-16`);
   });
 
   it('gives a name that the main process leaves unchanged when it cleans it again', () => {
-    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, MEETING_DAY);
+    const { folderName } = planExportPack('M'.repeat(300), CATEGORIES, CATEGORIES, MEETING_DAY);
     expect(safeFolderName(folderName)).toBe(folderName);
   });
 });
 
 describe('isPackFileName', () => {
   it('accepts exactly the five planned file names', () => {
-    for (const file of planExportPack('Meeting', CATEGORIES, MEETING_DAY).files) {
+    for (const file of planExportPack('Meeting', CATEGORIES, CATEGORIES, MEETING_DAY).files) {
       expect(isPackFileName(file.fileName)).toBe(true);
     }
     expect(isPackFileName('../Palmarès.pdf')).toBe(false);

@@ -4,7 +4,7 @@
  * Suppression casserait : le choix des blocs, de leur ordre et des catégories annoncées sur l'écran Cérémonie.
  */
 import { CEREMONY_BLOCKS, type CeremonyBlock, type CeremonyOptions } from './ceremony-script';
-import { isMixteCategory } from './category-selection';
+import { defaultPickedCategories } from './category-picking';
 
 export interface PlannedBlock {
   block: CeremonyBlock;
@@ -29,19 +29,9 @@ export function moveBlock(plan: readonly PlannedBlock[], index: number, delta: -
 }
 
 /**
- * Categories ticked when the screen opens: Mixte only, the only category the
- * Meeting de la Mer actually rewards (same rule as the result screens,
- * isMixteCategory). Without a Mixte category, nothing
- * tells which one is rewarded, so every category is ticked.
- */
-export function defaultCeremonyCategories(available: readonly string[]): string[] {
-  const mixte = available.filter(isMixteCategory);
-  return mixte.length > 0 ? mixte : [...available];
-}
-
-/**
  * The categories actually announced, in `available` order. `chosen` is null
- * until the manager ticks or unticks one: the default applies. An empty
+ * until the manager ticks or unticks one: the default applies
+ * (defaultPickedCategories: Mixte only, or every category without Mixte). An empty
  * choice is kept as is, so the manager sees he unticked everything (the
  * screen then blocks the launch) instead of the boxes silently ticking back.
  * A choice whose categories all disappeared from the data (re-import or
@@ -49,24 +39,10 @@ export function defaultCeremonyCategories(available: readonly string[]): string[
  * not untick them, they vanished.
  */
 export function resolveCeremonyCategories(available: readonly string[], chosen: readonly string[] | null): string[] {
-  if (chosen === null) return defaultCeremonyCategories(available);
+  if (chosen === null) return defaultPickedCategories(available);
   if (chosen.length === 0) return [];
   const kept = available.filter((category) => chosen.includes(category));
-  return kept.length > 0 ? kept : defaultCeremonyCategories(available);
-}
-
-/** Ticks or unticks one category; every box can be unticked, including the last one. */
-export function toggleCeremonyCategory(selected: readonly string[], category: string): string[] {
-  return selected.includes(category) ? selected.filter((entry) => entry !== category) : [...selected, category];
-}
-
-/**
- * True when there are categories to choose from but none is ticked: the
- * launch and the printed sheet are then blocked, with a sentence saying why.
- * Without any category in the data there is nothing to tick, so nothing to ask.
- */
-export function isMissingCeremonyCategory(available: readonly string[], selected: readonly string[]): boolean {
-  return available.length > 0 && selected.length === 0;
+  return kept.length > 0 ? kept : defaultPickedCategories(available);
 }
 
 /** Options for buildCeremonyScript: the ticked blocks, in the planned order, for the ticked categories. */
