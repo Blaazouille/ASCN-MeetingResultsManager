@@ -59,7 +59,8 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 
 ## Palmarès (`/palmares`)
 
-- `PageHeader` avec `CategoryTabs` en action (filtrage par catégorie).
+- `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de prix, ex. « Dames · 5 prix »), sans action.
+- `FilterBar` : `CategoryTabs` (catégories actives), à l'identique d'Individuels.
 - Grille de 6 cartes (`FunAwardsGrid`), une par récompense humoristique (Le Doyen, La Relève, Duo Mixte, Photo-Finish, Le Club des Sages / Le Club des Grandes Dames selon la catégorie, La Jeune Garde) : icône Lucide colorée dans un badge rond (pas d'emoji), nom du gagnant, description.
 - Calcul entièrement automatique à partir des résultats de la catégorie active (`computeFunAwards`).
 
