@@ -11,7 +11,7 @@ export interface FilterBarProps {
 
 export function FilterBar({ children }: FilterBarProps): JSX.Element {
   return (
-    <section aria-label="Filtres" className="flex flex-wrap items-center gap-8 rounded-lg bg-surface-raised px-4 py-3 shadow-card">
+    <section aria-label="Filtres" className="flex flex-wrap items-center gap-6 rounded-lg bg-surface-raised px-4 py-3 shadow-card">
       {children}
     </section>
   );

@@ -34,7 +34,8 @@ export function RankingToolbar({
     <FilterBar>
       <CategoryTabs categories={categories} active={category} onChange={onCategoryChange} />
       <Segmented label="Nageurs comptés par club" options={TOP_N_SEGMENTS} value={topN} onChange={onTopNChange} />
-      <div className="ml-auto">
+      {/* Flexible slot: the search shrinks to 200px so it shares the first row at 1366px wide, and only wraps on narrower windows. */}
+      <div className="ml-auto flex min-w-[200px] flex-1 justify-end">
         <SearchField value={search} onChange={onSearchChange} placeholder="Rechercher un club" />
       </div>
     </FilterBar>

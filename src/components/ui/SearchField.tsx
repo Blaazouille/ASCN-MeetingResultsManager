@@ -14,7 +14,7 @@ export interface SearchFieldProps {
 
 export function SearchField({ value, onChange, placeholder }: SearchFieldProps): JSX.Element {
   return (
-    <label className="flex h-11 w-[300px] max-w-full items-center gap-2 rounded-sm border-[1.5px] border-line-strong bg-surface-raised px-3 text-ink-muted focus-within:border-bassin-strong">
+    <label className="flex h-11 w-full max-w-[300px] items-center gap-2 rounded-sm border-[1.5px] border-line-strong bg-surface-raised px-3 text-ink-muted focus-within:border-bassin-strong">
       <Search className="h-[18px] w-[18px] shrink-0" aria-hidden />
       <input
         type="search"

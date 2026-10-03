@@ -76,7 +76,8 @@ export default function IndividualPage(): JSX.Element {
       />
       <FilterBar>
         <CategoryTabs categories={categories} active={category} onChange={setCategory} />
-        <div className="ml-auto">
+        {/* Same flexible slot as the ranking toolbar: the search takes the free space, 200 to 300px. */}
+        <div className="ml-auto flex min-w-[200px] flex-1 justify-end">
           <SearchField value={search} onChange={setSearch} placeholder="Rechercher un nageur ou un club" />
         </div>
       </FilterBar>
