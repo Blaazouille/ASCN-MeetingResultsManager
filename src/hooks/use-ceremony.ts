@@ -9,6 +9,7 @@ import type { Meeting } from '@/lib/db';
 import { buildCeremonyScript, ceremonyCategories, DEFAULT_TEAM_PLACES, type CeremonyBlock, type CeremonyStep } from '@/lib/ceremony-script';
 import {
   DEFAULT_PLAN,
+  isMissingCeremonyCategory,
   moveBlock,
   planToOptions,
   resolveCeremonyCategories,
@@ -51,8 +52,10 @@ export interface UseCeremonyResult {
   setTeamPlaces: (places: number) => void;
   /** Categories that can be announced: the meeting's active categories found in the data. */
   availableCategories: string[];
-  /** Categories ticked for the ceremony (Mixte only by default); never empty while some are available. */
+  /** Categories ticked for the ceremony (Mixte only by default); empty when the manager unticked them all. */
   categories: string[];
+  /** True when categories are available but none is ticked: launching and printing are blocked. */
+  isMissingCategory: boolean;
   toggleCategory: (category: string) => void;
   /** The script as it would be launched now, from the current data and plan. */
   preview: CeremonyStep[];
@@ -129,6 +132,7 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     setTeamPlaces,
     availableCategories,
     categories,
+    isMissingCategory: isMissingCeremonyCategory(availableCategories, categories),
     // Toggled from what is shown (resolved), not from the raw choice, so the
     // first click on a default box behaves exactly as it looks.
     toggleCategory: (category) =>

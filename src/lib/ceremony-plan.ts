@@ -40,19 +40,32 @@ export function defaultCeremonyCategories(available: readonly string[]): string[
 
 /**
  * The categories actually announced, in `available` order. `chosen` is null
- * until the manager ticks or unticks one. A choice that no longer matches any
- * available category (data or Paramètres changed meanwhile) falls back to the
- * default, so at least one category is always announced.
+ * until the manager ticks or unticks one: the default applies. An empty
+ * choice is kept as is, so the manager sees he unticked everything (the
+ * screen then blocks the launch) instead of the boxes silently ticking back.
+ * A choice whose categories all disappeared from the data (re-import or
+ * Paramètres changed meanwhile) falls back to the default: the manager did
+ * not untick them, they vanished.
  */
 export function resolveCeremonyCategories(available: readonly string[], chosen: readonly string[] | null): string[] {
-  const kept = chosen === null ? [] : available.filter((category) => chosen.includes(category));
+  if (chosen === null) return defaultCeremonyCategories(available);
+  if (chosen.length === 0) return [];
+  const kept = available.filter((category) => chosen.includes(category));
   return kept.length > 0 ? kept : defaultCeremonyCategories(available);
 }
 
-/** Ticks or unticks one category; the last ticked one stays ticked, as with the active categories in Paramètres. */
+/** Ticks or unticks one category; every box can be unticked, including the last one. */
 export function toggleCeremonyCategory(selected: readonly string[], category: string): string[] {
-  if (!selected.includes(category)) return [...selected, category];
-  return selected.length === 1 ? [...selected] : selected.filter((entry) => entry !== category);
+  return selected.includes(category) ? selected.filter((entry) => entry !== category) : [...selected, category];
+}
+
+/**
+ * True when there are categories to choose from but none is ticked: the
+ * launch and the printed sheet are then blocked, with a sentence saying why.
+ * Without any category in the data there is nothing to tick, so nothing to ask.
+ */
+export function isMissingCeremonyCategory(available: readonly string[], selected: readonly string[]): boolean {
+  return available.length > 0 && selected.length === 0;
 }
 
 /** Options for buildCeremonyScript: the ticked blocks, in the planned order, for the ticked categories. */

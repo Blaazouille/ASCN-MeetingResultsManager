@@ -11,6 +11,7 @@ import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useCeremony } from '@/hooks/use-ceremony';
 import { useCeremonyExport } from '@/hooks/use-ceremony-export';
 import { Button } from '@/components/ui/Button';
+import { NO_CATEGORY_HINT_ID } from '@/components/ceremony/CeremonyCategoryPicker';
 import { CeremonyPreparation } from '@/components/ceremony/CeremonyPreparation';
 import { CeremonyRun } from '@/components/ceremony/CeremonyRun';
 import { ExportFeedback } from '@/components/ranking/ExportFeedback';
@@ -31,6 +32,9 @@ export default function CeremonyPage(): JSX.Element {
   const { run } = ceremony;
   // The sheet always matches what is on screen: the frozen script once launched, the preview before.
   const printedSteps = run?.steps ?? ceremony.preview;
+  // Only while preparing: once launched, the frozen run no longer depends on the boxes.
+  const blockedByCategory = run === null && ceremony.isMissingCategory;
+  const blockedHint = blockedByCategory ? NO_CATEGORY_HINT_ID : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,13 +48,25 @@ export default function CeremonyPage(): JSX.Element {
         }
         actions={
           <>
-            <Button icon={Printer} disabled={isExporting || printedSteps.length === 0} onClick={() => void exportPdf(meeting, printedSteps)}>
+            <Button
+              icon={Printer}
+              disabled={isExporting || blockedByCategory || printedSteps.length === 0}
+              aria-describedby={blockedHint}
+              onClick={() => void exportPdf(meeting, printedSteps)}
+            >
               Imprimer le déroulé
             </Button>
             {run === null ? (
               // Distinct keys: React must not reuse one <button> for the other, or the
               // focus left on « Lancer » would land on « Revenir à la préparation ».
-              <Button key="start" variant="primary" icon={Play} disabled={ceremony.preview.length === 0} onClick={ceremony.start}>
+              <Button
+                key="start"
+                variant="primary"
+                icon={Play}
+                disabled={blockedByCategory || ceremony.preview.length === 0}
+                aria-describedby={blockedHint}
+                onClick={ceremony.start}
+              >
                 Lancer le déroulé
               </Button>
             ) : (
@@ -73,6 +89,7 @@ export default function CeremonyPage(): JSX.Element {
           warnings={ceremony.warnings}
           availableCategories={ceremony.availableCategories}
           categories={ceremony.categories}
+          isMissingCategory={ceremony.isMissingCategory}
           onToggleCategory={ceremony.toggleCategory}
         />
       ) : (
