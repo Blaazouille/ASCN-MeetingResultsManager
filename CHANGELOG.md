@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.4.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.3.0...v1.4.0) (2026-10-03)
+
+
+### Features
+
+* add a built-in training meeting to rehearse before meeting day ([#58](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/58)) ([7738f6a](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/7738f6adcaa8437cdc38b747de4997206f97963d))
+* add a guided ceremony run-through for the meeting manager ([#55](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/55)) ([4fc55f4](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/4fc55f41b36acec4b41e0aacc4482caa585b49c5))
+* choose the categories announced at the ceremony (Mixte only by default) ([#68](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/68)) ([0b364b2](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/0b364b2aad5c3fcecd6d6d3bdea9b52d67181ae6))
+* choose the categories exported by "Tout exporter" ([#78](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/78)) ([b3e0532](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/b3e05323324cce226cfa280876cc8659434904e9))
+* export every meeting result into one folder in a single click ([#60](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/60)) ([c139c80](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/c139c80228b32c46eaebae6a69e3dd4177dc6903))
+* handle ties in team and individual rankings ([#35](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/35)) ([4c86537](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/4c86537007f424f915faa1ffefe18fa81045c106))
+* let every ceremony category box be unticked and block the launch when none is ticked ([#72](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/72)) ([a65f1eb](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/a65f1eba2107911f8e136b82a24ae4f539c0567f)), closes [#71](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/71)
+* make "Notre club" configurable in Settings ([#62](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/62)) ([b2e023a](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/b2e023a37b42893d769b3bd0754169e0b8acf500)), closes [#26](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/26)
+* replace the "Notre club" card with a compact line in the filter bar ([#70](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/70)) ([2a61cb3](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/2a61cb3bb8e3034a792cd349a33c897b50646cd8))
+* share the selected category across Classement, Individuels and Palmarès ([#73](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/73)) ([7b0fa17](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/7b0fa17e3c47d83e834eb4db87d87831cdadcea8))
+* show clubs, swimmers and last import on Accueil ([#18](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/18)) ([e98e35e](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/e98e35e61a05deaaf0240f61faee963425cafbc1))
+* show our club's standing in every category on the ranking screen ([#63](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/63)) ([3cc96d5](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/3cc96d50e318d2144ff5688d440e6df1d0838d0e))
+* show what changed after a CSV re-import ([#37](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/37)) ([0567263](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/056726381db63dd3e091566aa6ef3cf8066ce26d))
+* warn before an import overwrites existing results ([#40](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/40)) ([538af77](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/538af77218f474db4a5cdb1814169468bbcbb134))
+
+
+### Bug Fixes
+
+* drop stale import results after a meeting change and polish import messages ([#61](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/61)) ([da1bfa0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/da1bfa09e16d31cd5d0ef7b53b406e76eaa0c7f4))
+* keep the import snapshot on a no-op re-import and announce removed swimmers ([#52](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/52)) ([31ea333](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/31ea3339c4697f2da5b2624ac62513892a7c9d3c))
+* keep the search on the first row of the filter bar ([#76](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/76)) ([29dcd8b](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/29dcd8bd3d106bb72608867294acecda6132dbc1))
+* list three tied podium places as "1, 2 et 3" ([#36](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/36)) ([9b2dcc4](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/9b2dcc4ed16bb339fb3936e67cfabfde01c92fd9))
+* move the Palmarès category selector into the filter bar ([#69](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/69)) ([c6bc282](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/c6bc282f5fd9a5e5389c276eae808f6abdac720b))
+* rank each individual category from its own rows ([#39](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/39)) ([2c0c30e](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/2c0c30e3c3fe035821ee1db06ea2cc1c8fcf4275)), closes [#38](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/38)
+* record update check results and show them in settings ([#54](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/54)) ([674d1ac](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/674d1ac19279a1cb7c13c934a6e417042af07214))
+* report export, backup settings and comparison errors instead of failing silently ([#56](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/56)) ([f760f29](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/f760f293abfe9c3b1247200290aa15b40c371987))
+* report import and file drop errors clearly ([#53](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/53)) ([fb6c3c8](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/fb6c3c85f69b7c82e4e03cd4a03a06740ffe5dd2))
+* restore focus to the modal opener on close ([#48](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/48)) ([1feb711](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/1feb7112962543601602fc2cee628efef1af846f)), closes [#47](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/47)
+* save the current database before a restore ([#50](https://github.com/Blaazouille/ASCN-MeetingResultsManager/issues/50)) ([cb2b5cd](https://github.com/Blaazouille/ASCN-MeetingResultsManager/commit/cb2b5cda0acaac002c6bd99930051e254f684644))
+
 ## [1.3.0](https://github.com/Blaazouille/ASCN-MeetingResultsManager/compare/v1.2.0...v1.3.0) (2026-10-01)
 
 
