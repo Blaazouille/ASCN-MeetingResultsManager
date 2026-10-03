@@ -1,6 +1,6 @@
 /**
  * Responsabilité : carte blanche qui regroupe les filtres d'une page de classement.
- * Appelé par : RankingToolbar.tsx, IndividualPage.tsx.
+ * Appelé par : RankingToolbar.tsx, IndividualPage.tsx, PalmaresPage.tsx.
  * Suppression casserait : la mise en page des filtres des classements.
  */
 import type { ReactNode } from 'react';
