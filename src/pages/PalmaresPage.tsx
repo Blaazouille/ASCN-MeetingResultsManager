@@ -11,6 +11,8 @@ import { computeFunAwards } from '@/lib/fun-awards';
 import { FunAwardsGrid } from '@/components/ranking/FunAwardsGrid';
 import { CategoryTabs } from '@/components/ranking/CategoryTabs';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FilterBar } from '@/components/layout/FilterBar';
+import { categoryShortLabel } from '@/lib/ui-labels';
 
 export default function PalmaresPage(): JSX.Element {
   const { meetingState } = useOutletContext<AppOutletContext>();
@@ -40,9 +42,12 @@ export default function PalmaresPage(): JSX.Element {
       <PageHeader
         overline={meeting.name}
         title="Palmarès des rigolos"
-        subtitle="Prix humoristiques calculés automatiquement à partir des résultats."
-        actions={<CategoryTabs categories={categories} active={currentTab} onChange={setActiveCategory} />}
+        // "prix" is invariable in French, so no singular/plural helper is needed.
+        subtitle={`${categoryShortLabel(currentTab)} · ${awards.length} prix`}
       />
+      <FilterBar>
+        <CategoryTabs categories={categories} active={currentTab} onChange={setActiveCategory} />
+      </FilterBar>
       {awards.length === 0 ? (
         <p className="text-[15px] text-ink-muted">Aucun prix disponible pour cette catégorie.</p>
       ) : (
