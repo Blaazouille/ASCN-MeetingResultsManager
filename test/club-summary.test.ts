@@ -1,11 +1,11 @@
 /**
- * Responsabilité : vérifie la situation de « Notre club » par catégorie (issue #25) : rang, ex æquo, écarts, seuil, absence, meilleur nageur.
+ * Responsabilité : vérifie la situation de « Notre club » dans la catégorie affichée (issues #25, #64) : rang, ex æquo, écarts, seuil, absence.
  * Appelé par : Vitest.
  * Suppression casserait : la couverture de club-summary.ts.
  */
 import { describe, expect, it } from 'vitest';
 import type { RawSwimmerRow } from '../src/lib/csv-parser';
-import { computeClubSummary, type ClubCategorySummary } from '../src/lib/club-summary';
+import { computeClubSummary, type ClubCategoryStatus } from '../src/lib/club-summary';
 
 const MIXTE = 'Classement Mixte';
 const DAMES = 'Classement Dames';
@@ -22,44 +22,47 @@ function club(category: string, name: string, ...points: number[]): RawSwimmerRo
   return points.map((p) => row(category, name, p));
 }
 
-const params = { categories: [MIXTE], topN: 2, minSwimmers: 0 };
+const params = { category: MIXTE, topN: 2, minSwimmers: 0 };
 
-function only(summary: ReturnType<typeof computeClubSummary>): ClubCategorySummary {
+function statusOf(summary: ReturnType<typeof computeClubSummary>): ClubCategoryStatus {
   expect(summary).not.toBeNull();
-  return summary!.categories[0]!;
+  return summary!.status;
 }
 
 describe('computeClubSummary', () => {
   it('gives the rank among ranked clubs, the total of the top N and the gaps to both neighbours', () => {
     const rows = [
       ...club(MIXTE, 'A', 600, 500), // 1100
-      ...club(MIXTE, OURS, 550, 400, 100), // 950, 2 retained out of 3
+      ...club(MIXTE, OURS, 550, 400, 100), // 950 (top 2)
       ...club(MIXTE, 'C', 450, 420), // 870
     ];
-    const summary = only(computeClubSummary(rows, OURS, params));
-    expect(summary.entered).toBe(3);
-    expect(summary.status).toEqual({
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toEqual({
       kind: 'ranked',
       rank: 2,
       tied: false,
       clubCount: 3,
       totalPoints: 950,
-      retained: 2,
       behind: { rank: 1, points: 150 },
       ahead: { rank: 3, points: 80 },
     });
   });
 
+  it('only speaks of the category shown', () => {
+    const rows = [...club(MIXTE, OURS, 300), ...club(MIXTE, 'A', 600), ...club(DAMES, OURS, 900), ...club(DAMES, 'B', 100)];
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toMatchObject({ rank: 2, totalPoints: 300 });
+    expect(statusOf(computeClubSummary(rows, OURS, { ...params, category: DAMES }))).toMatchObject({ rank: 1, totalPoints: 900 });
+  });
+
   it('uses the top N chosen on screen', () => {
     const rows = [...club(MIXTE, 'A', 500, 500), ...club(MIXTE, OURS, 600, 300, 300)];
     // Top 2: 900 < 1000, 2nd. Top 3: 1200 vs 1000, 1st.
-    expect(only(computeClubSummary(rows, OURS, params)).status).toMatchObject({ rank: 2 });
-    expect(only(computeClubSummary(rows, OURS, { ...params, topN: 3 })).status).toMatchObject({ rank: 1 });
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toMatchObject({ rank: 2 });
+    expect(statusOf(computeClubSummary(rows, OURS, { ...params, topN: 3 }))).toMatchObject({ rank: 1 });
   });
 
   it('has no gap above for the 1st, only its lead', () => {
     const rows = [...club(MIXTE, OURS, 600), ...club(MIXTE, 'B', 500)];
-    expect(only(computeClubSummary(rows, OURS, params)).status).toMatchObject({
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toMatchObject({
       rank: 1,
       behind: null,
       ahead: { rank: 2, points: 100 },
@@ -68,7 +71,7 @@ describe('computeClubSummary', () => {
 
   it('has no lead for the last, only the gap above', () => {
     const rows = [...club(MIXTE, 'A', 600), ...club(MIXTE, OURS, 500)];
-    expect(only(computeClubSummary(rows, OURS, params)).status).toMatchObject({
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toMatchObject({
       rank: 2,
       behind: { rank: 1, points: 100 },
       ahead: null,
@@ -82,7 +85,7 @@ describe('computeClubSummary', () => {
       ...club(MIXTE, OURS, 700),
       ...club(MIXTE, 'D', 650),
     ];
-    expect(only(computeClubSummary(rows, OURS, params)).status).toMatchObject({
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toMatchObject({
       rank: 2,
       tied: true,
       clubCount: 4,
@@ -93,44 +96,24 @@ describe('computeClubSummary', () => {
 
   it('says the club is not ranked when it entered fewer swimmers than the threshold', () => {
     const rows = [...club(MIXTE, 'A', 600, 500, 400), ...club(MIXTE, OURS, 900, 800)];
-    const summary = only(computeClubSummary(rows, OURS, { ...params, minSwimmers: 3 }));
-    expect(summary.entered).toBe(2);
-    expect(summary.status).toEqual({ kind: 'below-threshold', minSwimmers: 3 });
-  });
-
-  it('says the club is absent from a category where it has no swimmer, and still covers the others', () => {
-    const rows = [...club(MIXTE, OURS, 600), ...club(DAMES, 'A', 500)];
-    const summary = computeClubSummary(rows, OURS, { ...params, categories: [DAMES, MIXTE] });
-    expect(summary?.categories.map((c) => [c.category, c.status.kind, c.entered])).toEqual([
-      [DAMES, 'absent', 0],
-      [MIXTE, 'ranked', 1],
-    ]);
-    expect(summary?.categories[0]?.bestSwimmer).toBeNull();
-  });
-
-  it('names our best swimmer with their individual rank and points in the category', () => {
-    const rows = [
-      row(MIXTE, 'A', 700),
-      { ...row(MIXTE, OURS, 650), firstname: 'Léa', lastname: 'MARTIN' },
-      row(MIXTE, 'B', 650),
-      row(MIXTE, OURS, 300),
-    ];
-    expect(only(computeClubSummary(rows, OURS, params)).bestSwimmer).toEqual({
-      firstname: 'Léa',
-      lastname: 'MARTIN',
-      rank: 2,
-      tied: true,
-      points: 650,
+    expect(statusOf(computeClubSummary(rows, OURS, { ...params, minSwimmers: 3 }))).toEqual({
+      kind: 'below-threshold',
+      minSwimmers: 3,
     });
   });
 
-  it('recognises the club whatever the case and keeps its spelling from the results', () => {
+  it('says the club has no swimmer in the category shown when it only swims in others', () => {
+    const rows = [...club(MIXTE, 'A', 600), ...club(DAMES, OURS, 500)];
+    expect(statusOf(computeClubSummary(rows, OURS, params))).toEqual({ kind: 'absent' });
+  });
+
+  it('recognises the club whatever the case and keeps its spelling from the results, the key of its table row', () => {
     const rows = club(MIXTE, 'As Cherbourg Natation', 600);
     expect(computeClubSummary(rows, OURS, params)?.club).toBe('As Cherbourg Natation');
   });
 
-  it('returns null when the club has no swimmer in the categories shown', () => {
-    const rows = [...club(MIXTE, 'A', 600), ...club(DAMES, OURS, 500)];
+  it('returns null when the club has no swimmer in the meeting', () => {
+    const rows = [...club(MIXTE, 'A', 600), ...club(DAMES, 'B', 500)];
     expect(computeClubSummary(rows, OURS, params)).toBeNull();
   });
 });

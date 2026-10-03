@@ -1,6 +1,6 @@
 /**
  * Responsabilité : étiquette « Notre club » accolée au club choisi dans Paramètres (AS Cherbourg Natation par défaut) dans les classements.
- * Appelé par : TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx.
+ * Appelé par : TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx, OurClubLine.tsx.
  * Suppression casserait : le repérage de notre club autrement que par la couleur.
  */
 export function ClubTag(): JSX.Element {

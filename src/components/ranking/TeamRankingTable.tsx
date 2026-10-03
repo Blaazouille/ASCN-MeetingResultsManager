@@ -30,7 +30,7 @@ export interface TeamRankingTableProps {
   search: string;
   /** Rank changes since the previous import, by club; absent without a previous import. */
   movements?: Map<string, Movement> | null;
-  /** Club row to unfold and bring into view (« Notre club » card); a new object asks again for the same club. */
+  /** Club row to unfold and bring into view (« Notre club » line); a new object asks again for the same club. */
   reveal?: { club: string } | null;
 }
 
@@ -121,7 +121,7 @@ export function TeamRankingTable({ results, category, search, movements, reveal 
   useEffect(() => {
     if (!reveal) return;
     setExpanded((current) => new Set(current).add(reveal.club));
-    // Found by data attribute rather than a ref per row: TeamRow is memoised and the club comes from the card.
+    // Found by data attribute rather than a ref per row: TeamRow is memoised and the club comes from the « Notre club » line.
     const row = [...(sectionRef.current?.querySelectorAll<HTMLElement>('tr[data-club]') ?? [])].find(
       (tr) => tr.dataset.club === reveal.club
     );

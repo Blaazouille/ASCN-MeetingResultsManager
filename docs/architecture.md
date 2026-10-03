@@ -147,8 +147,8 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ranking-engine.ts      # Classement par équipes
 │   │   ├── rank-ties.ts           # Rangs ex-aequo, détection des égalités sur le podium
 │   │   ├── individual-ranking.ts  # Classement individuel, détection du genre
-│   │   ├── club-summary.ts        # Situation de « Notre club » par catégorie (rang, écarts, nageurs, meilleur nageur)
-│   │   ├── club-summary-labels.ts # Textes de la carte « Notre club » (« 7e / 38 », « −154 pts pour la 6e place »…)
+│   │   ├── club-summary.ts        # Situation de « Notre club » dans la catégorie affichée (rang, points, écarts)
+│   │   ├── club-summary-labels.ts # Textes de la ligne « Notre club » (« 7e / 38 », « −23 pour la 6e »…)
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
 │   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre → options du déroulé
@@ -211,7 +211,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── import/                # DropZone, StatTile, ImportChanges, ImportGuardDialog, ImportRemovalNotice,
 │   │   │                          # DemoImportWarning
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
-│   │   │                          # PodiumCards, OurClubCard, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
+│   │   │                          # PodiumCards, OurClubLine, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
 │   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, OurClubSection, BackupSection, BackupConfigSection, UpdateSection
