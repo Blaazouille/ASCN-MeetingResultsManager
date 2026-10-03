@@ -18,6 +18,8 @@ const TEAM_PLACE_OPTIONS = [3, 5, 10].map((value) => ({ value, label: String(val
 export interface CeremonyPreparationProps {
   availableCategories: string[];
   categories: string[];
+  /** True when no category is ticked: the picker explains it and the preview says why it is empty. */
+  isMissingCategory: boolean;
   onToggleCategory: (category: string) => void;
   plan: PlannedBlock[];
   onToggleBlock: (block: CeremonyBlock) => void;
@@ -41,6 +43,7 @@ export function CeremonyPreparation({
   warnings,
   availableCategories,
   categories,
+  isMissingCategory,
   onToggleCategory,
 }: CeremonyPreparationProps): JSX.Element {
   return (
@@ -51,7 +54,12 @@ export function CeremonyPreparation({
           <p className="text-[15px] text-ink-muted">
             Les prix rigolos, les prix individuels et les équipes ne sont annoncés que pour les catégories cochées.
           </p>
-          <CeremonyCategoryPicker available={availableCategories} selected={categories} onToggle={onToggleCategory} />
+          <CeremonyCategoryPicker
+            available={availableCategories}
+            selected={categories}
+            isMissing={isMissingCategory}
+            onToggle={onToggleCategory}
+          />
         </section>
 
         <section className={CARD}>
@@ -89,7 +97,12 @@ export function CeremonyPreparation({
       <section className={CARD} aria-label="Aperçu du déroulé">
         <h2 className={CARD_TITLE}>Aperçu · {stepCountLabel(preview.length)}</h2>
         {preview.length === 0 ? (
-          <p className="text-[15px] text-ink-muted">Rien à annoncer pour l&apos;instant. Vérifiez qu&apos;au moins un bloc est coché.</p>
+          <p className="text-[15px] text-ink-muted">
+            {/* Name the actual cause: with no category ticked, ticking blocks would not help. */}
+            {isMissingCategory
+              ? 'Aucune catégorie cochée\u00a0: rien à annoncer.'
+              : "Rien à annoncer pour l'instant. Vérifiez qu'au moins un bloc est coché."}
+          </p>
         ) : (
           <ol className="flex flex-col divide-y divide-line">
             {preview.map((step, index) => (
