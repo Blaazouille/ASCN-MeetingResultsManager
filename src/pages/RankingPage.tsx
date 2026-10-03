@@ -81,6 +81,7 @@ export default function RankingPage(): JSX.Element {
   }
 
   const clubCount = ranking.teamResults.length;
+  const packBlocked = pack.isExporting || categories.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,8 +91,18 @@ export default function RankingPage(): JSX.Element {
         subtitle={`${categoryShortLabel(category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
         actions={
           <>
-            {/* Secondary: the end-of-meeting pack (ticked categories, top N shown here), see use-export-pack.ts. */}
-            <Button icon={FolderDown} disabled={pack.isExporting} onClick={() => setIsPackDialogOpen(true)}>
+            {/* Secondary: the end-of-meeting pack (ticked categories, top N shown here), see use-export-pack.ts.
+                aria-disabled rather than disabled: a disabled button drops the focus the dialog hands back to it
+                when the export starts, and shows no tooltip. The click handler is the actual guard. */}
+            <Button
+              icon={FolderDown}
+              aria-disabled={packBlocked}
+              title={categories.length === 0 ? 'Aucune catégorie active à exporter (voir Paramètres).' : undefined}
+              className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+              onClick={() => {
+                if (!packBlocked) setIsPackDialogOpen(true);
+              }}
+            >
               {pack.isExporting ? 'Export en cours…' : 'Tout exporter'}
             </Button>
             <ExportActions

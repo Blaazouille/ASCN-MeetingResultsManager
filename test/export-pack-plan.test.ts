@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { isPackFileName, packFolderCandidate, planExportPack, safeFolderName } from '../src/lib/export-pack-plan';
-import { defaultCeremonyCategories } from '../src/lib/ceremony-plan';
+import { defaultPickedCategories } from '../src/lib/category-picking';
 
 const CATEGORIES = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'];
 // Local time, late evening: the folder must carry the meeting's day, not the UTC one.
@@ -49,13 +49,13 @@ describe('planExportPack', () => {
 // Issue #77: « Tout exporter » only exports the categories ticked in its dialog.
 describe('planExportPack — chosen categories', () => {
   it('exports Mixte only when the dialog opens on its default choice', () => {
-    const plan = planExportPack('Meeting', CATEGORIES, defaultCeremonyCategories(CATEGORIES), MEETING_DAY);
+    const plan = planExportPack('Meeting', CATEGORIES, defaultPickedCategories(CATEGORIES), MEETING_DAY);
     expect(plan.categories).toEqual(['Classement Mixte']);
   });
 
   it('exports every active category by default when there is no Mixte category', () => {
     const noMixte = ['Classement Dames', 'Classement Messieurs'];
-    const plan = planExportPack('Meeting', noMixte, defaultCeremonyCategories(noMixte), MEETING_DAY);
+    const plan = planExportPack('Meeting', noMixte, defaultPickedCategories(noMixte), MEETING_DAY);
     expect(plan.categories).toEqual(noMixte);
   });
 

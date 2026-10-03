@@ -5,7 +5,7 @@
  */
 import { useRef, useState } from 'react';
 import { FolderDown } from 'lucide-react';
-import { defaultCeremonyCategories, isMissingCeremonyCategory, toggleCeremonyCategory } from '@/lib/ceremony-plan';
+import { defaultPickedCategories, isMissingPickedCategory, togglePickedCategory } from '@/lib/category-picking';
 import { useModalKeyboard } from '@/hooks/use-modal-keyboard';
 import { Button } from '@/components/ui/Button';
 import { CategoryCheckboxes } from '@/components/ui/CategoryCheckboxes';
@@ -25,12 +25,12 @@ export function ExportPackDialog({ available, topN, onConfirm, onCancel }: Expor
   // Same default and same rules as the Cérémonie (issue #77): only Mixte is
   // rewarded at the Meeting de la Mer, every category when there is no Mixte.
   // Not remembered: each opening starts from this default again.
-  const [selected, setSelected] = useState<string[]>(() => defaultCeremonyCategories(available));
+  const [selected, setSelected] = useState<string[]>(() => defaultPickedCategories(available));
   const dialogRef = useRef<HTMLDivElement>(null);
   // Escape cancels; closing hands focus back to « Tout exporter », like DeleteMeetingDialog.
   useModalKeyboard(dialogRef, onCancel, true);
 
-  const isMissing = isMissingCeremonyCategory(available, selected);
+  const isMissing = isMissingPickedCategory(available, selected);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-6">
@@ -56,7 +56,7 @@ export function ExportPackDialog({ available, topN, onConfirm, onCancel }: Expor
           available={available}
           selected={selected}
           isMissing={isMissing}
-          onToggle={(category) => setSelected((current) => toggleCeremonyCategory(current, category))}
+          onToggle={(category) => setSelected((current) => togglePickedCategory(current, category))}
           legend="Catégories exportées"
           missingHint="Cochez au moins une catégorie pour exporter."
           missingHintId={NO_CATEGORY_HINT_ID}

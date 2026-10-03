@@ -2,7 +2,7 @@
  * Responsabilité : règles de la catégorie affichée, partagée par Classement, Individuels et Palmarès
  * (catégorie par défaut, sélection encore proposée ou non).
  * Appelé par : use-selected-category.ts, import-diff.ts (catégorie du résumé de réimport),
- * ceremony-plan.ts (isMixteCategory) et les tests.
+ * category-picking.ts (isMixteCategory) et les tests.
  * Suppression casserait : le choix de la catégorie à l'ouverture d'un meeting et après un changement des catégories actives.
  */
 
