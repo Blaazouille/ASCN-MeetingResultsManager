@@ -3,7 +3,7 @@
  * Appelé par : RankingPage.tsx.
  * Suppression casserait : l'affichage du tableau de classement.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -30,8 +30,6 @@ export interface TeamRankingTableProps {
   search: string;
   /** Rank changes since the previous import, by club; absent without a previous import. */
   movements?: Map<string, Movement> | null;
-  /** Club row to unfold and bring into view (« Notre club » line); a new object asks again for the same club. */
-  reveal?: { club: string } | null;
 }
 
 const columnHelper = createColumnHelper<TeamResult>();
@@ -112,23 +110,8 @@ function buildColumns(
   ];
 }
 
-export function TeamRankingTable({ results, category, search, movements, reveal }: TeamRankingTableProps): JSX.Element {
+export function TeamRankingTable({ results, category, search, movements }: TeamRankingTableProps): JSX.Element {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const sectionRef = useRef<HTMLElement>(null);
-
-  // Keyed on the request object only, not on `results`: changing the top N
-  // afterwards must not unfold the row again or scroll the page back to it.
-  useEffect(() => {
-    if (!reveal) return;
-    setExpanded((current) => new Set(current).add(reveal.club));
-    // Found by data attribute rather than a ref per row: TeamRow is memoised and the club comes from the « Notre club » line.
-    const row = [...(sectionRef.current?.querySelectorAll<HTMLElement>('tr[data-club]') ?? [])].find(
-      (tr) => tr.dataset.club === reveal.club
-    );
-    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Keyboard users land on the row's own toggle, ready to read the swimmers.
-    row?.querySelector('button')?.focus({ preventScroll: true });
-  }, [reveal]);
 
   const filtered = useMemo(() => filterTeamResultsByClub(results, search), [results, search]);
   // Gaps and bars compare every club to the 1st of the whole ranking, not of the filtered view.
@@ -168,7 +151,7 @@ export function TeamRankingTable({ results, category, search, movements, reveal 
   }
 
   return (
-    <section ref={sectionRef} aria-label="Classement complet" className="overflow-hidden rounded-lg bg-surface-raised shadow-card">
+    <section aria-label="Classement complet" className="overflow-hidden rounded-lg bg-surface-raised shadow-card">
       <table className="w-full table-fixed border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (

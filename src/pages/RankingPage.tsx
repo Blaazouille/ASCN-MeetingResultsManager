@@ -1,5 +1,5 @@
 /**
- * Responsabilité : écran de classement par équipes (ligne « Notre club », tableau, filtres, exports PDF/Excel, « Tout exporter »).
+ * Responsabilité : écran de classement par équipes (tableau, filtres, exports PDF/Excel, « Tout exporter »).
  * Appelé par : App.tsx (route "classement").
  * Suppression casserait : l'écran de classement, cœur de l'application.
  */
@@ -14,15 +14,12 @@ import { useCategoryChoice } from '@/hooks/use-selected-category';
 import { useRankingExport } from '@/hooks/use-ranking-export';
 import { useExportPack } from '@/hooks/use-export-pack';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
-import { useOurClub } from '@/hooks/use-our-club';
-import { computeClubSummary } from '@/lib/club-summary';
 import { findPodiumTies } from '@/lib/rank-ties';
 import { rankMovements } from '@/lib/import-diff';
 import { computeTeamRanking, countClubsBelowThreshold, resolveActiveCategories } from '@/lib/ranking-engine';
 import { categoryShortLabel, unrankedClubsLabel } from '@/lib/ui-labels';
 import { RankingToolbar } from '@/components/ranking/RankingToolbar';
 import { TieBanner } from '@/components/ranking/TieBanner';
-import { OurClubLine } from '@/components/ranking/OurClubLine';
 import { PodiumCards } from '@/components/ranking/PodiumCards';
 import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
@@ -34,7 +31,6 @@ import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavai
 export default function RankingPage(): JSX.Element {
   const { meetingState, categorySelection } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
-  const [reveal, setReveal] = useState<{ club: string } | null>(null);
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
   const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
@@ -67,12 +63,6 @@ export default function RankingPage(): JSX.Element {
     () => countClubsBelowThreshold(rows, category, minSwimmers),
     [rows, category, minSwimmers]
   );
-  const ourClub = useOurClub();
-  // Same category, top N and threshold as the table, so the line's gaps are the ones the table shows.
-  const clubSummary = useMemo(
-    () => computeClubSummary(rows, ourClub, { category, topN: ranking.topN, minSwimmers }),
-    [rows, ourClub, category, ranking.topN, minSwimmers]
-  );
 
   const meeting = meetingState.currentMeeting;
   if (!meeting) {
@@ -89,13 +79,6 @@ export default function RankingPage(): JSX.Element {
   }
 
   const clubCount = ranking.teamResults.length;
-
-  function showOurClub(club: string): void {
-    // A search for another club would hide our row; clear it so the row is there to unfold.
-    setSearch('');
-    // A new object each time: clicking again scrolls back to the row even if the club is the same.
-    setReveal({ club });
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,7 +112,6 @@ export default function RankingPage(): JSX.Element {
         onTopNChange={ranking.setTopN}
         search={search}
         onSearchChange={setSearch}
-        ourClub={clubSummary && <OurClubLine summary={clubSummary} onSelect={() => showOurClub(clubSummary.club)} />}
       />
       <ExportFeedback error={error} notice={notice} />
       <ExportPackFeedback outcome={pack.outcome} error={pack.error} onOpenFolder={() => void pack.openFolder()} />
@@ -145,7 +127,6 @@ export default function RankingPage(): JSX.Element {
         category={category}
         search={search}
         movements={movements}
-        reveal={reveal}
       />
     </div>
   );
