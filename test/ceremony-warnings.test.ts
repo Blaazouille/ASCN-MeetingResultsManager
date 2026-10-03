@@ -10,7 +10,8 @@ import { ceremonyWarnings, STALE_IMPORT_MINUTES } from '../src/lib/ceremony-warn
 
 const MIXTE = 'Classement Mixte';
 const DAMES = 'Classement Dames';
-const TEAMS_ONLY: CeremonyOptions = { blocks: ['team-ranking'], teamPlaces: 3 };
+const TEAMS_ONLY: CeremonyOptions = { blocks: ['team-ranking'], teamPlaces: 3, categories: [MIXTE, DAMES] };
+const BOTH = [MIXTE, DAMES];
 const IMPORTED_AT = '2026-11-16 14:00:00';
 const JUST_AFTER = new Date('2026-11-16T14:05:00Z');
 
@@ -24,13 +25,13 @@ describe('ceremonyWarnings', () => {
   it('reports nothing when there is nothing to settle', () => {
     const rows = [row(MIXTE, 'A', 300), row(MIXTE, 'B', 200)];
     const steps = buildCeremonyScript(MEETING, rows, TEAMS_ONLY);
-    expect(ceremonyWarnings(MEETING, rows, steps, JUST_AFTER)).toEqual([]);
+    expect(ceremonyWarnings(MEETING, rows, steps, BOTH, JUST_AFTER)).toEqual([]);
   });
 
   it('flags each tie on an announced place', () => {
     const rows = [row(MIXTE, 'A', 300), row(MIXTE, 'B', 200), row(MIXTE, 'C', 200)];
     const steps = buildCeremonyScript(MEETING, rows, TEAMS_ONLY);
-    const warnings = ceremonyWarnings(MEETING, rows, steps, JUST_AFTER);
+    const warnings = ceremonyWarnings(MEETING, rows, steps, BOTH, JUST_AFTER);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({ kind: 'tie', step: { rank: 2 } });
   });
@@ -39,15 +40,15 @@ describe('ceremonyWarnings', () => {
     const rows = [row(MIXTE, 'A', 300)];
     const steps = buildCeremonyScript(MEETING, rows, TEAMS_ONLY);
     const later = new Date('2026-11-16T14:45:00Z');
-    expect(ceremonyWarnings(MEETING, rows, steps, later)).toEqual([{ kind: 'stale-import', minutes: 45 }]);
-    expect(ceremonyWarnings({ ...MEETING, lastImportedAt: null }, rows, steps, later)).toEqual([]);
+    expect(ceremonyWarnings(MEETING, rows, steps, BOTH, later)).toEqual([{ kind: 'stale-import', minutes: 45 }]);
+    expect(ceremonyWarnings({ ...MEETING, lastImportedAt: null }, rows, steps, BOTH, later)).toEqual([]);
   });
 
   it('flags an active category missing from the data', () => {
     const meeting = { ...MEETING, activeCategories: [MIXTE, DAMES] };
     const rows = [row(MIXTE, 'A', 300)];
     const steps = buildCeremonyScript(meeting, rows, TEAMS_ONLY);
-    expect(ceremonyWarnings(meeting, rows, steps, JUST_AFTER)).toEqual([{ kind: 'empty-category', category: DAMES }]);
+    expect(ceremonyWarnings(meeting, rows, steps, BOTH, JUST_AFTER)).toEqual([{ kind: 'empty-category', category: DAMES }]);
   });
 
   it('flags a category where no ticked block has anything to announce', () => {
@@ -55,6 +56,14 @@ describe('ceremonyWarnings', () => {
     const meeting = { ...MEETING, minSwimmers: 2 };
     const rows = [row(MIXTE, 'A', 300), row(MIXTE, 'A', 200), row(DAMES, 'B', 100)];
     const steps = buildCeremonyScript(meeting, rows, TEAMS_ONLY);
-    expect(ceremonyWarnings(meeting, rows, steps, JUST_AFTER)).toEqual([{ kind: 'empty-category', category: DAMES }]);
+    expect(ceremonyWarnings(meeting, rows, steps, BOTH, JUST_AFTER)).toEqual([{ kind: 'empty-category', category: DAMES }]);
+  });
+
+  it('does not flag a category left out of the ceremony', () => {
+    // Same data as above, but only Mixte is announced: Dames having no team is not a problem then.
+    const meeting = { ...MEETING, minSwimmers: 2 };
+    const rows = [row(MIXTE, 'A', 300), row(MIXTE, 'A', 200), row(DAMES, 'B', 100)];
+    const steps = buildCeremonyScript(meeting, rows, { ...TEAMS_ONLY, categories: [MIXTE] });
+    expect(ceremonyWarnings(meeting, rows, steps, [MIXTE], JUST_AFTER)).toEqual([]);
   });
 });

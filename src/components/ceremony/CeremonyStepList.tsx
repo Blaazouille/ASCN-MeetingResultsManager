@@ -1,8 +1,9 @@
 /**
- * Responsabilité : liste latérale des annonces du déroulé (faite cochée, sautée signalée, courante en évidence, clic pour y aller).
+ * Responsabilité : liste latérale des annonces du déroulé (faite cochée, sautée signalée, courante en évidence et gardée visible, clic pour y aller).
  * Appelé par : CeremonyRun.tsx.
  * Suppression casserait : la vue d'ensemble de la progression pendant la cérémonie.
  */
+import { useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import { isStepDone, isStepSkipped, type CeremonyProgress } from '@/lib/ceremony-navigation';
@@ -16,6 +17,15 @@ export interface CeremonyStepListProps {
 }
 
 export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepListProps): JSX.Element {
+  const currentRef = useRef<HTMLButtonElement>(null);
+
+  // The list is taller than the screen past ~10 announcements: follow the
+  // current one. 'nearest' scrolls only when it is out of view, so clicking a
+  // visible row does not make the list jump.
+  useEffect(() => {
+    currentRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [progress.current]);
+
   return (
     <ol aria-label="Toutes les annonces" className="flex flex-col gap-1">
       {steps.map((step, index) => {
@@ -25,6 +35,7 @@ export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepList
         return (
           <li key={step.id}>
             <button
+              ref={current ? currentRef : undefined}
               type="button"
               onClick={() => onSelect(index)}
               aria-current={current ? 'step' : undefined}

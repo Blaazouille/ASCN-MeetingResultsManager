@@ -151,7 +151,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── club-summary-labels.ts # Textes de la carte « Notre club » (« 7e / 38 », « −154 pts pour la 6e place »…)
 │   │   ├── fun-awards.ts          # Prix rigolos du palmarès
 │   │   ├── ceremony-script.ts     # Déroulé de cérémonie (buildCeremonyScript) : annonces dans l'ordre, à rebours
-│   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre → options du déroulé
+│   │   ├── ceremony-plan.ts       # Préparation : blocs cochés et leur ordre, catégories annoncées (Mixte seul par défaut) → options du déroulé
 │   │   ├── ceremony-navigation.ts # Progression : annonce courante, annonces affichées/faites/sautées, filtre des raccourcis clavier
 │   │   ├── ceremony-session.ts    # Déroulé figé au lancement, relu depuis sessionStorage
 │   │   ├── ceremony-warnings.ts   # Points à vérifier avant la cérémonie (ex æquo, import ancien, catégorie vide)
@@ -213,7 +213,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ranking/               # TeamRankingTable, TeamRow, SwimmerDetail, CategoryTabs, RankingToolbar,
 │   │   │                          # PodiumCards, OurClubCard, ExportActions, ExportFeedback, ExportPackFeedback, ComparisonUnavailableNote,
 │   │   │                          # IndividualRankingTable, FunAwardsGrid
-│   │   ├── ceremony/              # CeremonyPreparation, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
+│   │   ├── ceremony/              # CeremonyPreparation, CeremonyCategoryPicker, CeremonyBlockList, CeremonyRun, CeremonyStepCard, CeremonyStepList, LeaveCeremonyDialog
 │   │   ├── settings/              # SettingsForm, OurClubSection, BackupSection, BackupConfigSection, UpdateSection
 │   │   └── ui/                    # Button, Segmented, SearchField, ImportPendingBadge, DemoBadge, RankChip, ClubTag,
 │   │                              # MovementBadge

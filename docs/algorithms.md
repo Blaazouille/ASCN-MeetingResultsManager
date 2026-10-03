@@ -110,7 +110,7 @@ Implémenté dans `src/lib/ceremony-script.ts` (`buildCeremonyScript(meeting, ro
 
 ```
 Pour chaque bloc coché, dans l'ordre choisi (défaut : Palmarès des rigolos, Prix individuels, Classement par équipes) :
-  Pour chaque catégorie active présente dans les données (resolveActiveCategories) :
+  Pour chaque catégorie cochée pour la cérémonie, parmi les catégories actives présentes dans les données (resolveActiveCategories), dans l'ordre d'import :
     - Palmarès des rigolos : computeFunAwards sur les lignes de la catégorie, une annonce par prix
     - Prix individuels : computeCategoryRanking, rangs 1 à INDIVIDUAL_PRIZE_COUNT (2)
     - Classement par équipes : computeTeamRanking (top N et seuil du meeting), rangs 1 à N (défaut 3)
@@ -119,4 +119,5 @@ Les annonces classées sont à rebours (3e, 2e, puis 1re) ; les résultats d'un 
 
 - Filtre sur le rang, pas sur la position : des ex æquo à la dernière place annoncée sont tous gardés.
 - Écart avec le suivant : points de l'annonce moins ceux du premier résultat classé en dessous ; absent s'il n'y a personne en dessous et pour les prix rigolos.
-- Points à vérifier (`ceremony-warnings.ts`) : chaque ex æquo d'une annonce classée, un dernier import de plus de 30 minutes (`STALE_IMPORT_MINUTES`), une catégorie active absente des données ou sans aucune annonce.
+- Catégories annoncées (`ceremony-plan.ts`) : `defaultCeremonyCategories` coche les catégories dont le nom contient « mixte » (casse ignorée), ou toutes s'il n'y en a aucune. `resolveCeremonyCategories` garde le choix du gérant parmi les catégories disponibles et revient au défaut si plus aucune n'y figure ; `toggleCeremonyCategory` ne décoche jamais la dernière. Sur le fichier de référence : 10 annonces en Mixte seul, 30 avec les trois catégories.
+- Points à vérifier (`ceremony-warnings.ts`) : chaque ex æquo d'une annonce classée, un dernier import de plus de 30 minutes (`STALE_IMPORT_MINUTES`), une catégorie active absente des données, une catégorie cochée sans aucune annonce (une catégorie non cochée n'est jamais signalée comme vide).

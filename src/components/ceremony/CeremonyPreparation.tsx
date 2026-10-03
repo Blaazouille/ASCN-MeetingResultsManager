@@ -1,5 +1,5 @@
 /**
- * Responsabilité : préparation de la cérémonie (blocs, places annoncées par équipes, points à vérifier, aperçu).
+ * Responsabilité : préparation de la cérémonie (catégories, blocs, places annoncées par équipes, points à vérifier, aperçu).
  * Appelé par : CeremonyPage.tsx.
  * Suppression casserait : la phase « avant la cérémonie » de l'écran Cérémonie.
  */
@@ -10,11 +10,15 @@ import type { CeremonyWarning } from '@/lib/ceremony-warnings';
 import { stepContext, stepCountLabel, stepHeading, warningLabel } from '@/lib/ceremony-labels';
 import { Segmented } from '@/components/ui/Segmented';
 import { CeremonyBlockList } from './CeremonyBlockList';
+import { CeremonyCategoryPicker } from './CeremonyCategoryPicker';
 
 /** Team places offered: the podium by default, more for meetings that reward further down. */
 const TEAM_PLACE_OPTIONS = [3, 5, 10].map((value) => ({ value, label: String(value) }));
 
 export interface CeremonyPreparationProps {
+  availableCategories: string[];
+  categories: string[];
+  onToggleCategory: (category: string) => void;
   plan: PlannedBlock[];
   onToggleBlock: (block: CeremonyBlock) => void;
   onMoveBlock: (index: number, delta: -1 | 1) => void;
@@ -35,10 +39,21 @@ export function CeremonyPreparation({
   onTeamPlacesChange,
   preview,
   warnings,
+  availableCategories,
+  categories,
+  onToggleCategory,
 }: CeremonyPreparationProps): JSX.Element {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-6">
       <div className="flex flex-col gap-6">
+        <section className={CARD}>
+          <h2 className={CARD_TITLE}>Catégories annoncées</h2>
+          <p className="text-[15px] text-ink-muted">
+            Les prix rigolos, les prix individuels et les équipes ne sont annoncés que pour les catégories cochées.
+          </p>
+          <CeremonyCategoryPicker available={availableCategories} selected={categories} onToggle={onToggleCategory} />
+        </section>
+
         <section className={CARD}>
           <h2 className={CARD_TITLE}>Ordre des annonces</h2>
           <p className="text-[15px] text-ink-muted">
