@@ -1,6 +1,6 @@
 /**
  * Responsabilité : donne à tout composant le nom de « Notre club » configuré dans Paramètres, et le met à jour partout quand il change.
- * Appelé par : RankingPage.tsx, Sidebar.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx, OurClubSection.tsx, SettingsPage.tsx, ImportPage.tsx et les hooks d'export.
+ * Appelé par : Sidebar.tsx, TeamRankingTable.tsx, IndividualRankingTable.tsx, CeremonyStepCard.tsx, OurClubSection.tsx, SettingsPage.tsx, ImportPage.tsx et les hooks d'export.
  * Suppression casserait : la mise en avant du club choisi (tableaux, exports, cérémonie, barre latérale).
  */
 import { useSyncExternalStore } from 'react';
