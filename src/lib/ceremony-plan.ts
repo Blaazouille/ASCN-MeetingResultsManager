@@ -1,7 +1,7 @@
 /**
- * Responsabilité : préparation de la cérémonie (blocs cochés et leur ordre), traduite en options du déroulé.
+ * Responsabilité : préparation de la cérémonie (blocs cochés et leur ordre, catégories annoncées), traduite en options du déroulé.
  * Appelé par : use-ceremony.ts et les tests.
- * Suppression casserait : le choix et le réordonnancement des blocs d'annonce sur l'écran Cérémonie.
+ * Suppression casserait : le choix des blocs, de leur ordre et des catégories annoncées sur l'écran Cérémonie.
  */
 import { CEREMONY_BLOCKS, type CeremonyBlock, type CeremonyOptions } from './ceremony-script';
 
@@ -27,7 +27,35 @@ export function moveBlock(plan: readonly PlannedBlock[], index: number, delta: -
   return next;
 }
 
-/** Options for buildCeremonyScript: the ticked blocks, in the planned order. */
-export function planToOptions(plan: readonly PlannedBlock[], teamPlaces: number): CeremonyOptions {
-  return { blocks: plan.filter((entry) => entry.enabled).map((entry) => entry.block), teamPlaces };
+/**
+ * Categories ticked when the screen opens: Mixte only, the only category the
+ * Meeting de la Mer actually rewards. Matched on the name (any case) since
+ * the file names it « Classement Mixte ». Without a Mixte category, nothing
+ * tells which one is rewarded, so every category is ticked.
+ */
+export function defaultCeremonyCategories(available: readonly string[]): string[] {
+  const mixte = available.filter((category) => category.toLowerCase().includes('mixte'));
+  return mixte.length > 0 ? mixte : [...available];
+}
+
+/**
+ * The categories actually announced, in `available` order. `chosen` is null
+ * until the manager ticks or unticks one. A choice that no longer matches any
+ * available category (data or Paramètres changed meanwhile) falls back to the
+ * default, so at least one category is always announced.
+ */
+export function resolveCeremonyCategories(available: readonly string[], chosen: readonly string[] | null): string[] {
+  const kept = chosen === null ? [] : available.filter((category) => chosen.includes(category));
+  return kept.length > 0 ? kept : defaultCeremonyCategories(available);
+}
+
+/** Ticks or unticks one category; the last ticked one stays ticked, as with the active categories in Paramètres. */
+export function toggleCeremonyCategory(selected: readonly string[], category: string): string[] {
+  if (!selected.includes(category)) return [...selected, category];
+  return selected.length === 1 ? [...selected] : selected.filter((entry) => entry !== category);
+}
+
+/** Options for buildCeremonyScript: the ticked blocks, in the planned order, for the ticked categories. */
+export function planToOptions(plan: readonly PlannedBlock[], teamPlaces: number, categories: string[]): CeremonyOptions {
+  return { blocks: plan.filter((entry) => entry.enabled).map((entry) => entry.block), teamPlaces, categories };
 }

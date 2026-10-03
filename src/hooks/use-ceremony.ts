@@ -1,13 +1,21 @@
 /**
- * Responsabilité : état de l'écran Cérémonie (préparation, déroulé figé, annonce courante, confirmation de sortie).
+ * Responsabilité : état de l'écran Cérémonie (préparation, catégories annoncées, déroulé figé, annonce courante, confirmation de sortie).
  * Appelé par : CeremonyPage.tsx.
  * Suppression casserait : l'écran Cérémonie.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
 import type { Meeting } from '@/lib/db';
-import { buildCeremonyScript, DEFAULT_TEAM_PLACES, type CeremonyBlock, type CeremonyStep } from '@/lib/ceremony-script';
-import { DEFAULT_PLAN, moveBlock, planToOptions, toggleBlock, type PlannedBlock } from '@/lib/ceremony-plan';
+import { buildCeremonyScript, ceremonyCategories, DEFAULT_TEAM_PLACES, type CeremonyBlock, type CeremonyStep } from '@/lib/ceremony-script';
+import {
+  DEFAULT_PLAN,
+  moveBlock,
+  planToOptions,
+  resolveCeremonyCategories,
+  toggleBlock,
+  toggleCeremonyCategory,
+  type PlannedBlock,
+} from '@/lib/ceremony-plan';
 import { goToStep, moveStep, START_PROGRESS, type CeremonyMove } from '@/lib/ceremony-navigation';
 import { parseCeremonyRun, type CeremonyRun } from '@/lib/ceremony-session';
 import { ceremonyWarnings, type CeremonyWarning } from '@/lib/ceremony-warnings';
@@ -41,6 +49,11 @@ export interface UseCeremonyResult {
   moveBlock: (index: number, delta: -1 | 1) => void;
   teamPlaces: number;
   setTeamPlaces: (places: number) => void;
+  /** Categories that can be announced: the meeting's active categories found in the data. */
+  availableCategories: string[];
+  /** Categories ticked for the ceremony (Mixte only by default); never empty while some are available. */
+  categories: string[];
+  toggleCategory: (category: string) => void;
   /** The script as it would be launched now, from the current data and plan. */
   preview: CeremonyStep[];
   warnings: CeremonyWarning[];
@@ -62,19 +75,29 @@ export interface UseCeremonyResult {
 export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): UseCeremonyResult {
   const [plan, setPlan] = useState<PlannedBlock[]>([...DEFAULT_PLAN]);
   const [teamPlaces, setTeamPlaces] = useState(DEFAULT_TEAM_PLACES);
+  // null until the manager touches a box: the default then follows the data,
+  // which loads after the first render. Kept in memory only, like the rest of
+  // the preparation; once launched, the run carries its own frozen steps.
+  const [chosenCategories, setChosenCategories] = useState<string[] | null>(null);
   const [storedRun, setStoredRun] = useState<CeremonyRun | null>(readStoredRun);
   // A run stored for another meeting is ignored, not shown under this one.
   const run = storedRun !== null && storedRun.meetingId === meeting?.id ? storedRun : null;
 
   useEffect(() => storeRun(storedRun), [storedRun]);
 
+  const availableCategories = useMemo(() => (meeting === null ? [] : ceremonyCategories(meeting, rows)), [meeting, rows]);
+  const categories = useMemo(
+    () => resolveCeremonyCategories(availableCategories, chosenCategories),
+    [availableCategories, chosenCategories]
+  );
+
   const preview = useMemo(
-    () => (meeting === null ? [] : buildCeremonyScript(meeting, rows, planToOptions(plan, teamPlaces))),
-    [meeting, rows, plan, teamPlaces]
+    () => (meeting === null ? [] : buildCeremonyScript(meeting, rows, planToOptions(plan, teamPlaces, categories))),
+    [meeting, rows, plan, teamPlaces, categories]
   );
   const warnings = useMemo(
-    () => (meeting === null ? [] : ceremonyWarnings(meeting, rows, preview, new Date())),
-    [meeting, rows, preview]
+    () => (meeting === null ? [] : ceremonyWarnings(meeting, rows, preview, categories, new Date())),
+    [meeting, rows, preview, categories]
   );
 
   const start = useCallback((): void => {
@@ -104,6 +127,12 @@ export function useCeremony(meeting: Meeting | null, rows: RawSwimmerRow[]): Use
     moveBlock: (index, delta) => setPlan((current) => moveBlock(current, index, delta)),
     teamPlaces,
     setTeamPlaces,
+    availableCategories,
+    categories,
+    // Toggled from what is shown (resolved), not from the raw choice, so the
+    // first click on a default box behaves exactly as it looks.
+    toggleCategory: (category) =>
+      setChosenCategories((current) => toggleCeremonyCategory(resolveCeremonyCategories(availableCategories, current), category)),
     preview,
     warnings,
     run,

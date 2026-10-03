@@ -71,6 +71,9 @@ export default function CeremonyPage(): JSX.Element {
           onTeamPlacesChange={ceremony.setTeamPlaces}
           preview={ceremony.preview}
           warnings={ceremony.warnings}
+          availableCategories={ceremony.availableCategories}
+          categories={ceremony.categories}
+          onToggleCategory={ceremony.toggleCategory}
         />
       ) : (
         <CeremonyRun

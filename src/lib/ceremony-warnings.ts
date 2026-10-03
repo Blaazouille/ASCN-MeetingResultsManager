@@ -1,11 +1,11 @@
 /**
- * Responsabilité : points à vérifier avant la cérémonie (ex æquo annoncés, import ancien, catégorie sans annonce).
+ * Responsabilité : points à vérifier avant la cérémonie (ex æquo annoncés, import ancien, catégorie cochée sans rien à annoncer ou absente du fichier).
  * Appelé par : use-ceremony.ts et les tests.
  * Suppression casserait : l'encart « À vérifier avant de commencer » de l'écran Cérémonie.
  */
 import type { RawSwimmerRow } from './csv-parser';
 import type { Meeting } from './db';
-import { ceremonyCategories, type CeremonyMeeting, type CeremonyStep } from './ceremony-script';
+import type { CeremonyMeeting, CeremonyStep } from './ceremony-script';
 import { parseSqliteTimestamp } from './export-data';
 
 export type CeremonyWarning =
@@ -20,14 +20,16 @@ export type CeremonyWarning =
 export const STALE_IMPORT_MINUTES = 30;
 
 /**
- * Everything the manager should settle before starting. Categories are
- * checked against the meeting settings, not just the data, so a category
- * ticked in Paramètres but missing from the file is flagged too.
+ * Everything the manager should settle before starting. `categories` are the
+ * ones chosen for the ceremony: a category left unticked is not announced, so
+ * it is never flagged as silent. Active categories missing from the file are
+ * still flagged whatever the choice: they hint at an incomplete import.
  */
 export function ceremonyWarnings(
   meeting: CeremonyMeeting & Pick<Meeting, 'lastImportedAt'>,
   rows: RawSwimmerRow[],
   steps: CeremonyStep[],
+  categories: string[],
   now: Date
 ): CeremonyWarning[] {
   const warnings: CeremonyWarning[] = steps
@@ -42,7 +44,12 @@ export function ceremonyWarnings(
   const present = new Set(rows.map((row) => row.name));
   const missing = (meeting.activeCategories ?? []).filter((category) => !present.has(category));
   // Only meaningful once a block is ticked: with nothing to announce, every category would be flagged.
-  const silent = steps.length === 0 ? [] : ceremonyCategories(meeting, rows).filter((category) => !steps.some((step) => step.category === category));
+  // `present` only guards a direct call of this pure function with a category absent from the file
+  // (already in `missing` when active): the screen passes resolved categories, always present.
+  const silent =
+    steps.length === 0
+      ? []
+      : categories.filter((category) => present.has(category) && !steps.some((step) => step.category === category));
   for (const category of [...missing, ...silent]) {
     warnings.push({ kind: 'empty-category', category });
   }

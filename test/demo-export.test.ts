@@ -74,7 +74,7 @@ describe('PDF exports of the training meeting', () => {
   });
 
   it('print the notice on the ceremony sheet, and not on a real meeting', async () => {
-    const steps = buildCeremonyScript(DEMO, ROWS, { blocks: ['individual-prizes'], teamPlaces: 3 });
+    const steps = buildCeremonyScript(DEMO, ROWS, { blocks: ['individual-prizes'], teamPlaces: 3, categories: [CATEGORY] });
 
     expect(await pdfText(await buildCeremonyPdfBlob(buildExportMeta(DEMO, DEFAULT_OUR_CLUB), steps))).toContain(DEMO_EXPORT_NOTICE);
     expect(await pdfText(await buildCeremonyPdfBlob(buildExportMeta(REAL, DEFAULT_OUR_CLUB), steps))).not.toContain('EXEMPLE');

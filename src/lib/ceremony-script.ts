@@ -24,6 +24,12 @@ export interface CeremonyOptions {
   blocks: CeremonyBlock[];
   /** Team places announced per category, from the Nth down to the 1st. */
   teamPlaces: number;
+  /**
+   * Categories chosen for the ceremony. Only those among ceremonyCategories
+   * are announced, in import order: a stale choice (a category since
+   * deactivated in Paramètres) can never sneak into the script.
+   */
+  categories: string[];
 }
 
 export interface CeremonyWinner {
@@ -152,12 +158,13 @@ export function ceremonyCategories(meeting: CeremonyMeeting, rows: RawSwimmerRow
 
 /**
  * The full announcement script: each enabled block in the chosen order, and
- * within a block each active category in turn. No ranking logic of its own:
+ * within a block each chosen category in turn. No ranking logic of its own:
  * every step comes from the same functions as the Classement, Individuels and
  * Palmarès screens, so the ceremony can never disagree with them.
  */
 export function buildCeremonyScript(meeting: CeremonyMeeting, rows: RawSwimmerRow[], options: CeremonyOptions): CeremonyStep[] {
-  const categories = ceremonyCategories(meeting, rows);
+  const chosen = new Set(options.categories);
+  const categories = ceremonyCategories(meeting, rows).filter((category) => chosen.has(category));
   return options.blocks.flatMap((block) =>
     categories.flatMap((category) => BLOCK_BUILDERS[block](rows, category, meeting, options))
   );
