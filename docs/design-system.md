@@ -59,7 +59,7 @@ Vérifié par `test/design-tokens.test.ts`, qui calcule le ratio de contraste de
 | `Button` | Bouton d'action — variantes `primary` (une seule par écran), `secondary`, `ghost` ; tailles `md`/`lg` |
 | `ClubTag` | Étiquette « Notre club » accolée au club choisi dans Paramètres (AS Cherbourg Natation par défaut) dans les classements |
 | `RankChip` | Numéro de rang, aux couleurs de la médaille pour les trois premiers (chiffres `ink`, jamais blancs) |
-| `SearchField` | Champ de recherche avec loupe, filtre à la frappe |
+| `SearchField` | Champ de recherche avec loupe, filtre à la frappe ; occupe la largeur de son conteneur, 300 px au plus |
 | `Segmented` | Sélecteur « une option parmi quelques-unes » toujours visible (catégorie, nageurs comptés) |
 | `MovementBadge` | Mouvement de rang depuis le dernier import : `↑2` en `success`, `↓1` en `corail-strong`, pastille « + » `bassin-strong` sur `bassin-soft` pour une entrée nouvelle (infobulle) ; la flèche et le chiffre portent le sens, la couleur ne fait que le renforcer |
 | `ImportPendingBadge` | Pastille « À importer » d'un meeting sans résultat importé |
