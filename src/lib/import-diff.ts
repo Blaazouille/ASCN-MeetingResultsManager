@@ -4,7 +4,7 @@
  * Suppression casserait : les flèches de mouvement et le résumé « Depuis l'import de… ».
  */
 import type { RawSwimmerRow } from './csv-parser';
-import { computeTeamRanking } from './ranking-engine';
+import { computeTeamRanking, resolveActiveCategories } from './ranking-engine';
 import { defaultCategory } from './category-selection';
 
 /** Places gained (> 0) or lost (< 0) since the previous import, or 'new' for an entry that wasn't ranked before. Stable entries have none. */
@@ -49,13 +49,21 @@ export interface ImportChanges {
   removedSwimmers: number;
   /** Results (one per swimmer and category) present before and after with different points. */
   changedResults: number;
-  /** Clubs whose rank moved (or that appeared) in the default category, with the meeting's own top N. */
+  /** Clubs whose rank moved (or that appeared) in `clubsMovedCategory`, with the meeting's own top N. */
   clubsMoved: number;
+  /**
+   * Category the club moves are counted in: the one the Classement screen opens on (Mixte among the
+   * active categories, otherwise the first). Named in the summary, and selected by its « Voir le classement »
+   * link, so the volunteer sees exactly the moves announced.
+   */
+  clubsMovedCategory: string;
 }
 
 export interface ImportChangesParams {
   topN: number;
   minSwimmers?: number;
+  /** The meeting's active categories (null = all), so the moves are counted in a category the Classement offers. */
+  activeCategories: string[] | null;
 }
 
 export function summarizeImportChanges(
@@ -68,7 +76,7 @@ export function summarizeImportChanges(
   const resultKey = (row: RawSwimmerRow): string => `${row.name}|${swimmerIdentity(row)}`;
   const previousPoints = new Map(previous.map((row) => [resultKey(row), row.points]));
 
-  const category = defaultCategory([...new Set(current.map((row) => row.name))]);
+  const category = defaultCategory(resolveActiveCategories([...new Set(current.map((row) => row.name))], params.activeCategories));
   const rankingParams = { category, topN: params.topN, minSwimmers: params.minSwimmers };
   const clubMovements = rankMovements(
     computeTeamRanking(previous, rankingParams),
@@ -84,9 +92,10 @@ export function summarizeImportChanges(
       return was !== undefined && was !== row.points;
     }).length,
     clubsMoved: clubMovements.size,
+    clubsMovedCategory: category,
   };
 }
 
 export function hasChanges(changes: ImportChanges): boolean {
-  return Object.values(changes).some((count) => count > 0);
+  return changes.addedSwimmers + changes.removedSwimmers + changes.changedResults + changes.clubsMoved > 0;
 }

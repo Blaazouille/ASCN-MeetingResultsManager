@@ -1,16 +1,23 @@
 /**
  * Responsabilité : règles de la catégorie affichée, partagée par Classement, Individuels et Palmarès
  * (catégorie par défaut, sélection encore proposée ou non).
- * Appelé par : use-selected-category.ts, import-diff.ts (catégorie du résumé de réimport) et les tests.
+ * Appelé par : use-selected-category.ts, import-diff.ts (catégorie du résumé de réimport),
+ * ceremony-plan.ts (isMixteCategory) et les tests.
  * Suppression casserait : le choix de la catégorie à l'ouverture d'un meeting et après un changement des catégories actives.
  */
 
 /**
- * The category shown when nothing valid is selected: the first one whose name contains « Mixte »
- * (any case, the FFN label is the only thing that tells it apart), otherwise the first one offered ('' when none).
+ * True for the Mixte category, the one the Meeting de la Mer rewards. Matched on the name, any case:
+ * the FFN label (« Classement Mixte ») is the only thing that tells it apart. One rule for every screen,
+ * the Cérémonie included, so they never disagree on which category is Mixte.
  */
-export function defaultCategory(categories: string[]): string {
-  return categories.find((category) => /mixte/i.test(category)) ?? categories[0] ?? '';
+export function isMixteCategory(category: string): boolean {
+  return /mixte/i.test(category);
+}
+
+/** The category shown when nothing valid is selected: Mixte when offered, otherwise the first one offered ('' when none). */
+export function defaultCategory(categories: readonly string[]): string {
+  return categories.find(isMixteCategory) ?? categories[0] ?? '';
 }
 
 /** The category to display: the volunteer's choice while it is still offered, otherwise the default rule. */

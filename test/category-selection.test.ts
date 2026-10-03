@@ -3,9 +3,21 @@
  * Mixte par défaut, sinon la première catégorie proposée ; retour au défaut quand le choix n'est plus proposé.
  */
 import { describe, expect, it } from 'vitest';
-import { defaultCategory, isStaleSelection, resolveCategory } from '../src/lib/category-selection';
+import { defaultCategory, isMixteCategory, isStaleSelection, resolveCategory } from '../src/lib/category-selection';
 
 const ALL = ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'];
+
+describe('isMixteCategory', () => {
+  it('recognises Mixte by its name, whatever the case', () => {
+    expect(isMixteCategory('Classement Mixte')).toBe(true);
+    expect(isMixteCategory('CLASSEMENT MIXTE')).toBe(true);
+  });
+
+  it('rejects the other categories', () => {
+    expect(isMixteCategory('Classement Dames')).toBe(false);
+    expect(isMixteCategory('Classement Messieurs')).toBe(false);
+  });
+});
 
 describe('defaultCategory', () => {
   it('opens on Mixte when it is offered, even if it is not first', () => {

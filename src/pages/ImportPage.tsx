@@ -29,7 +29,7 @@ import { useOurClub } from '@/hooks/use-our-club';
 const ENCODING_LABELS = { latin1: 'ISO-8859-1', 'utf-8': 'UTF-8' } as const;
 
 export default function ImportPage(): JSX.Element {
-  const { importState, meetingState } = useOutletContext<AppOutletContext>();
+  const { importState, meetingState, categorySelection } = useOutletContext<AppOutletContext>();
   const { result, fileName, error, errorId, outcome, setOutcome, pending, setPending, handleFileAccepted, handleFileRejected } = importState;
   const { isPersisting, setIsPersisting, persistError, setPersistError, clearError, beginRun, reset: resetImport } = importState;
   const { refresh } = meetingState;
@@ -77,6 +77,7 @@ export default function ImportPage(): JSX.Element {
           const summary = summarizeImportChanges(snapshot.rows, current, {
             topN: meeting.defaultTopN,
             minSwimmers: meeting.minSwimmers,
+            activeCategories: meeting.activeCategories,
           });
           changes = { since: snapshot.importedAt, summary };
         }
@@ -209,7 +210,7 @@ export default function ImportPage(): JSX.Element {
             </Button>
           </div>
 
-          {isDone && outcome?.changes && <ImportChanges since={outcome.changes.since} changes={outcome.changes.summary} />}
+          {isDone && outcome?.changes && <ImportChanges since={outcome.changes.since} changes={outcome.changes.summary} onShowRanking={categorySelection.select} />}
 
           <div className="grid grid-cols-3 gap-4">
             <StatTile value={result.swimmerCount} label="nageurs" />

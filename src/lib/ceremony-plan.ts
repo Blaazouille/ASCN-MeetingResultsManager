@@ -4,6 +4,7 @@
  * Suppression casserait : le choix des blocs, de leur ordre et des catégories annoncées sur l'écran Cérémonie.
  */
 import { CEREMONY_BLOCKS, type CeremonyBlock, type CeremonyOptions } from './ceremony-script';
+import { isMixteCategory } from './category-selection';
 
 export interface PlannedBlock {
   block: CeremonyBlock;
@@ -29,12 +30,12 @@ export function moveBlock(plan: readonly PlannedBlock[], index: number, delta: -
 
 /**
  * Categories ticked when the screen opens: Mixte only, the only category the
- * Meeting de la Mer actually rewards. Matched on the name (any case) since
- * the file names it « Classement Mixte ». Without a Mixte category, nothing
+ * Meeting de la Mer actually rewards (same rule as the result screens,
+ * isMixteCategory). Without a Mixte category, nothing
  * tells which one is rewarded, so every category is ticked.
  */
 export function defaultCeremonyCategories(available: readonly string[]): string[] {
-  const mixte = available.filter((category) => category.toLowerCase().includes('mixte'));
+  const mixte = available.filter(isMixteCategory);
   return mixte.length > 0 ? mixte : [...available];
 }
 
