@@ -32,7 +32,8 @@ export function CeremonyStepList({ steps, progress, onSelect, scrollContainerRef
     if (container === null || item === null) return;
     const itemRect = item.getBoundingClientRect();
     const containerTop = container.getBoundingClientRect().top + container.clientTop;
-    container.scrollTop = nearestScrollTop({
+    // Back on the first announcement, show the top of the box too (the « Déroulé » title above the list).
+    container.scrollTop = progress.current === 0 ? 0 : nearestScrollTop({
       scrollTop: container.scrollTop,
       viewHeight: container.clientHeight,
       itemTop: itemRect.top - containerTop + container.scrollTop,
