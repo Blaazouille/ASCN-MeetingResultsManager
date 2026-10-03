@@ -44,7 +44,8 @@ export function ceremonyWarnings(
   const present = new Set(rows.map((row) => row.name));
   const missing = (meeting.activeCategories ?? []).filter((category) => !present.has(category));
   // Only meaningful once a block is ticked: with nothing to announce, every category would be flagged.
-  // A chosen category absent from the file is already in `missing` when active; never flag it twice.
+  // `present` only guards a direct call of this pure function with a category absent from the file
+  // (already in `missing` when active): the screen passes resolved categories, always present.
   const silent =
     steps.length === 0
       ? []

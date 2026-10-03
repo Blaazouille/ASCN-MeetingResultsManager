@@ -15,9 +15,13 @@ export interface CeremonyCategoryPickerProps {
 }
 
 export function CeremonyCategoryPicker({ available, selected, onToggle }: CeremonyCategoryPickerProps): JSX.Element {
-  const onlyOneLeft = selected.length === 1 && available.length > 1;
+  // Also true when the meeting has a single category: the box is then locked and explained the same way.
+  const onlyOneLeft = selected.length === 1;
   return (
-    <div className="flex flex-col gap-2">
+    // fieldset + legend so a screen reader announces the boxes as one group; the
+    // legend is hidden because the card title above already says it on screen.
+    <fieldset className="flex flex-col gap-2">
+      <legend className="sr-only">Catégories annoncées</legend>
       <ul className="flex flex-wrap gap-2">
         {available.map((category) => {
           const isChecked = selected.includes(category);
@@ -46,6 +50,6 @@ export function CeremonyCategoryPicker({ available, selected, onToggle }: Ceremo
         })}
       </ul>
       {onlyOneLeft && <p className="text-sm text-ink-muted">Au moins une catégorie doit rester cochée.</p>}
-    </div>
+    </fieldset>
   );
 }

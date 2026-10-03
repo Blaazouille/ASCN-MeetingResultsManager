@@ -3,6 +3,7 @@
  * Appelé par : CeremonyPage.tsx.
  * Suppression casserait : la phase « pendant la cérémonie » de l'écran Cérémonie.
  */
+import { useRef } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { CeremonyRun as CeremonyRunState } from '@/lib/ceremony-session';
 import { doneCount, type CeremonyMove } from '@/lib/ceremony-navigation';
@@ -26,6 +27,7 @@ export function CeremonyRun({ run, hasNewerData, onStep, onGoTo }: CeremonyRunPr
   const isLast = progress.current === total - 1;
   const done = doneCount(progress, total);
   const step = steps[progress.current]!;
+  const listBoxRef = useRef<HTMLElement>(null);
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_320px] items-start gap-6">
@@ -84,9 +86,9 @@ export function CeremonyRun({ run, hasNewerData, onStep, onGoTo }: CeremonyRunPr
         </div>
       </div>
 
-      <aside className="flex max-h-[calc(100vh-12rem)] flex-col gap-3 overflow-y-auto rounded-xl bg-surface-raised p-3 shadow-card">
+      <aside ref={listBoxRef} className="flex max-h-[calc(100vh-12rem)] flex-col gap-3 overflow-y-auto rounded-xl bg-surface-raised p-3 shadow-card">
         <span className="px-3 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-ink-muted">Déroulé</span>
-        <CeremonyStepList steps={steps} progress={progress} onSelect={onGoTo} />
+        <CeremonyStepList steps={steps} progress={progress} onSelect={onGoTo} scrollContainerRef={listBoxRef} />
       </aside>
     </div>
   );

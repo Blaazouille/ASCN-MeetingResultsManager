@@ -157,6 +157,7 @@ La fenêtre principale (`BrowserWindow`) est configurée avec `autoHideMenuBar: 
 │   │   ├── ceremony-warnings.ts   # Points à vérifier avant la cérémonie (ex æquo, import ancien, catégorie vide)
 │   │   ├── ceremony-labels.ts     # Textes du déroulé (intitulés, progression, écarts, alertes)
 │   │   ├── ceremony-pdf-export.tsx # Fiche de proclamation PDF (même déroulé que l'écran)
+│   │   ├── nearest-scroll.ts      # Défilement minimal d'un conteneur vers un élément (liste « Déroulé » de la cérémonie)
 │   │   ├── db-schema.ts           # Schéma SQLite et migrations
 │   │   ├── db.ts                  # Opérations CRUD SQLite
 │   │   ├── app-settings.ts        # Réglages globaux (table app_setting) : « Notre club »
