@@ -20,6 +20,7 @@ describe('buildCeremonyPdfBlob', () => {
     const steps = buildCeremonyScript({ activeCategories: null, defaultTopN: 5, minSwimmers: 0 }, rows, {
       blocks: ['fun-awards', 'individual-prizes', 'team-ranking'],
       teamPlaces: 3,
+      categories: ['Classement Dames', 'Classement Messieurs', 'Classement Mixte'],
     });
 
     const blob = await buildCeremonyPdfBlob(META, steps);
@@ -38,6 +39,7 @@ describe('buildCeremonyPdfBlob', () => {
     const steps = buildCeremonyScript({ activeCategories: ['Classement Mixte'], defaultTopN: 5, minSwimmers: 0 }, rows, {
       blocks: ['team-ranking'],
       teamPlaces: 5,
+      categories: ['Classement Mixte'],
     });
 
     const byDefault = await pdfText(await buildCeremonyPdfBlob(META, steps));

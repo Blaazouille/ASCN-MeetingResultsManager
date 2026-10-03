@@ -1,21 +1,46 @@
 /**
- * Responsabilité : liste latérale des annonces du déroulé (faite cochée, sautée signalée, courante en évidence, clic pour y aller).
+ * Responsabilité : liste latérale des annonces du déroulé (faite cochée, sautée signalée, courante en évidence et gardée visible, clic pour y aller).
  * Appelé par : CeremonyRun.tsx.
  * Suppression casserait : la vue d'ensemble de la progression pendant la cérémonie.
  */
+import { useEffect, useRef, type RefObject } from 'react';
 import { Check } from 'lucide-react';
 import type { CeremonyStep } from '@/lib/ceremony-script';
 import { isStepDone, isStepSkipped, type CeremonyProgress } from '@/lib/ceremony-navigation';
 import { stepContext, stepHeading } from '@/lib/ceremony-labels';
+import { nearestScrollTop } from '@/lib/nearest-scroll';
 import { cn } from '@/lib/utils';
 
 export interface CeremonyStepListProps {
   steps: CeremonyStep[];
   progress: CeremonyProgress;
   onSelect: (index: number) => void;
+  /** The scrollable box holding the list: the only thing scrolled to follow the current announcement. */
+  scrollContainerRef: RefObject<HTMLElement>;
 }
 
-export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepListProps): JSX.Element {
+export function CeremonyStepList({ steps, progress, onSelect, scrollContainerRef }: CeremonyStepListProps): JSX.Element {
+  const currentRef = useRef<HTMLButtonElement>(null);
+
+  // The list is taller than the screen past ~10 announcements: follow the
+  // current one. Only the list box scrolls, never the page (see
+  // nearestScrollTop), and only when the row is out of view, so clicking a
+  // visible row does not make the list jump.
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const item = currentRef.current;
+    if (container === null || item === null) return;
+    const itemRect = item.getBoundingClientRect();
+    const containerTop = container.getBoundingClientRect().top + container.clientTop;
+    // Back on the first announcement, show the top of the box too (the « Déroulé » title above the list).
+    container.scrollTop = progress.current === 0 ? 0 : nearestScrollTop({
+      scrollTop: container.scrollTop,
+      viewHeight: container.clientHeight,
+      itemTop: itemRect.top - containerTop + container.scrollTop,
+      itemHeight: itemRect.height,
+    });
+  }, [progress.current, scrollContainerRef]);
+
   return (
     <ol aria-label="Toutes les annonces" className="flex flex-col gap-1">
       {steps.map((step, index) => {
@@ -25,6 +50,7 @@ export function CeremonyStepList({ steps, progress, onSelect }: CeremonyStepList
         return (
           <li key={step.id}>
             <button
+              ref={current ? currentRef : undefined}
               type="button"
               onClick={() => onSelect(index)}
               aria-current={current ? 'step' : undefined}
