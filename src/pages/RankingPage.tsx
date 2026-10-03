@@ -10,6 +10,7 @@ import type { AppOutletContext } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMeetingRows } from '@/hooks/use-meeting-rows';
 import { useRanking } from '@/hooks/use-ranking';
+import { useCategoryChoice } from '@/hooks/use-selected-category';
 import { useRankingExport } from '@/hooks/use-ranking-export';
 import { useExportPack } from '@/hooks/use-export-pack';
 import { usePreviousRows } from '@/hooks/use-previous-rows';
@@ -31,7 +32,7 @@ import { Button } from '@/components/ui/Button';
 import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
 
 export default function RankingPage(): JSX.Element {
-  const { meetingState } = useOutletContext<AppOutletContext>();
+  const { meetingState, categorySelection } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
   const [reveal, setReveal] = useState<{ club: string } | null>(null);
 
@@ -42,7 +43,8 @@ export default function RankingPage(): JSX.Element {
     [presentCategories, meetingState.currentMeeting]
   );
   const minSwimmers = meetingState.currentMeeting?.minSwimmers ?? 0;
-  const ranking = useRanking(rows, categories, {
+  const { category, setCategory } = useCategoryChoice(categorySelection, categories);
+  const ranking = useRanking(rows, category, {
     initialTopN: meetingState.currentMeeting?.defaultTopN,
     minSwimmers,
   });
@@ -54,22 +56,22 @@ export default function RankingPage(): JSX.Element {
     () =>
       previousRows &&
       rankMovements(
-        computeTeamRanking(previousRows, { category: ranking.category, topN: ranking.topN, minSwimmers }),
+        computeTeamRanking(previousRows, { category, topN: ranking.topN, minSwimmers }),
         ranking.teamResults,
         (team) => team.club
       ),
-    [previousRows, ranking.category, ranking.topN, ranking.teamResults, minSwimmers]
+    [previousRows, category, ranking.topN, ranking.teamResults, minSwimmers]
   );
   // computeTeamRanking drops these clubs silently: say so, or a volunteer looks for a club that seems lost.
   const unrankedCount = useMemo(
-    () => countClubsBelowThreshold(rows, ranking.category, minSwimmers),
-    [rows, ranking.category, minSwimmers]
+    () => countClubsBelowThreshold(rows, category, minSwimmers),
+    [rows, category, minSwimmers]
   );
   const ourClub = useOurClub();
   // Same category, top N and threshold as the table, so the line's gaps are the ones the table shows.
   const clubSummary = useMemo(
-    () => computeClubSummary(rows, ourClub, { category: ranking.category, topN: ranking.topN, minSwimmers }),
-    [rows, ourClub, ranking.category, ranking.topN, minSwimmers]
+    () => computeClubSummary(rows, ourClub, { category, topN: ranking.topN, minSwimmers }),
+    [rows, ourClub, category, ranking.topN, minSwimmers]
   );
 
   const meeting = meetingState.currentMeeting;
@@ -100,7 +102,7 @@ export default function RankingPage(): JSX.Element {
       <PageHeader
         overline={meeting.name}
         title="Classement par équipes"
-        subtitle={`${categoryShortLabel(ranking.category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
+        subtitle={`${categoryShortLabel(category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
         actions={
           <>
             {/* Secondary: the end-of-meeting pack (every active category, top N shown here), see use-export-pack.ts. */}
@@ -113,16 +115,16 @@ export default function RankingPage(): JSX.Element {
             </Button>
             <ExportActions
               disabled={isExporting}
-              onExcel={() => exportExcel(meeting, ranking.category, ranking.teamResults)}
-              onPdf={() => exportPdf(meeting, ranking.category, ranking.teamResults)}
+              onExcel={() => exportExcel(meeting, category, ranking.teamResults)}
+              onPdf={() => exportPdf(meeting, category, ranking.teamResults)}
             />
           </>
         }
       />
       <RankingToolbar
         categories={categories}
-        category={ranking.category}
-        onCategoryChange={ranking.setCategory}
+        category={category}
+        onCategoryChange={setCategory}
         topN={ranking.topN}
         onTopNChange={ranking.setTopN}
         search={search}
@@ -136,11 +138,11 @@ export default function RankingPage(): JSX.Element {
       )}
       <ComparisonUnavailableNote show={previousRowsFailed} />
       {/* The tie banner stays right above the podium it is about. */}
-      <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={ranking.category} />
+      <TieBanner ranks={findPodiumTies(ranking.teamResults, 3)} category={category} />
       <PodiumCards results={ranking.teamResults} />
       <TeamRankingTable
         results={ranking.teamResults}
-        category={ranking.category}
+        category={category}
         search={search}
         movements={movements}
         reveal={reveal}

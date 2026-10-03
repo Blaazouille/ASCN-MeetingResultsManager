@@ -62,7 +62,9 @@ Résultat `null` si le club n'a aucun nageur dans le meeting : la ligne n'est pa
 
 ## Catégories actives
 
-`resolveActiveCategories(present, active)` détermine les catégories proposées par l'écran Classement : l'intersection entre `present` (catégories réellement présentes dans les données importées) et `active` (catégories configurées dans Paramètres). `active === null` signifie « toutes actives ». Si l'intersection est vide, retombe sur toutes les catégories présentes pour ne jamais laisser un meeting sans catégorie sélectionnable.
+`resolveActiveCategories(present, active)` détermine les catégories proposées par les écrans Classement, Individuels et Palmarès : l'intersection entre `present` (catégories réellement présentes dans les données importées) et `active` (catégories configurées dans Paramètres). `active === null` signifie « toutes actives ». Si l'intersection est vide, retombe sur toutes les catégories présentes pour ne jamais laisser un meeting sans catégorie sélectionnable.
+
+La catégorie affichée, commune à ces trois écrans, suit `src/lib/category-selection.ts` : `defaultCategory(categories)` renvoie la première catégorie dont le nom contient « Mixte » (insensible à la casse), sinon la première proposée (`''` si aucune) ; `resolveCategory(selected, categories)` garde le choix du bénévole tant qu'il est proposé, sinon applique `defaultCategory` ; `isStaleSelection` dit quand oublier ce choix (plus proposé, alors que la liste n'est pas vide : une liste vide veut dire « encore en chargement »). Le résumé de réimport (`summarizeImportChanges`) compte les clubs qui ont bougé dans `defaultCategory` des catégories du fichier.
 
 ## Classement individuel
 

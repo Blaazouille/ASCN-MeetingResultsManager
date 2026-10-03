@@ -1,11 +1,11 @@
 /**
- * Responsabilité : état de la catégorie/top N sélectionnés et calcul du classement dérivé.
+ * Responsabilité : état du top N sélectionné et calcul du classement par équipes de la catégorie affichée.
  * Appelé par : RankingPage.tsx.
  * Suppression casserait : l'affichage et le filtrage du classement par équipes.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { RawSwimmerRow } from '@/lib/csv-parser';
-import { computeTeamRanking, pickDefaultCategory, type TeamResult } from '@/lib/ranking-engine';
+import { computeTeamRanking, type TeamResult } from '@/lib/ranking-engine';
 
 export const TOP_N_OPTIONS = [3, 5, 7, 10] as const;
 export type TopN = (typeof TOP_N_OPTIONS)[number];
@@ -13,26 +13,11 @@ export type TopN = (typeof TOP_N_OPTIONS)[number];
 const DEFAULT_TOP_N: TopN = 5;
 
 export interface UseRankingResult {
-  category: string;
-  setCategory: (category: string) => void;
   topN: TopN;
   setTopN: (topN: TopN) => void;
   teamResults: TeamResult[];
 }
 
-/**
- * Owns the category/topN selection for the ranking screen and derives the
- * team ranking from it. Defaults to "Classement Mixte" when present in the
- * imported categories, otherwise the first available category.
- *
- * `categories` can be empty on the first render (e.g. the historique path,
- * where rows are still being fetched from the DB) and only become populated
- * on a later render once they arrive. An effect re-adopts the default
- * category whenever that happens, or whenever `categories` changes to a set
- * that no longer contains the current selection (e.g. switching to another
- * meeting with different categories) — otherwise `category` would latch
- * onto `''` (or a stale value) and never recover.
- */
 export interface UseRankingOptions {
   /** Initial Top N value, from the meeting's saved default (falls back to 5 if not one of TOP_N_OPTIONS). */
   initialTopN?: number;
@@ -40,28 +25,23 @@ export interface UseRankingOptions {
   minSwimmers?: number;
 }
 
+/**
+ * Owns the top N selection for the ranking screen and derives the team ranking of `category`.
+ * The category is not owned here: it is shared with Individuels and Palmarès (use-selected-category.ts).
+ */
 export function useRanking(
   rows: RawSwimmerRow[],
-  categories: string[],
+  category: string,
   options: UseRankingOptions = {}
 ): UseRankingResult {
-  const [category, setCategory] = useState<string>(pickDefaultCategory(categories));
   const initialTopN = (TOP_N_OPTIONS as readonly number[]).includes(options.initialTopN ?? -1)
     ? (options.initialTopN as TopN)
     : DEFAULT_TOP_N;
   const [topN, setTopN] = useState<TopN>(initialTopN);
 
-  useEffect(() => {
-    if (categories.length === 0 || categories.includes(category)) {
-      return;
-    }
-    setCategory(pickDefaultCategory(categories));
-  }, [categories, category]);
-
   // Re-adopts the meeting's default top N when it changes (e.g. switching to
-  // another meeting without this hook's owning component unmounting) — same
-  // "stale state on prop change" concern as the category effect above, but
-  // for topN there's no invalid-value case to guard, just a value to re-sync.
+  // another meeting without this hook's owning component unmounting): state
+  // initialised from a prop would otherwise keep the previous meeting's value.
   useEffect(() => {
     setTopN(initialTopN);
   }, [initialTopN]);
@@ -71,5 +51,5 @@ export function useRanking(
     [rows, category, topN, options.minSwimmers]
   );
 
-  return { category, setCategory, topN, setTopN, teamResults };
+  return { topN, setTopN, teamResults };
 }

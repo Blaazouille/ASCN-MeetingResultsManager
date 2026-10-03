@@ -4,7 +4,8 @@
  * Suppression casserait : les flèches de mouvement et le résumé « Depuis l'import de… ».
  */
 import type { RawSwimmerRow } from './csv-parser';
-import { computeTeamRanking, pickDefaultCategory } from './ranking-engine';
+import { computeTeamRanking } from './ranking-engine';
+import { defaultCategory } from './category-selection';
 
 /** Places gained (> 0) or lost (< 0) since the previous import, or 'new' for an entry that wasn't ranked before. Stable entries have none. */
 export type Movement = number | 'new';
@@ -67,7 +68,7 @@ export function summarizeImportChanges(
   const resultKey = (row: RawSwimmerRow): string => `${row.name}|${swimmerIdentity(row)}`;
   const previousPoints = new Map(previous.map((row) => [resultKey(row), row.points]));
 
-  const category = pickDefaultCategory([...new Set(current.map((row) => row.name))]);
+  const category = defaultCategory([...new Set(current.map((row) => row.name))]);
   const rankingParams = { category, topN: params.topN, minSwimmers: params.minSwimmers };
   const clubMovements = rankMovements(
     computeTeamRanking(previous, rankingParams),

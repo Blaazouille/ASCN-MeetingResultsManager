@@ -36,13 +36,17 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 - Avertissements et détails techniques (encodage, délimiteur, nombre de lignes) repliés dans un `<details>`, fermé par défaut.
 - Persistance des lignes parsées en base via IPC (`insertSwimmerResults`).
 
+## Catégorie affichée (Classement, Individuels, Palmarès)
+
+Les trois écrans de résultats partagent **une seule catégorie sélectionnée** : choisir « Dames » sur l'un l'affiche aussi sur les deux autres. Ils proposent les mêmes catégories, les catégories actives de Paramètres présentes dans les données (`resolveActiveCategories`). À l'ouverture d'un meeting, la catégorie est Mixte (nom contenant « Mixte », sans tenir compte de la casse) si elle est proposée, sinon la première proposée (`defaultCategory`). Changer de meeting revient à cette règle, de même qu'une catégorie choisie qui n'est plus proposée (catégories actives modifiées, réimport sans elle). Le choix vit tant que l'app reste ouverte : un redémarrage revient à Mixte. La Cérémonie garde sa propre sélection, indépendante.
+
 ## Classement (`/classement`)
 
 - `PageHeader` avec les exports en actions : bouton « Tout exporter » (secondaire), bouton Excel (secondaire) et bouton PDF (principal).
 - « Tout exporter » (pack de fin de meeting) : une boîte de dialogue propose `Documents/MDLM Ranking/Exports` (le bénévole peut choisir un autre dossier), puis l'app crée `<nom du meeting> – <AAAA-MM-JJ>` (ou « (2) » s'il existe déjà) avec `Classement équipes – Complet.pdf`, `Classement équipes.xlsx` (une feuille par catégorie), `Classement individuel – Complet.pdf`, `Classement individuel.xlsx` et `Palmarès.pdf`, pour toutes les catégories actives et le top N affiché. Le compte rendu (`ExportPackFeedback`) dit si tout est enregistré (fond vert) ou liste les fichiers non créés avec leur cause (fond orangé), affiche le chemin du dossier et propose « Ouvrir le dossier ». Annuler la boîte de dialogue n'affiche rien.
 - Retour d'export (`ExportFeedback`) sous les filtres : « Fichier PDF créé. » / « Fichier Excel créé. » en vert (`role="status"`, sans modale), ou l'échec avec sa cause (« Échec de l'export PDF. Vous pouvez réessayer. Détail : … », `role="alert"`). Même comportement sur Individuels.
 - Clubs sous le seuil minimum de nageurs (Paramètres) : ils ne sont pas classés, et une mention discrète l'indique sous les filtres (« 2 clubs non classés : moins de 3 nageurs dans la catégorie », `countClubsBelowThreshold`). Rien sans seuil ou si aucun club n'est concerné.
-- Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`), précédée de la ligne « Notre club » (ci-dessous).
+- Barre de filtres (`RankingToolbar`, sur `FilterBar`) : onglets de catégorie (`CategoryTabs`, limités aux catégories actives configurées dans Paramètres, catégorie partagée avec Individuels et Palmarès), sélecteur du nombre de nageurs retenus par club (top N, `Segmented`), recherche par nom de club (`SearchField`), précédée de la ligne « Notre club » (ci-dessous).
 - Ligne « Notre club » (`OurClubLine`, dans la barre de filtres, à gauche de la recherche ; à 1366 px elle partage la deuxième rangée de la barre avec la recherche, sans retour à la ligne) : `ClubTag` puis, pour la **catégorie affichée seulement**, calculée avec le top N et le seuil affichés (`computeClubSummary`) : « 7e / 38 · 4 735 pts · −23 pour la 6e · +14 sur le 8e » et une flèche. Le 1er n'a que l'avance, le dernier que l'écart ; rang partagé : « 3e ex æquo / 38 ». Club non classé : « Non classé : moins de X nageurs » ; aucun nageur du club dans la catégorie : « Aucun nageur dans cette catégorie » (ces deux cas sont du texte simple, non cliquable : le club n'a pas de ligne dans le tableau). Clic ou Entrée sur la ligne (bouton, cible ≥ 44 px) : vide la recherche, déplie la ligne du club dans le tableau, la fait défiler à l'écran et place le focus sur son chevron. Ligne masquée si le club n'a aucun nageur dans le meeting. Le podium suit directement la barre de filtres.
 - Podium (`PodiumCards`) : les 3 premiers clubs, ordre gauche-à-droite 1‑2‑3, carte du 1er en `marine` mise en avant, écart par rapport au leader (`formatGap`).
 - Tableau des clubs (`TeamRankingTable` / `TeamRow`) : Rang (`RankChip`), Club (+ `ClubTag` « Notre club » pour le club choisi dans Paramètres, AS Cherbourg Natation par défaut, teinte corail sur toute la ligne), Nageurs retenus (« N retenus sur M », `formatRetainedSwimmers`), Écart, Points avec barre de progression par rapport au leader. Après un réimport, `MovementBadge` à côté du rang : `↑2` (`success`), `↓1` (`corail-strong`), pastille « + » pour une entrée nouvelle (infobulle « Nouveau dans le classement » ; omise quand plus de la moitié des lignes sont nouvelles) ; rien si le rang est stable ou s'il n'y a pas d'import précédent. Calculé pour la catégorie et le top N affichés ; absent des exports PDF/Excel. Si l'import précédent ne peut pas être relu, les flèches sont masquées et une mention discrète le dit (`ComparisonUnavailableNote`, aussi sur Individuels), pour que leur absence ne passe pas pour « aucun changement ».
@@ -51,7 +55,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 ## Individuels (`/individuels`)
 
 - `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de nageurs), actions Excel/PDF.
-- `FilterBar` : `CategoryTabs` (catégories actives) + `SearchField` (recherche par nom ou club, alignée à droite).
+- `FilterBar` : `CategoryTabs` (catégories actives, catégorie partagée avec Classement et Palmarès) + `SearchField` (recherche par nom ou club, alignée à droite).
 - Classement par points des nageurs de la catégorie active (`IndividualRankingTable`, rang recalculé par catégorie) : Rang (`RankChip`, couleurs médaille pour le top 3), Nom, Année de naissance, Club (+ `ClubTag` pour ASCN), Points (`font-display`, `formatPoints`).
 - `MovementBadge` à côté du rang après un réimport (même règles que sur le Classement, par catégorie affichée ; absent des exports).
 - Pastille corail « 1er Prix » / « 2e Prix » pour les nageurs de rang 1 et 2 (ex-aequo inclus). Rang partagé : marqueur « ex. » ; bandeau corail si l'égalité touche un prix ou le podium équipes.
@@ -60,7 +64,7 @@ Fixe à gauche (`w-sidebar`, 248px), fond `marine`, présente sur tous les écra
 ## Palmarès (`/palmares`)
 
 - `PageHeader` (surtitre = nom du meeting, sous-titre = catégorie + nombre de prix, ex. « Dames · 5 prix »), sans action.
-- `FilterBar` : `CategoryTabs` (catégories actives), à l'identique d'Individuels.
+- `FilterBar` : `CategoryTabs` (catégories actives, catégorie partagée avec Classement et Individuels), à l'identique d'Individuels.
 - Grille de 6 cartes (`FunAwardsGrid`), une par récompense humoristique (Le Doyen, La Relève, Duo Mixte, Photo-Finish, Le Club des Sages / Le Club des Grandes Dames selon la catégorie, La Jeune Garde) : icône Lucide colorée dans un badge rond (pas d'emoji), nom du gagnant, description.
 - Calcul entièrement automatique à partir des résultats de la catégorie active (`computeFunAwards`).
 
