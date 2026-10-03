@@ -15,7 +15,10 @@ import { useOurClub } from './use-our-club';
 export interface ExportPackRequest {
   meeting: Meeting;
   rows: RawSwimmerRow[];
+  /** Active categories of the meeting, in display order. */
   categories: string[];
+  /** The ones ticked in « Exporter le meeting »: only these go in the pack. */
+  chosenCategories: string[];
   topN: number;
 }
 
@@ -64,7 +67,7 @@ export function useExportPack(meetingId: number | null): UseExportPackResult {
     const input: ExportPackInput = {
       meta: buildExportMeta(request.meeting, ourClub),
       rows: request.rows,
-      categories: request.categories,
+      categories: plan.categories,
       topN: request.topN,
       minSwimmers: request.meeting.minSwimmers,
     };
@@ -88,7 +91,7 @@ export function useExportPack(meetingId: number | null): UseExportPackResult {
     setError(null);
     setOutcome(null);
     try {
-      const plan = planExportPack(request.meeting.name, request.categories, new Date());
+      const plan = planExportPack(request.meeting.name, request.categories, request.chosenCategories, new Date());
       const chosen = await window.electronAPI.chooseExportPackDir();
       if (!chosen.success) throw new Error(chosen.error);
       // Cancelling the folder dialog is a choice, not an error: nothing to report.

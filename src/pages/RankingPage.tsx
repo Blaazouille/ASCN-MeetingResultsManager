@@ -25,12 +25,14 @@ import { TeamRankingTable } from '@/components/ranking/TeamRankingTable';
 import { ExportActions } from '@/components/ranking/ExportActions';
 import { ExportFeedback } from '@/components/ranking/ExportFeedback';
 import { ExportPackFeedback } from '@/components/ranking/ExportPackFeedback';
+import { ExportPackDialog } from '@/components/ranking/ExportPackDialog';
 import { Button } from '@/components/ui/Button';
 import { ComparisonUnavailableNote } from '@/components/ranking/ComparisonUnavailableNote';
 
 export default function RankingPage(): JSX.Element {
   const { meetingState, categorySelection } = useOutletContext<AppOutletContext>();
   const [search, setSearch] = useState('');
+  const [isPackDialogOpen, setIsPackDialogOpen] = useState(false);
 
   const meetingId = meetingState.currentMeeting?.id ?? null;
   const { rows, categories: presentCategories, isLoading, error: rowsError } = useMeetingRows(meetingId);
@@ -88,12 +90,8 @@ export default function RankingPage(): JSX.Element {
         subtitle={`${categoryShortLabel(category)} · ${ranking.topN} meilleurs nageurs par club · ${clubCount} ${clubCount >= 2 ? 'clubs classés' : 'club classé'}`}
         actions={
           <>
-            {/* Secondary: the end-of-meeting pack (every active category, top N shown here), see use-export-pack.ts. */}
-            <Button
-              icon={FolderDown}
-              disabled={pack.isExporting}
-              onClick={() => void pack.exportAll({ meeting, rows, categories, topN: ranking.topN })}
-            >
+            {/* Secondary: the end-of-meeting pack (ticked categories, top N shown here), see use-export-pack.ts. */}
+            <Button icon={FolderDown} disabled={pack.isExporting} onClick={() => setIsPackDialogOpen(true)}>
               {pack.isExporting ? 'Export en cours…' : 'Tout exporter'}
             </Button>
             <ExportActions
@@ -115,6 +113,17 @@ export default function RankingPage(): JSX.Element {
       />
       <ExportFeedback error={error} notice={notice} />
       <ExportPackFeedback outcome={pack.outcome} error={pack.error} onOpenFolder={() => void pack.openFolder()} />
+      {isPackDialogOpen && (
+        <ExportPackDialog
+          available={categories}
+          topN={ranking.topN}
+          onCancel={() => setIsPackDialogOpen(false)}
+          onConfirm={(chosenCategories) => {
+            setIsPackDialogOpen(false);
+            void pack.exportAll({ meeting, rows, categories, chosenCategories, topN: ranking.topN });
+          }}
+        />
+      )}
       {unrankedCount > 0 && (
         <p className="text-sm text-ink-muted">{unrankedClubsLabel(unrankedCount, minSwimmers)}</p>
       )}

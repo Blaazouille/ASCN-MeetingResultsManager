@@ -25,6 +25,8 @@ export interface PackFileFailure {
 
 export interface ExportPackPlan {
   folderName: string;
+  /** Categories put in every file of the pack: the ticked ones, in the meeting's display order. */
+  categories: string[];
   files: ExportPackFile[];
 }
 
@@ -80,13 +82,25 @@ export function safeFolderName(name: string, maxLength: number = MAX_FOLDER_NAME
 }
 
 /**
- * Folder and files of the end-of-meeting pack, e.g.
+ * Folder, categories and files of the end-of-meeting pack, e.g.
  * "Meeting de la Mer 2026 – 2026-11-16" with the five files of issue #24.
- * No active category means nothing to rank, so no file is planned.
+ * Only the categories ticked in « Exporter le meeting » (issue #77) go in the
+ * pack, in the order of `available` (the order seen on screen) whatever the
+ * ticking order; a ticked name no longer active is ignored. File names do not
+ * depend on the categories (each file holds every exported one), so the main
+ * process whitelist (isPackFileName) stays the same five names.
+ * Nothing to export means nothing to rank, so no file is planned.
  */
-export function planExportPack(meetingName: string, categories: readonly string[], date: Date): ExportPackPlan {
+export function planExportPack(
+  meetingName: string,
+  available: readonly string[],
+  chosen: readonly string[],
+  date: Date
+): ExportPackPlan {
+  const categories = available.filter((category) => chosen.includes(category));
   return {
     folderName: `${safeFolderName(meetingName, MAX_MEETING_NAME_LENGTH)} – ${localDay(date)}`,
+    categories,
     files: categories.length === 0 ? [] : PACK_FILES.map((file) => ({ ...file })),
   };
 }

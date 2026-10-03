@@ -115,7 +115,7 @@ describe('« Tout exporter » pack of the training meeting', () => {
   ];
   const CATEGORIES = ['Classement Dames', 'Classement Messieurs'];
   const packInput = (meeting: Meeting) => ({ meta: buildExportMeta(meeting, DEFAULT_OUR_CLUB), rows: PACK_ROWS, categories: CATEGORIES, topN: 5, minSwimmers: 0 });
-  const files = planExportPack(DEMO.name, CATEGORIES, new Date()).files;
+  const files = planExportPack(DEMO.name, CATEGORIES, CATEGORIES, new Date()).files;
   const countNotices = (text: string): number => text.split(DEMO_EXPORT_NOTICE).length - 1;
 
   it.each(files.filter((file) => file.fileName.endsWith('.pdf')))('prints the notice on every page of $fileName', async ({ kind }) => {

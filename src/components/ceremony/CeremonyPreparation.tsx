@@ -9,8 +9,11 @@ import type { PlannedBlock } from '@/lib/ceremony-plan';
 import type { CeremonyWarning } from '@/lib/ceremony-warnings';
 import { stepContext, stepCountLabel, stepHeading, warningLabel } from '@/lib/ceremony-labels';
 import { Segmented } from '@/components/ui/Segmented';
+import { CategoryCheckboxes } from '@/components/ui/CategoryCheckboxes';
 import { CeremonyBlockList } from './CeremonyBlockList';
-import { CeremonyCategoryPicker } from './CeremonyCategoryPicker';
+
+/** Id of the sentence shown when no category is ticked; « Lancer » and « Imprimer » point to it with aria-describedby. */
+export const NO_CATEGORY_HINT_ID = 'ceremony-no-category-hint';
 
 /** Team places offered: the podium by default, more for meetings that reward further down. */
 const TEAM_PLACE_OPTIONS = [3, 5, 10].map((value) => ({ value, label: String(value) }));
@@ -54,11 +57,14 @@ export function CeremonyPreparation({
           <p className="text-[15px] text-ink-muted">
             Les prix rigolos, les prix individuels et les équipes ne sont annoncés que pour les catégories cochées.
           </p>
-          <CeremonyCategoryPicker
+          <CategoryCheckboxes
             available={availableCategories}
             selected={categories}
             isMissing={isMissingCategory}
             onToggle={onToggleCategory}
+            legend="Catégories annoncées"
+            missingHint="Cochez au moins une catégorie pour lancer le déroulé."
+            missingHintId={NO_CATEGORY_HINT_ID}
           />
         </section>
 

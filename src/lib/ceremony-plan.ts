@@ -1,7 +1,7 @@
 /**
  * Responsabilité : préparation de la cérémonie (blocs cochés et leur ordre, catégories annoncées), traduite en options du déroulé.
- * Appelé par : use-ceremony.ts et les tests.
- * Suppression casserait : le choix des blocs, de leur ordre et des catégories annoncées sur l'écran Cérémonie.
+ * Appelé par : use-ceremony.ts, ExportPackDialog.tsx (catégories cochées par défaut dans « Tout exporter ») et les tests.
+ * Suppression casserait : le choix des blocs, de leur ordre et des catégories annoncées sur l'écran Cérémonie, et le choix par défaut des catégories de « Tout exporter ».
  */
 import { CEREMONY_BLOCKS, type CeremonyBlock, type CeremonyOptions } from './ceremony-script';
 import { isMixteCategory } from './category-selection';
